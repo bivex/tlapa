@@ -1,4 +1,4 @@
-# Generated from /Volumes/External/Code/tlapa/tlaparser/parser/TLAPLusParser.g4 by ANTLR 4.13.1
+# Generated from TLAPLusParser.g4 by ANTLR 4.13.1
 from antlr4 import *
 if "." in __name__:
     from .TLAPLusParser import TLAPLusParser
@@ -14,13 +14,13 @@ class TLAPLusParserVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by TLAPLusParser#firstModule.
-    def visitFirstModule(self, ctx:TLAPLusParser.FirstModuleContext):
+    # Visit a parse tree produced by TLAPLusParser#module.
+    def visitModule(self, ctx:TLAPLusParser.ModuleContext):
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by TLAPLusParser#module.
-    def visitModule(self, ctx:TLAPLusParser.ModuleContext):
+    # Visit a parse tree produced by TLAPLusParser#beginModule.
+    def visitBeginModule(self, ctx:TLAPLusParser.BeginModuleContext):
         return self.visitChildren(ctx)
 
 
@@ -531,6 +531,11 @@ class TLAPLusParserVisitor(ParseTreeVisitor):
 
     # Visit a parse tree produced by TLAPLusParser#SetExpression.
     def visitSetExpression(self, ctx:TLAPLusParser.SetExpressionContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by TLAPLusParser#TemporalActionExpression.
+    def visitTemporalActionExpression(self, ctx:TLAPLusParser.TemporalActionExpressionContext):
         return self.visitChildren(ctx)
 
 
