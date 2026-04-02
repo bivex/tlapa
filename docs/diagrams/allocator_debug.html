@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Nassi-Shneiderman — SimpleAllocator</title>
+<style>
+:root{
+  --bg: #0d1117;
+  --sf: #161b22;
+  --bd: #30363d;
+  --tx: #e6edf3;
+  --tm: #8b949e;
+  --blue: #569cd6;
+  --green: #4ec990;
+  --purple: #c586c0;
+  --yellow: #dcdcaa;
+  --orange: #ce9178;
+  --red: #f44747;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  font-family: "JetBrains Mono", "Fira Code", monospace;
+  background: var(--bg);
+  color: var(--tx);
+  padding: 24px;
+  max-width: 960px;
+  margin: 0 auto;
+}
+.hdr{
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--bd);
+}
+.hdr h1{
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--blue);
+  margin-bottom: 6px;
+}
+.hdr .meta{
+  font-size: 13px;
+  color: var(--tm);
+  font-family: "JetBrains Mono", monospace;
+}
+.summary{
+  font-size: 14px;
+  color: var(--tm);
+  margin-bottom: 20px;
+  line-height: 1.6;
+}
+.diags{
+  margin-bottom: 20px;
+  background: var(--sf);
+  border: 1px solid var(--bd);
+  border-radius: 8px;
+  padding: 12px;
+}
+.diags summary{
+  cursor: pointer;
+  color: var(--red);
+  font-weight: 600;
+  font-size: 14px;
+}
+.diags table{
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  margin-top: 8px;
+}
+.diags th,.diags td{
+  text-align: left;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--bd);
+}
+.diags th{
+  background: rgba(86, 156, 214, 0.15);
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 11px;
+  letter-spacing: 0.05em;
+}
+.sev{
+  color: var(--red);
+  font-weight: 700;
+  font-size: 11px;
+  text-transform: uppercase;
+}
+svg{
+  display: block;
+  border: 1px solid var(--bd);
+  border-radius: 8px;
+  width: 100%;
+  max-width: 640px;
+  background: var(--bg);
+}
+</style>
+</head>
+<body>
+<div class="hdr">
+  <h1>SimpleAllocator</h1>
+  <div class="meta">/Volumes/External/Code/tlapa/tests/fixtures/allocator.tla &middot; 179 tokens &middot; 58.8ms</div>
+</div>
+<div class="summary">2 constant &middot; 14 module &middot; 21 operator definition &middot; 2 variable</div>
+<details class="diags"><summary>43 diagnostic(s)</summary><table><thead><tr><th></th><th>Loc</th><th>Message</th></tr></thead><tbody><tr><td class="sev">ERR</td><td>L9:7</td><td>no viable alternative at input &#x27;TypeInvariant==/\allocated&#x27;</td></tr><tr><td class="sev">ERR</td><td>L10:4</td><td>missing DEF at &#x27;/\&#x27;</td></tr><tr><td class="sev">ERR</td><td>L10:7</td><td>mismatched input &#x27;requests&#x27; expecting {AND, OR}</td></tr><tr><td class="sev">ERR</td><td>L12:0</td><td>extraneous input &#x27;Init&#x27; expecting DEF</td></tr><tr><td class="sev">ERR</td><td>L13:7</td><td>mismatched input &#x27;allocated&#x27; expecting {AND, OR}</td></tr><tr><td class="sev">ERR</td><td>L13:19</td><td>mismatched input &#x27;{&#x27; expecting IDENTIFIER</td></tr><tr><td class="sev">ERR</td><td>L17:7</td><td>no viable alternative at input &#x27;Request(c)==/\\E&#x27;</td></tr><tr><td class="sev">ERR</td><td>L16:9</td><td>mismatched input &#x27;)&#x27; expecting SEPARATOR</td></tr><tr><td class="sev">ERR</td><td>L17:26</td><td>mismatched input &#x27;\&#x27; expecting DEF</td></tr><tr><td class="sev">ERR</td><td>L17:38</td><td>mismatched input &#x27;:&#x27; expecting SEPARATOR</td></tr><tr><td class="sev">ERR</td><td>L18:18</td><td>mismatched input &#x27;=&#x27; expecting DEF</td></tr><tr><td class="sev">ERR</td><td>L18:34</td><td>extraneous input &#x27;{&#x27; expecting IDENTIFIER</td></tr><tr><td class="sev">ERR</td><td>L18:36</td><td>mismatched input &#x27;}&#x27; expecting DEF</td></tr><tr><td class="sev">ERR</td><td>L19:18</td><td>mismatched input &#x27;=&#x27; expecting DEF</td></tr><tr><td class="sev">ERR</td><td>L21:0</td><td>missing SEPARATOR at &#x27;Allocate&#x27;</td></tr><tr><td class="sev">ERR</td><td>L21:10</td><td>mismatched input &#x27;,&#x27; expecting SEPARATOR</td></tr><tr><td class="sev">ERR</td><td>L21:13</td><td>mismatched input &#x27;)&#x27; expecting SEPARATOR</td></tr><tr><td class="sev">ERR</td><td>L23:4</td><td>missing DEF at &#x27;/\&#x27;</td></tr><tr><td class="sev">ERR</td><td>L23:7</td><td>mismatched input &#x27;r&#x27; expecting {AND, OR}</td></tr><tr><td class="sev">ERR</td><td>L24:4</td><td>missing DEF at &#x27;/\&#x27;</td></tr><tr><td class="sev">ERR</td><td>L24:7</td><td>mismatched input &#x27;allocated&#x27; expecting {AND, OR}</td></tr><tr><td class="sev">ERR</td><td>L24:18</td><td>mismatched input &#x27;=&#x27; expecting DEF</td></tr><tr><td class="sev">ERR</td><td>L24:35</td><td>extraneous input &#x27;{&#x27; expecting IDENTIFIER</td></tr><tr><td class="sev">ERR</td><td>L24:37</td><td>mismatched input &#x27;}&#x27; expecting DEF</td></tr><tr><td class="sev">ERR</td><td>L25:17</td><td>mismatched input &#x27;=&#x27; expecting DEF</td></tr><tr><td class="sev">ERR</td><td>L25:30</td><td>extraneous input &#x27;{&#x27; expecting IDENTIFIER</td></tr><tr><td class="sev">ERR</td><td>L25:32</td><td>mismatched input &#x27;}&#x27; expecting DEF</td></tr><tr><td class="sev">ERR</td><td>L27:9</td><td>mismatched input &#x27;,&#x27; expecting SEPARATOR</td></tr><tr><td class="sev">ERR</td><td>L27:12</td><td>mismatched input &#x27;)&#x27; expecting SEPARATOR</td></tr><tr><td class="sev">ERR</td><td>L29:4</td><td>missing DEF at &#x27;/\&#x27;</td></tr><tr><td class="sev">ERR</td><td>L29:7</td><td>mismatched input &#x27;allocated&#x27; expecting {AND, OR}</td></tr><tr><td class="sev">ERR</td><td>L29:18</td><td>mismatched input &#x27;=&#x27; expecting DEF</td></tr><tr><td class="sev">ERR</td><td>L29:32</td><td>extraneous input &#x27;{&#x27; expecting IDENTIFIER</td></tr><tr><td class="sev">ERR</td><td>L29:34</td><td>mismatched input &#x27;}&#x27; expecting DEF</td></tr><tr><td class="sev">ERR</td><td>L30:17</td><td>mismatched input &#x27;=&#x27; expecting DEF</td></tr><tr><td class="sev">ERR</td><td>L32:0</td><td>missing SEPARATOR at &#x27;Next&#x27;</td></tr><tr><td class="sev">ERR</td><td>L33:21</td><td>mismatched input &#x27;:&#x27; expecting DEF</td></tr><tr><td class="sev">ERR</td><td>L34:20</td><td>mismatched input &#x27;)&#x27; expecting SEPARATOR</td></tr><tr><td class="sev">ERR</td><td>L35:30</td><td>mismatched input &#x27;:&#x27; expecting DEF</td></tr><tr><td class="sev">ERR</td><td>L35:42</td><td>mismatched input &#x27;,&#x27; expecting SEPARATOR</td></tr><tr><td class="sev">ERR</td><td>L35:45</td><td>mismatched input &#x27;)&#x27; expecting SEPARATOR</td></tr><tr><td class="sev">ERR</td><td>L35:59</td><td>mismatched input &#x27;,&#x27; expecting SEPARATOR</td></tr><tr><td class="sev">ERR</td><td>L35:62</td><td>mismatched input &#x27;)&#x27; expecting SEPARATOR</td></tr></tbody></table></details>
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="1504" viewBox="0 0 640 1504">
+<rect width="100%" height="100%" fill="#0d1117" rx="6"/>
+<rect x="20" y="0" width="600" height="34" rx="6" ry="6" fill="#0f2847" stroke="#569cd6" stroke-width="1"/>
+  <text x="30" y="21" fill="#569cd6" font-family="JetBrains Mono", "Fira Code", monospace font-size="12" font-weight="bold">MODULE SimpleAllocator</text>
+  <text x="610" y="21" text-anchor="end" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="10">L1</text>
+<rect x="20" y="40" width="600" height="34" rx="0" ry="0" fill="#2a2a1a" stroke="#dcdcaa" stroke-width="1"/>
+  <text x="30" y="61" fill="#dcdcaa" font-family="JetBrains Mono", "Fira Code", monospace font-size="12" font-weight="normal">CONSTANT Clients</text>
+  <text x="610" y="61" text-anchor="end" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="10">L4</text>
+<rect x="20" y="76" width="600" height="34" rx="0" ry="0" fill="#2a2a1a" stroke="#dcdcaa" stroke-width="1"/>
+  <text x="30" y="97" fill="#dcdcaa" font-family="JetBrains Mono", "Fira Code", monospace font-size="12" font-weight="normal">CONSTANT Resources</text>
+  <text x="610" y="97" text-anchor="end" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="10">L4</text>
+<rect x="20" y="112" width="600" height="34" rx="0" ry="0" fill="#2a2a1a" stroke="#dcdcaa" stroke-width="1"/>
+  <text x="30" y="133" fill="#dcdcaa" font-family="JetBrains Mono", "Fira Code", monospace font-size="12" font-weight="normal">VARIABLE allocated</text>
+  <text x="610" y="133" text-anchor="end" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="10">L6</text>
+<rect x="20" y="148" width="600" height="34" rx="0" ry="0" fill="#2a2a1a" stroke="#dcdcaa" stroke-width="1"/>
+  <text x="30" y="169" fill="#dcdcaa" font-family="JetBrains Mono", "Fira Code", monospace font-size="12" font-weight="normal">VARIABLE requests</text>
+  <text x="610" y="169" text-anchor="end" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="10">L6</text>
+<rect x="20" y="188" width="600" height="34" rx="0" ry="0" fill="#1e2533" stroke="#3b4660" stroke-width="1"/>
+  <text x="30" y="209" fill="#d4d4d4" font-family="JetBrains Mono", "Fira Code", monospace font-size="12" font-weight="normal">=  allocated\subseteqResources == ...</text>
+  <text x="610" y="209" text-anchor="end" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="10">L9</text>
+<rect x="20" y="224" width="600" height="34" rx="0" ry="0" fill="#1e2533" stroke="#3b4660" stroke-width="1"/>
+  <text x="30" y="245" fill="#d4d4d4" font-family="JetBrains Mono", "Fira Code", monospace font-size="12" font-weight="normal">=  requests\subseteqResources == ...</text>
+  <text x="610" y="245" text-anchor="end" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="10">L10</text>
+<rect x="20" y="260" width="600" height="34" rx="0" ry="0" fill="#1e2533" stroke="#3b4660" stroke-width="1"/>
+  <text x="30" y="281" fill="#d4d4d4" font-family="JetBrains Mono", "Fira Code", monospace font-size="12" font-weight="normal">=  allocated={}/\ == ...</text>
+  <text x="610" y="281" text-anchor="end" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="10">L13</text>
+<rect x="20" y="300" width="600" height="34" rx="6" ry="6" fill="#0f2847" stroke="#569cd6" stroke-width="1"/>
+  <text x="30" y="321" fill="#569cd6" font-family="JetBrains Mono", "Fira Code", monospace font-size="12" font-weight="bold">MODULE c</text>
+  <text x="610" y="321" text-anchor="end" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="10">L16</text>
+<rect x="20" y="340" width="600" height="34" rx="0" ry="0" fill="#1e2533" stroke="#3b4660" stroke-width="1"/>
+  <text x="30" y="361" fill="#d4d4d4" font-family="JetBrains Mono", "Fira Code", monospace font-size="12" font-weight="normal">=  r\inResources == ...</text>
+  <text x="610" y="361" text-anchor="end" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="10">L17</text>
+<rect x="20" y="380" width="600" height="34" rx="6" ry="6" fill="#0f2847" stroke="#569cd6" stroke-width="1"/>
+  <text x="30" y="401" fill="#569cd6" font-family="JetBrains Mono", "Fira Code", monospace font-size="12" font-weight="bold">MODULE allocated</text>
+  <text x="610" y="401" text-anchor="end" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="10">L17</text>
+<rect x="20" y="420" width="600" height="34" rx="0" ry="0" fill="#1e2533" stroke="#3b4660" stroke-width="1"/>
+  <text x="30" y="441" fill="#d4d4d4" font-family="JetBrains Mono", "Fira Code", monospace font-size="12" font-weight="normal">=  requests&#x27; == ...</text>
+  <text x="610" y="441" text-anchor="end" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="10">L18</text>
+<rect x="20" y="456" width="600" height="34" rx="0" ry="0" fill="#1e2533" stroke="#3b4660" stroke-width="1"/>
+  <text x="30" y="477" fill="#d4d4d4" font-family="JetBrains Mono", "Fira Code", monospace font-size="12" font-weight="normal">=  requests\cup{r == ...</text>
+  <text x="610" y="477" text-anchor="end" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="10">L18</text>
+<rect x="20" y="492" width="600" height="34" rx="0" ry="0" fill="#1e2533" stroke="#3b4660" stroke-width="1"/>
+  <text x="30" y="513" fill="#d4d4d4" font-family="JetBrains Mono", "Fira Code", monospace font-size="12" font-weight="normal">=  allocated&#x27; == ...</text>
+  <text x="610" y="513" text-anchor="end" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="10">L19</text>
+<rect x="20" y="532" width="600" height="34" rx="6" ry="6" fill="#0f2847" stroke="#569cd6" stroke-width="1"/>
+  <text x="30" y="553" fill="#569cd6" font-family="JetBrains Mono", "Fira Code", monospace font-size="12" font-weight="bold">MODULE allocated</text>
+  <text x="610" y="553" text-anchor="end" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="10">L19</text>
+<rect x="20" y="572" width="600" height="34" rx="6" ry="6" fill="#0f2847" stroke="#569cd6" stroke-width="1"/>
+  <text x="30" y="593" fill="#569cd6" font-family="JetBrains Mono", "Fira Code", monospace font-size="12" font-weight="bold">MODULE c</text>
+  <text x="610" y="593" text-anchor="end" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="10">L21</text>
+<rect x="20" y="612" width="600" height="34" rx="6" ry="6" fill="#0f2847" stroke="#569cd6" stroke-width="1"/>
+  <text x="30" y="633" fill="#569cd6" font-family="JetBrains Mono", "Fira Code", monospace font-size="12" font-weight="bold">MODULE r</text>
+  <text x="610" y="633" text-anchor="end" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="10">L21</text>
+<rect x="20" y="652" width="600" height="34" rx="0" ry="0" fill="#1e2533" stroke="#3b4660" stroke-width="1"/>
+  <text x="30" y="673" fill="#d4d4d4" font-family="JetBrains Mono", "Fira Code", monospace font-size="12" font-weight="normal">=  r\inrequests == ...</text>
+  <text x="610" y="673" text-anchor="end" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="10">L22</text>
+<rect x="20" y="688" width="600" height="34" rx="0" ry="0" fill="#1e2533" stroke="#3b4660" stroke-width="1"/>
+  <text x="30" y="709" fill="#d4d4d4" font-family="JetBrains Mono", "Fira Code", monospace font-size="12" font-weight="normal">=  r\notinallocated == ...</text>
+  <text x="610" y="709" text-anchor="end" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="10">L23</text>
+<rect x="20" y="724" width="600" height="34" rx="0" ry="0" fill="#1e2533" stroke="#3b4660" stroke-width="1"/>
+  <text x="30" y="745" fill="#d4d4d4" font-family="JetBrains Mono", "Fira Code", monospace font-size="12" font-weight="normal">=  allocated&#x27; == ...</text>
+  <text x="610" y="745" text-anchor="end" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="10">L24</text>
+<rect x="20" y="760" width="600" height="34" rx="0" ry="0" fill="#1e2533" stroke="#3b4660" stroke-width="1"/>
+  <text x="30" y="781" fill="#d4d4d4" font-family="JetBrains Mono", "Fira Code", monospace font-size="12" font-weight="normal">=  allocated\cup{r == ...</text>
+  <text x="610" y="781" text-anchor="end" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="10">L24</text>
+<rect x="20" y="796" width="600" height="34" rx="0" ry="0" fill="#1e2533" stroke="#3b4660" stroke-width="1"/>
+  <text x="30" y="817" fill="#d4d4d4" font-family="JetBrains Mono", "Fira Code", monospace font-size="12" font-weight="normal">=  requests&#x27; == ...</text>
+  <text x="610" y="817" text-anchor="end" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="10">L25</text>
+<rect x="20" y="832" width="600" height="34" rx="0" ry="0" fill="#1e2533" stroke="#3b4660" stroke-width="1"/>
+  <text x="30" y="853" fill="#d4d4d4" font-family="JetBrains Mono", "Fira Code", monospace font-size="12" font-weight="normal">=  requests\{r == ...</text>
+  <text x="610" y="853" text-anchor="end" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="10">L25</text>
+<rect x="20" y="872" width="600" height="34" rx="6" ry="6" fill="#0f2847" stroke="#569cd6" stroke-width="1"/>
+  <text x="30" y="893" fill="#569cd6" font-family="JetBrains Mono", "Fira Code", monospace font-size="12" font-weight="bold">MODULE c</text>
+  <text x="610" y="893" text-anchor="end" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="10">L27</text>
+<rect x="20" y="912" width="600" height="34" rx="6" ry="6" fill="#0f2847" stroke="#569cd6" stroke-width="1"/>
+  <text x="30" y="933" fill="#569cd6" font-family="JetBrains Mono", "Fira Code", monospace font-size="12" font-weight="bold">MODULE r</text>
+  <text x="610" y="933" text-anchor="end" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="10">L27</text>
+<rect x="20" y="952" width="600" height="34" rx="0" ry="0" fill="#1e2533" stroke="#3b4660" stroke-width="1"/>
+  <text x="30" y="973" fill="#d4d4d4" font-family="JetBrains Mono", "Fira Code", monospace font-size="12" font-weight="normal">=  r\inallocated == ...</text>
+  <text x="610" y="973" text-anchor="end" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="10">L28</text>
+<rect x="20" y="988" width="600" height="34" rx="0" ry="0" fill="#1e2533" stroke="#3b4660" stroke-width="1"/>
+  <text x="30" y="1009" fill="#d4d4d4" font-family="JetBrains Mono", "Fira Code", monospace font-size="12" font-weight="normal">=  allocated&#x27; == ...</text>
+  <text x="610" y="1009" text-anchor="end" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="10">L29</text>
+<rect x="20" y="1024" width="600" height="34" rx="0" ry="0" fill="#1e2533" stroke="#3b4660" stroke-width="1"/>
+  <text x="30" y="1045" fill="#d4d4d4" font-family="JetBrains Mono", "Fira Code", monospace font-size="12" font-weight="normal">=  allocated\{r == ...</text>
+  <text x="610" y="1045" text-anchor="end" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="10">L29</text>
+<rect x="20" y="1060" width="600" height="34" rx="0" ry="0" fill="#1e2533" stroke="#3b4660" stroke-width="1"/>
+  <text x="30" y="1081" fill="#d4d4d4" font-family="JetBrains Mono", "Fira Code", monospace font-size="12" font-weight="normal">=  requests&#x27; == ...</text>
+  <text x="610" y="1081" text-anchor="end" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="10">L30</text>
+<rect x="20" y="1100" width="600" height="34" rx="6" ry="6" fill="#0f2847" stroke="#569cd6" stroke-width="1"/>
+  <text x="30" y="1121" fill="#569cd6" font-family="JetBrains Mono", "Fira Code", monospace font-size="12" font-weight="bold">MODULE requests</text>
+  <text x="610" y="1121" text-anchor="end" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="10">L30</text>
+<rect x="20" y="1140" width="600" height="34" rx="0" ry="0" fill="#1e2533" stroke="#3b4660" stroke-width="1"/>
+  <text x="30" y="1161" fill="#d4d4d4" font-family="JetBrains Mono", "Fira Code", monospace font-size="12" font-weight="normal">=  c\inClients == ...</text>
+  <text x="610" y="1161" text-anchor="end" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="10">L33</text>
+<rect x="20" y="1180" width="600" height="34" rx="6" ry="6" fill="#0f2847" stroke="#569cd6" stroke-width="1"/>
+  <text x="30" y="1201" fill="#569cd6" font-family="JetBrains Mono", "Fira Code", monospace font-size="12" font-weight="bold">MODULE c</text>
+  <text x="610" y="1201" text-anchor="end" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="10">L34</text>
+<rect x="20" y="1220" width="600" height="34" rx="0" ry="0" fill="#1e2533" stroke="#3b4660" stroke-width="1"/>
+  <text x="30" y="1241" fill="#d4d4d4" font-family="JetBrains Mono", "Fira Code", monospace font-size="12" font-weight="normal">=  r\inResources == ...</text>
+  <text x="610" y="1241" text-anchor="end" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="10">L35</text>
+<rect x="20" y="1260" width="600" height="34" rx="6" ry="6" fill="#0f2847" stroke="#569cd6" stroke-width="1"/>
+  <text x="30" y="1281" fill="#569cd6" font-family="JetBrains Mono", "Fira Code", monospace font-size="12" font-weight="bold">MODULE c</text>
+  <text x="610" y="1281" text-anchor="end" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="10">L35</text>
+<rect x="20" y="1300" width="600" height="34" rx="6" ry="6" fill="#0f2847" stroke="#569cd6" stroke-width="1"/>
+  <text x="30" y="1321" fill="#569cd6" font-family="JetBrains Mono", "Fira Code", monospace font-size="12" font-weight="bold">MODULE r</text>
+  <text x="610" y="1321" text-anchor="end" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="10">L35</text>
+<rect x="20" y="1340" width="600" height="34" rx="6" ry="6" fill="#0f2847" stroke="#569cd6" stroke-width="1"/>
+  <text x="30" y="1361" fill="#569cd6" font-family="JetBrains Mono", "Fira Code", monospace font-size="12" font-weight="bold">MODULE c</text>
+  <text x="610" y="1361" text-anchor="end" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="10">L35</text>
+<rect x="20" y="1380" width="600" height="34" rx="6" ry="6" fill="#0f2847" stroke="#569cd6" stroke-width="1"/>
+  <text x="30" y="1401" fill="#569cd6" font-family="JetBrains Mono", "Fira Code", monospace font-size="12" font-weight="bold">MODULE r</text>
+  <text x="610" y="1401" text-anchor="end" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="10">L35</text>
+<rect x="20" y="1420" width="600" height="34" rx="0" ry="0" fill="#1e2533" stroke="#3b4660" stroke-width="1"/>
+  <text x="30" y="1441" fill="#d4d4d4" font-family="JetBrains Mono", "Fira Code", monospace font-size="12" font-weight="normal">=  Spec == ...</text>
+  <text x="610" y="1441" text-anchor="end" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="10">L37</text>
+<rect x="20" y="1456" width="600" height="34" rx="0" ry="0" fill="#1e2533" stroke="#3b4660" stroke-width="1"/>
+  <text x="30" y="1477" fill="#d4d4d4" font-family="JetBrains Mono", "Fira Code", monospace font-size="12" font-weight="normal">=  NoDeadlock == ...</text>
+  <text x="610" y="1477" text-anchor="end" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="10">L39</text>
+</svg>
+</body>
+</html>

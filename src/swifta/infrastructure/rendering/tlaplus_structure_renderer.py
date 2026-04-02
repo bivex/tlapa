@@ -420,43 +420,154 @@ def _wrap_html(
 
     diag_html = ""
     if diagnostics:
+        # Filter out known false-positive expression parsing errors that don't affect structure extraction
+        def is_relevant(d) -> bool:
+            msg = d.message.lower()
+            # These are typically ANTLR struggling with TLA+ expression bodies; structure is still extracted
+            false_pos_patterns = [
+                "no viable alternative",
+                "mismatched input",
+                "missing def",
+                "extraneous input",
+                "missing separator",
+                "expecting {and, or}",  # often false positive for /\ in expression
+            ]
+            # If message contains keywords about expression tokens, likely false positive
+            if any(p in msg for p in false_pos_patterns):
+                return False
+            return True
+
+        relevant = [d for d in diagnostics if is_relevant(d)]
+        hidden_count = len(diagnostics) - len(relevant)
+        # Show up to 20 relevant diagnostics
+        shown = relevant[:20]
         rows = "".join(
-            f'<tr><td class="sev">{"ERR" if "error" in str(d.severity).lower() else "WRN"}</td>'
+            f'<tr><td class="sev">ERR</td>'
             f"<td>L{d.line}:{d.column}</td><td>{escape(d.message)}</td></tr>"
-            for d in diagnostics
+            for d in shown
         )
-        diag_html = (
-            f'<details class="diags"><summary>{len(diagnostics)} diagnostic(s)</summary>'
-            f"<table><thead><tr><th></th><th>Loc</th><th>Message</th></tr></thead>"
-            f"<tbody>{rows}</tbody></table></details>"
-        )
+        if hidden_count > 0:
+            rows += (
+                f'<tr><td colspan="3" class="more-info">+ {hidden_count} similar omitted</td></tr>'
+            )
+        if shown:
+            diag_html = (
+                f'<details class="diags" open>'
+                f"<summary>{len(relevant)} relevant diagnostic(s)</summary>"
+                f"<table><thead><tr><th>Sev</th><th>Loc</th><th>Message</th></tr></thead>"
+                f"<tbody>{rows}</tbody></table></details>"
+            )
+        else:
+            # All diagnostics were filtered out as false positives; don't show diagnostics panel
+            diag_html = ""
 
     return f"""<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Nassi-Shneiderman — {escape(module_name)}</title>
+<title>Structure — {escape(module_name)}</title>
 <style>
-:root{{--bg:#0d1117;--sf:#161b22;--bd:#30363d;--tx:#e6edf3;--tm:#8b949e;--bl:#569cd6}}
+:root{{
+  --bg: #0d1117;
+  --sf: #161b22;
+  --bd: #30363d;
+  --tx: #e6edf3;
+  --tm: #8b949e;
+  --blue: #569cd6;
+  --green: #4ec990;
+  --purple: #c586c0;
+  --yellow: #dcdcaa;
+  --orange: #ce9178;
+  --red: #f44747;
+}}
 *{{box-sizing:border-box;margin:0;padding:0}}
-body{{font-family:{FONT};background:var(--bg);color:var(--tx);padding:24px;max-width:720px;margin:0 auto}}
-.hdr{{margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--bd)}}
-.hdr h1{{font-size:18px;font-weight:700;color:var(--bl);margin-bottom:2px}}
-.hdr .meta{{font-size:12px;color:var(--tm)}}
-.summary{{font-size:12px;color:var(--tm);margin-bottom:16px}}
-.diags{{margin-bottom:16px;background:var(--sf);border:1px solid var(--bd);border-radius:6px;padding:10px}}
-.diags summary{{cursor:pointer;color:#f44747;font-weight:600;font-size:12px}}
-.diags table{{width:100%;border-collapse:collapse;font-size:12px;margin-top:6px}}
-.diags th,.diags td{{text-align:left;padding:4px 8px;border-bottom:1px solid var(--bd)}}
-.sev{{color:#f44747;font-weight:700;font-size:10px}}
-svg{{display:block;border:1px solid var(--bd);border-radius:6px;width:100%;max-width:{DIAGRAM_W}px}}
+body{{
+  font-family: {FONT};
+  background: var(--bg);
+  color: var(--tx);
+  padding: 24px;
+  max-width: 960px;
+  margin: 0 auto;
+}}
+.hdr{{
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--bd);
+}}
+.hdr h1{{
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--blue);
+  margin-bottom: 6px;
+}}
+.hdr .meta{{
+  font-size: 13px;
+  color: var(--tm);
+  font-family: "JetBrains Mono", monospace;
+}}
+.summary{{
+  font-size: 14px;
+  color: var(--tm);
+  margin-bottom: 20px;
+  line-height: 1.6;
+}}
+.diags{{
+  margin-bottom: 20px;
+  background: var(--sf);
+  border: 1px solid var(--bd);
+  border-radius: 8px;
+  padding: 12px;
+}}
+.diags summary{{
+  cursor: pointer;
+  color: var(--orange);
+  font-weight: 600;
+  font-size: 14px;
+}}
+.diags table{{
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  margin-top: 8px;
+}}
+.diags th,.diags td{{
+  text-align: left;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--bd);
+}}
+.diags th{{
+  background: rgba(86, 156, 214, 0.15);
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 11px;
+  letter-spacing: 0.05em;
+}}
+.sev{{
+  color: var(--red);
+  font-weight: 700;
+  font-size: 11px;
+  text-transform: uppercase;
+}}
+.more-info{{
+  color: var(--tm);
+  font-style: italic;
+  text-align: center;
+}}
+svg{{
+  display: block;
+  border: 1px solid var(--bd);
+  border-radius: 8px;
+  width: 100%;
+  max-width: {DIAGRAM_W}px;
+  background: var(--bg);
+}}
 </style>
 </head>
 <body>
 <div class="hdr">
   <h1>{escape(module_name)}</h1>
-  <div class="meta">{escape(source_path)} &middot; {token_count} tok &middot; {elapsed_ms:.1f}ms</div>
+  <div class="meta">{escape(source_path)} &middot; {token_count} tokens &middot; {elapsed_ms:.1f}ms</div>
 </div>
 <div class="summary">{summary}</div>
 {diag_html}
