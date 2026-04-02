@@ -337,9 +337,23 @@ def _build_svg(module_name: str, elements: tuple[StructuralElement, ...]) -> str
             y_cursor += 4
 
         elif section_type == "definition":
-            for defn in items:
+            # Sort definitions: invariants first, then actions, lemmas/specs, then others alphabetically
+            def sort_key(defn):
+                n = defn.name.lower()
+                if "inv" in n or "typeinv" in n:
+                    return (0, n)
+                if "'" in (defn.signature or ""):
+                    return (1, n)
+                if any(kw in n for kw in ["lemma", "ax", "theorem", "spec"]):
+                    return (2, n)
+                return (3, n)
+
+            items_sorted = sorted(items, key=sort_key)
+            for defn in items_sorted:
                 k = str(defn.kind)
                 sig = defn.signature or defn.name
+                name = defn.name.lower()
+                # Determine icon and color by type
                 if "function" in k:
                     icon = "f[ ]"
                     fill = C_BLOCK
@@ -357,9 +371,23 @@ def _build_svg(module_name: str, elements: tuple[StructuralElement, ...]) -> str
                     fill = C_BLOCK
                     stroke = C_TEXT_YELLOW
                 else:
-                    icon = "="
-                    fill = C_BLOCK
-                    stroke = C_BLOCK_STROKE
+                    # Classify operators: invariants, actions, lemmas/specs, predicates
+                    if any(keyword in name for keyword in ["inv", "typeinv"]):
+                        icon = "[I]"
+                        fill = C_BLOCK
+                        stroke = C_TEXT_GREEN
+                    elif "'" in sig:
+                        icon = "[A]"
+                        fill = C_BLOCK
+                        stroke = C_TEXT_YELLOW
+                    elif any(keyword in name for keyword in ["lemma", "ax", "theorem", "spec"]):
+                        icon = "[S]"
+                        fill = C_BLOCK
+                        stroke = C_TEXT_ORANGE
+                    else:
+                        icon = "[P]"
+                        fill = C_BLOCK
+                        stroke = C_BLOCK_STROKE
 
                 label = f"{icon}  {sig}"
                 y_cursor = _draw_block(y_cursor, label, fill, stroke, C_TEXT, f"L{defn.line}")
