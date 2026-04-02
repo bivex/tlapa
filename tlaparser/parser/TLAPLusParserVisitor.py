@@ -534,8 +534,8 @@ class TLAPLusParserVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by TLAPLusParser#BracketExpression.
-    def visitBracketExpression(self, ctx:TLAPLusParser.BracketExpressionContext):
+    # Visit a parse tree produced by TLAPLusParser#StandaloneBracketExpr.
+    def visitStandaloneBracketExpr(self, ctx:TLAPLusParser.StandaloneBracketExprContext):
         return self.visitChildren(ctx)
 
 

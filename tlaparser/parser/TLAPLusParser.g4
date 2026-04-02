@@ -101,8 +101,7 @@ operatorOrFunctionDefinition
     ;
 
 functionDefinition
-    : (IDENTIFIER | identifierTuple) (LBR US (COMMA US)* RBR)?
-      DEF functionBody
+    : (IDENTIFIER | identifierTuple) LSB quantBound (COMMA quantBound)* RSB DEF functionBody
     ;
 
 operatorDefinition
@@ -647,7 +646,7 @@ primaryExpression
     | NUMBER_LITERAL (DOT NUMBER_LITERAL)?                                             #NumberExpression
     | LBR expression RBR                                                               #ParenExpression
     | LBC setBody RBC                                                                  #SetExpression
-    | LSB functionBody2 RSB                                                            #BracketExpression
+    | LSB functionBody2 RSB                                                            #StandaloneBracketExpr
     | LAB tupleBody (RAB | ARAB reducedExpression)                                     #TupleOrActionExpression
     | proofStepRef (LBR opOrExpr (COMMA opOrExpr)* RBR)?                               #ProofStepExpression
     | fairnessExpression                                                               #FairnessExprPrimary

@@ -953,12 +953,12 @@ class TLAPLusParserListener(ParseTreeListener):
         pass
 
 
-    # Enter a parse tree produced by TLAPLusParser#BracketExpression.
-    def enterBracketExpression(self, ctx:TLAPLusParser.BracketExpressionContext):
+    # Enter a parse tree produced by TLAPLusParser#StandaloneBracketExpr.
+    def enterStandaloneBracketExpr(self, ctx:TLAPLusParser.StandaloneBracketExprContext):
         pass
 
-    # Exit a parse tree produced by TLAPLusParser#BracketExpression.
-    def exitBracketExpression(self, ctx:TLAPLusParser.BracketExpressionContext):
+    # Exit a parse tree produced by TLAPLusParser#StandaloneBracketExpr.
+    def exitStandaloneBracketExpr(self, ctx:TLAPLusParser.StandaloneBracketExprContext):
         pass
 
 

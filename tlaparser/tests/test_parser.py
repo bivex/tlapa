@@ -15,10 +15,13 @@ from tlaparser import parse_tla, parse_expression, get_tokens, TLAErrorListener
 def test_tokenize():
     """Test basic tokenization."""
     print("=== Test: Tokenization ===")
-    tokens = get_tokens("---- MODULE Test ----")
+    # BEGIN_MODULE is skipped (mode switch), so tokens in SPEC mode are:
+    # IDENTIFIER, SEPARATOR, END_MODULE
+    tokens = get_tokens("---- MODULE Test ----\n====")
     for tok in tokens:
         print(f"  {tok['type']:30s}  '{tok['text']}'")
-    assert any(t["type"] == "BEGIN_MODULE" for t in tokens), "Should find BEGIN_MODULE token"
+    assert any(t["type"] == "IDENTIFIER" for t in tokens), "Should find IDENTIFIER token"
+    assert any(t["type"] == "SEPARATOR" for t in tokens), "Should find SEPARATOR token"
     print("  PASSED\n")
 
 
