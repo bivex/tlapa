@@ -16,6 +16,8 @@ from swifta.infrastructure.rendering.tlaplus_structure_renderer import (
     render_index_html,
     render_single_file,
 )
+from swifta.presentation.nassi_blocks import ActionBlock, SequenceBlock
+from swifta.presentation.nassi_renderer import render_nassi_diagram
 from swifta.infrastructure.system import (
     InMemoryParsingJobRepository,
     StructuredLoggingEventPublisher,
@@ -63,18 +65,49 @@ def _nassi_file(args) -> int:
     source_path = Path(args.path).expanduser().resolve()
     content = source_path.read_text(encoding="utf-8")
 
-    result = render_single_file(str(source_path), content)
+    # Parse using the adapter to get structural elements (we'll extract them)
+    parser = AntlrTlaplusSyntaxParser()
+    outcome = parser.parse_file(str(source_path))
+    elements = outcome.structural_elements
+    module_name = outcome.module_name or "TLA+ Module"
+
+    # Build simple NSD: sequence of elements
+    from swifta.presentation.nassi_blocks import ActionBlock, SequenceBlock
+
+    blocks = [
+        ActionBlock(
+            text=f"{elem.kind.value.title()}: {elem.name or '<anonymous>'} (line {elem.line})"
+        )
+        for elem in elements
+    ]
+    root = SequenceBlock(children=blocks) if blocks else ActionBlock(text="(no elements)")
+
+    svg = render_nassi_diagram(root, module_name)
 
     out_path = _resolve_output_path(args.path, args.out)
     out_path.parent.mkdir(parents=True, exist_ok=True)
-    out_path.write_text(result.html, encoding="utf-8")
+    html = f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>NSD — {module_name}</title>
+<style>
+:root{{--bg:#0d1117;--tx:#e6edf3;--mono:"JetBrains Mono","Fira Code",monospace}}
+body{{background:var(--bg);color:var(--tx);font-family:var(--mono);padding:24px;margin:0}}
+</style>
+</head>
+<body>
+{svg}
+</body>
+</html>"""
+    out_path.write_text(html, encoding="utf-8")
 
     payload = {
-        "source_location": result.source_location,
-        "module_name": result.module_name,
-        "element_count": result.element_count,
-        "diagnostic_count": result.diagnostic_count,
-        "elapsed_ms": result.elapsed_ms,
+        "source_location": str(source_path),
+        "module_name": module_name,
+        "element_count": len(elements),
+        "diagnostic_count": len(outcome.diagnostics),
+        "elapsed_ms": 0,  # not measured here
         "output_path": str(out_path),
     }
     print(json.dumps(payload, indent=2))
