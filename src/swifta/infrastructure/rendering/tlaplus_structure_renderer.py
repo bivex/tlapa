@@ -50,6 +50,7 @@ C_CONST_VAR_STROKE = "#dcdcaa"
 C_PROOF = "#1a2a3a"
 C_PROOF_STROKE = "#569cd6"
 C_COMMENT = "#3b4660"
+C_BORDER_LIGHT = "#484f58"
 
 
 @dataclass
@@ -218,59 +219,108 @@ def _build_svg(module_name: str, elements: tuple[StructuralElement, ...]) -> str
             f"No structural elements</text></svg>"
         )
 
-    # --- Group elements into sections ---
+    # --- Group elements into TLA+ logical sections ---
     sections: list[tuple[str, list[StructuralElement]]] = []
     current_section = "header"
     current_items: list[StructuralElement] = []
 
+    def section_end():
+        if current_items:
+            sections.append((current_section, current_items))
+        return [], ""
+
     for elem in elements:
         k = str(elem.kind)
+        name_l = elem.name.lower() if elem.name else ""
+
         if k in ("module", "StructuralElementKind.MODULE"):
             if current_items:
                 sections.append((current_section, current_items))
             current_section = "module"
             current_items = [elem]
-        elif k in ("extends", "StructuralElementKind.EXTENDS"):
-            if current_section != "extends":
+        elif k in ("constant", "StructuralElementKind.CONSTANT"):
+            if current_section != "constant":
                 if current_items:
                     sections.append((current_section, current_items))
-                current_section = "extends"
+                current_section = "constant"
                 current_items = [elem]
             else:
                 current_items.append(elem)
-        elif k in (
-            "variable",
-            "constant",
-            "StructuralElementKind.VARIABLE",
-            "StructuralElementKind.CONSTANT",
-        ):
-            if current_section not in ("variable",):
+        elif k in ("variable", "StructuralElementKind.VARIABLE"):
+            if current_section != "variable":
                 if current_items:
                     sections.append((current_section, current_items))
                 current_section = "variable"
                 current_items = [elem]
             else:
                 current_items.append(elem)
-        elif k in (
-            "theorem",
-            "assumption",
-            "StructuralElementKind.THEOREM",
-            "StructuralElementKind.ASSUMPTION",
-        ):
-            if current_items:
-                sections.append((current_section, current_items))
-            current_section = "theorem"
-            current_items = [elem]
-        elif k in ("proof", "StructuralElementKind.PROOF"):
-            if current_items:
-                sections.append((current_section, current_items))
-            current_section = "proof"
-            current_items = [elem]
-        else:
-            if current_section != "definition":
+        elif k in ("operator_definition", "StructuralElementKind.OPERATOR_DEFINITION"):
+            # Classify operator into logical TLA+ categories
+            if any(tag in name_l for tag in ["init", "initial"]):
+                cat = "init"
+            elif any(tag in name_l for tag in ["next", "step", "do", "perform"]):
+                cat = "action"
+            elif any(tag in name_l for tag in ["inv", "typeinv", "invariant"]):
+                cat = "invariant"
+            elif any(
+                tag in name_l for tag in ["spec", "next", "[]", "fairness", "safety", "liveness"]
+            ):
+                cat = "spec"
+            else:
+                cat = "predicate"
+            if current_section != cat:
                 if current_items:
                     sections.append((current_section, current_items))
-                current_section = "definition"
+                current_section = cat
+                current_items = [elem]
+            else:
+                current_items.append(elem)
+        elif k in ("function_definition", "StructuralElementKind.FUNCTION_DEFINITION"):
+            if current_section != "function":
+                if current_items:
+                    sections.append((current_section, current_items))
+                current_section = "function"
+                current_items = [elem]
+            else:
+                current_items.append(elem)
+        elif k in ("theorem", "StructuralElementKind.THEOREM"):
+            if current_section != "theorem":
+                if current_items:
+                    sections.append((current_section, current_items))
+                current_section = "theorem"
+                current_items = [elem]
+            else:
+                current_items.append(elem)
+        elif k in ("assumption", "StructuralElementKind.ASSUMPTION"):
+            if current_section != "assumption":
+                if current_items:
+                    sections.append((current_section, current_items))
+                current_section = "assumption"
+                current_items = [elem]
+            else:
+                current_items.append(elem)
+        elif k in ("proof", "StructuralElementKind.PROOF"):
+            if current_section != "proof":
+                if current_items:
+                    sections.append((current_section, current_items))
+                current_section = "proof"
+                current_items = [elem]
+            else:
+                current_items.append(elem)
+        elif k in ("instance", "StructuralElementKind.INSTANCE"):
+            if current_section != "instance":
+                if current_items:
+                    sections.append((current_section, current_items))
+                current_section = "instance"
+                current_items = [elem]
+            else:
+                current_items.append(elem)
+        else:
+            # Unknown/other
+            if current_section != "other":
+                if current_items:
+                    sections.append((current_section, current_items))
+                current_section = "other"
                 current_items = [elem]
             else:
                 current_items.append(elem)
@@ -300,7 +350,23 @@ def _build_svg(module_name: str, elements: tuple[StructuralElement, ...]) -> str
         )
         return y + BLOCK_H + BLOCK_PAD
 
+    def _draw_section_header(y: int, title: str) -> int:
+        """Draw a section header with separator and title."""
+        y += 6
+        drawn_parts.append(
+            f'<line x1="{MARGIN_X}" y1="{y}" x2="{MARGIN_X + w}" y2="{y}" '
+            f'stroke="{C_BORDER_LIGHT}" stroke-width="1"/>'
+        )
+        y += 2
+        drawn_parts.append(
+            f'<text x="{MARGIN_X + 10}" y="{y + 9}" fill="{C_TEXT_DIM}" '
+            f'font-family={FONT} font-size="11" font-weight="600">{escape(title)}</text>'
+        )
+        y += 10
+        return y
+
     for section_type, items in sections:
+        # Section header styling
         if section_type == "module":
             name = items[0].name
             y_cursor = _draw_block(
@@ -316,6 +382,7 @@ def _build_svg(module_name: str, elements: tuple[StructuralElement, ...]) -> str
             y_cursor += 4
 
         elif section_type == "extends":
+            y_cursor = _draw_section_header(y_cursor, "EXTENDS")
             for ext in items:
                 y_cursor = _draw_block(
                     y_cursor,
@@ -327,84 +394,127 @@ def _build_svg(module_name: str, elements: tuple[StructuralElement, ...]) -> str
                 )
             y_cursor += 4
 
+        elif section_type == "constant":
+            y_cursor = _draw_section_header(y_cursor, "CONSTANTS")
+            for const in items:
+                label = const.signature or const.name
+                y_cursor = _draw_block(
+                    y_cursor, label, C_CONST_VAR, C_CONST_VAR_STROKE, C_TEXT_YELLOW, f"L{const.line}"
+                )
+            y_cursor += 4
+
         elif section_type == "variable":
+            y_cursor = _draw_section_header(y_cursor, "VARIABLES")
             for var in items:
-                k = str(var.kind)
                 label = var.signature or var.name
                 y_cursor = _draw_block(
                     y_cursor, label, C_CONST_VAR, C_CONST_VAR_STROKE, C_TEXT_YELLOW, f"L{var.line}"
                 )
             y_cursor += 4
 
-        elif section_type == "definition":
-            # Sort definitions: invariants first, then actions, lemmas/specs, then others alphabetically
-            def sort_key(defn):
-                n = defn.name.lower()
-                if "inv" in n or "typeinv" in n:
-                    return (0, n)
-                if "'" in (defn.signature or ""):
-                    return (1, n)
-                if any(kw in n for kw in ["lemma", "ax", "theorem", "spec"]):
-                    return (2, n)
-                return (3, n)
-
-            items_sorted = sorted(items, key=sort_key)
+        elif section_type == "init":
+            y_cursor = _draw_section_header(y_cursor, "INITIALIZATION")
+            items_sorted = sorted(items, key=lambda d: d.line)
             for defn in items_sorted:
-                k = str(defn.kind)
-                sig = defn.signature or defn.name
-                name = defn.name.lower()
-                # Determine icon and color by type
-                if "function" in k:
-                    icon = "f[ ]"
-                    fill = C_BLOCK
-                    stroke = C_TEXT_BLUE
-                elif "module" in k:
-                    icon = "DEF"
-                    fill = C_BLOCK
-                    stroke = C_TEXT_PURPLE
-                elif "recursive" in k:
-                    icon = "REC"
-                    fill = C_BLOCK
-                    stroke = C_TEXT_YELLOW
-                elif "instance" in k:
-                    icon = "INST"
-                    fill = C_BLOCK
-                    stroke = C_TEXT_YELLOW
-                else:
-                    # Classify operators: invariants, actions, lemmas/specs, predicates
-                    if any(keyword in name for keyword in ["inv", "typeinv"]):
-                        icon = "[I]"
-                        fill = C_BLOCK
-                        stroke = C_TEXT_GREEN
-                    elif "'" in sig:
-                        icon = "[A]"
-                        fill = C_BLOCK
-                        stroke = C_TEXT_YELLOW
-                    elif any(keyword in name for keyword in ["lemma", "ax", "theorem", "spec"]):
-                        icon = "[S]"
-                        fill = C_BLOCK
-                        stroke = C_TEXT_ORANGE
-                    else:
-                        icon = "[P]"
-                        fill = C_BLOCK
-                        stroke = C_BLOCK_STROKE
+                label = defn.signature or defn.name
+                y_cursor = _draw_block(
+                    y_cursor, label, C_BLOCK, C_TEXT_GREEN, C_TEXT, f"L{defn.line}"
+                )
+            y_cursor += 4
 
-                label = f"{icon}  {sig}"
-                y_cursor = _draw_block(y_cursor, label, fill, stroke, C_TEXT, f"L{defn.line}")
+        elif section_type == "action":
+            y_cursor = _draw_section_header(y_cursor, "ACTIONS")
+            items_sorted = sorted(items, key=lambda d: d.name.lower())
+            for defn in items_sorted:
+                label = defn.signature or defn.name
+                y_cursor = _draw_block(
+                    y_cursor, label, C_BLOCK, C_TEXT_YELLOW, C_TEXT, f"L{defn.line}"
+                )
+            y_cursor += 4
+
+        elif section_type == "predicate":
+            y_cursor = _draw_section_header(y_cursor, "PREDICATES")
+            items_sorted = sorted(items, key=lambda d: d.name.lower())
+            for defn in items_sorted:
+                label = defn.signature or defn.name
+                y_cursor = _draw_block(
+                    y_cursor, label, C_BLOCK, C_BLOCK_STROKE, C_TEXT, f"L{defn.line}"
+                )
+            y_cursor += 4
+
+        elif section_type == "invariant":
+            y_cursor = _draw_section_header(y_cursor, "INVARIANTS")
+            items_sorted = sorted(items, key=lambda d: d.name.lower())
+            for defn in items_sorted:
+                label = defn.signature or defn.name
+                y_cursor = _draw_block(
+                    y_cursor, label, C_BLOCK, C_TEXT_GREEN, C_TEXT, f"L{defn.line}"
+                )
+            y_cursor += 4
+
+        elif section_type == "spec":
+            y_cursor = _draw_section_header(y_cursor, "SPECIFICATION")
+            items_sorted = sorted(items, key=lambda d: d.name.lower())
+            for defn in items_sorted:
+                label = defn.signature or defn.name
+                y_cursor = _draw_block(
+                    y_cursor, label, C_BLOCK, C_TEXT_ORANGE, C_TEXT, f"L{defn.line}"
+                )
             y_cursor += 4
 
         elif section_type == "theorem":
-            for thm in items:
+            y_cursor = _draw_section_header(y_cursor, "THEOREMS")
+            items_sorted = sorted(items, key=lambda d: d.name.lower())
+            for thm in items_sorted:
                 label = thm.signature or thm.name
                 y_cursor = _draw_block(
                     y_cursor, label, C_THEOREM, C_THEOREM_STROKE, C_TEXT_RED, f"L{thm.line}", "bold"
                 )
             y_cursor += 4
 
+        elif section_type == "assumption":
+            y_cursor = _draw_section_header(y_cursor, "ASSUMPTIONS")
+            for assm in items:
+                label = assm.signature or assm.name or "ASSUME"
+                y_cursor = _draw_block(
+                    y_cursor, label, C_BLOCK, C_TEXT_PURPLE, C_TEXT, f"L{assm.line}"
+                )
+            y_cursor += 4
+
         elif section_type == "proof":
+            y_cursor = _draw_section_header(y_cursor, "PROOF")
             for prf in items:
                 y_cursor = _draw_block(
                     y_cursor, "PROOF", C_PROOF, C_PROOF_STROKE, C_TEXT_BLUE, f"L{prf.line}"
+                )
+            y_cursor += 4
+
+        elif section_type == "instance":
+            y_cursor = _draw_section_header(y_cursor, "INSTANCES")
+            for inst in items:
+                label = inst.signature or inst.name
+                y_cursor = _draw_block(
+                    y_cursor, label, C_BLOCK, C_TEXT_YELLOW, C_TEXT, f"L{inst.line}"
+                )
+            y_cursor += 4
+
+        elif section_type == "function":
+            y_cursor = _draw_section_header(y_cursor, "FUNCTIONS")
+            items_sorted = sorted(items, key=lambda d: d.name.lower())
+            for defn in items_sorted:
+                label = defn.signature or defn.name
+                y_cursor = _draw_block(
+                    y_cursor, label, C_BLOCK, C_TEXT_BLUE, C_TEXT, f"L{defn.line}"
+                )
+            y_cursor += 4
+
+        else:
+            # Other/unknown section
+            y_cursor = _draw_section_header(y_cursor, section_type.upper())
+            for item in items:
+                label = item.signature or item.name
+                y_cursor = _draw_block(
+                    y_cursor, label, C_BLOCK, C_BLOCK_STROKE, C_TEXT, f"L{item.line}"
                 )
             y_cursor += 4
 

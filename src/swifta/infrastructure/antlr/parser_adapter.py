@@ -156,11 +156,14 @@ def _build_structure_visitor(visitor_base: type) -> type:
             name = self._extract_def_name(ctx)
             if name is None or not self._is_definition_name_valid(name):
                 return None
+            # Preserve raw LHS text for better classification (e.g., primed variables indicate actions)
+            raw_lhs = self._raw_def_lhs(ctx)
+            signature = f"{raw_lhs} == ..." if raw_lhs else f"{name} == ..."
             self._append(
                 StructuralElementKind.OPERATOR_DEFINITION,
                 name,
                 ctx,
-                signature=f"{name} == ...",
+                signature=signature,
             )
             return None
 
@@ -288,6 +291,68 @@ def _build_structure_visitor(visitor_base: type) -> type:
                 token = token.rstrip("(").rstrip(")").strip()
                 if token and self._is_definition_name_valid(token):
                     return token
+            return None
+
+            """Return raw left-hand side text of definition (including any primes, operators)."""
+            # Try identLhs first
+            ident_lhs = def_ctx.identLhs()
+            if ident_lhs:
+                return ident_lhs.getText().strip()
+            # Check prefix/infix/postfix
+            for attr in ("prefixLhs", "infixLhs", "postfixLhs"):
+                lhs = getattr(def_ctx, attr)()
+                if lhs:
+                    text = lhs.getText().strip()
+                    if text:
+                        return text
+            # Fallback: parse raw text before '=='
+            raw = def_ctx.getText().strip()
+            if "==" in raw:
+                lhs = raw.split("==", 1)[0].strip()
+                if lhs.upper().startswith("LOCAL "):
+                    lhs = lhs[6:].strip()
+                return lhs
+            return ""
+
+        def _raw_def_lhs(self, def_ctx) -> str:
+            """Return raw left-hand side text of definition (including any primes, operators)."""
+            # Try identLhs first
+            ident_lhs = def_ctx.identLhs()
+            if ident_lhs:
+                return ident_lhs.getText().strip()
+            # Check prefix/infix/postfix
+            for attr in ("prefixLhs", "infixLhs", "postfixLhs"):
+                lhs = getattr(def_ctx, attr)()
+                if lhs:
+                    text = lhs.getText().strip()
+                    if text:
+                        return text
+            # Fallback: parse raw text before '=='
+            raw = def_ctx.getText().strip()
+            if "==" in raw:
+                lhs = raw.split("==", 1)[0].strip()
+                if lhs.upper().startswith("LOCAL "):
+                    lhs = lhs[6:].strip()
+                return lhs
+            return ""
+
+        def _extract_name_from_children(self, def_ctx) -> str | None:
+            """Try to extract name from identLhs, prefixLhs, infixLhs, postfixLhs."""
+            ident_lhs = def_ctx.identLhs()
+            if ident_lhs:
+                name = self._scan_ident_lhs(ident_lhs)
+                if name:
+                    return name
+            for attr in ("prefixLhs", "infixLhs", "postfixLhs"):
+                lhs = getattr(def_ctx, attr)()
+                if lhs:
+                    text = lhs.getText().strip()
+                    if text:
+                        token = text.split()[0] if text.split() else None
+                        if token:
+                            token = token.rstrip("(").rstrip(")").strip()
+                            if token:
+                                return token
             return None
 
         def _extract_name_from_children(self, def_ctx) -> str | None:
