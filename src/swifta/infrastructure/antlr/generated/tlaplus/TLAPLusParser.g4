@@ -645,7 +645,7 @@ primaryExpression
     | STRING_LITERAL                                                                   #StringExpression
     | NUMBER_LITERAL (DOT NUMBER_LITERAL)?                                             #NumberExpression
     | LBR expression RBR                                                               #ParenExpression
-    | LBC setBody RBC                                                                  #SetExpression
+    | LBC setBody? RBC                                                                 #SetExpression
     | LSB expression ARSB reducedExpression                                            #TemporalActionExpression
     | LSB functionBody2 RSB                                                            #StandaloneBracketExpr
     | LAB tupleBody (RAB | ARAB reducedExpression)                                     #TupleOrActionExpression
@@ -674,7 +674,6 @@ reducedExpression
 setBody
     : (identifierTuple | IDENTIFIER) IN expression COLON expression                    #SetSubsetOf
     | expression (COMMA expression)*                                                   #SetEnumerate
-    |                                                                                  #SetEmpty
     | expression COLON quantBound (COMMA quantBound)*                                  #SetOfAll
     ;
 
