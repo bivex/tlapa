@@ -14,13 +14,13 @@ class TLAPLusParserVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by TLAPLusParser#module.
-    def visitModule(self, ctx:TLAPLusParser.ModuleContext):
+    # Visit a parse tree produced by TLAPLusParser#firstModule.
+    def visitFirstModule(self, ctx:TLAPLusParser.FirstModuleContext):
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by TLAPLusParser#beginModule.
-    def visitBeginModule(self, ctx:TLAPLusParser.BeginModuleContext):
+    # Visit a parse tree produced by TLAPLusParser#module.
+    def visitModule(self, ctx:TLAPLusParser.ModuleContext):
         return self.visitChildren(ctx)
 
 
@@ -386,11 +386,6 @@ class TLAPLusParserVisitor(ParseTreeVisitor):
 
     # Visit a parse tree produced by TLAPLusParser#JunctionPassThrough.
     def visitJunctionPassThrough(self, ctx:TLAPLusParser.JunctionPassThroughContext):
-        return self.visitChildren(ctx)
-
-
-    # Visit a parse tree produced by TLAPLusParser#junctionItem.
-    def visitJunctionItem(self, ctx:TLAPLusParser.JunctionItemContext):
         return self.visitChildren(ctx)
 
 

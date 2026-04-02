@@ -27,16 +27,20 @@ class ParseStatus(StrEnum):
 
 
 class StructuralElementKind(StrEnum):
-    IMPORT = "import"
-    TYPE_ALIAS = "type_alias"
-    CONSTANT = "constant"
+    MODULE = "module"
+    EXTENDS = "extends"
     VARIABLE = "variable"
-    FUNCTION = "function"
-    ENUM = "enum"
-    STRUCT = "struct"
-    CLASS = "class"
-    PROTOCOL = "protocol"
-    EXTENSION = "extension"
+    CONSTANT = "constant"
+    OPERATOR_DEFINITION = "operator_definition"
+    FUNCTION_DEFINITION = "function_definition"
+    MODULE_DEFINITION = "module_definition"
+    RECURSIVE = "recursive"
+    INSTANCE = "instance"
+    ASSUMPTION = "assumption"
+    THEOREM = "theorem"
+    PROOF = "proof"
+    USE = "use"
+    HIDE = "hide"
 
 
 @dataclass(frozen=True, slots=True)
@@ -117,11 +121,7 @@ class ParseOutcome:
         structural_elements: tuple[StructuralElement, ...],
         statistics: ParseStatistics,
     ) -> "ParseOutcome":
-        status = (
-            ParseStatus.SUCCEEDED_WITH_DIAGNOSTICS
-            if diagnostics
-            else ParseStatus.SUCCEEDED
-        )
+        status = ParseStatus.SUCCEEDED_WITH_DIAGNOSTICS if diagnostics else ParseStatus.SUCCEEDED
         return ParseOutcome(
             source_unit_id=source_unit.identifier,
             source_location=source_unit.location,
@@ -207,7 +207,9 @@ class ParsingJob:
 
     @property
     def succeeded_count(self) -> int:
-        return sum(1 for outcome in self.outcomes.values() if outcome.status == ParseStatus.SUCCEEDED)
+        return sum(
+            1 for outcome in self.outcomes.values() if outcome.status == ParseStatus.SUCCEEDED
+        )
 
     @property
     def succeeded_with_diagnostics_count(self) -> int:
@@ -228,4 +230,3 @@ class ParsingJob:
     @property
     def ordered_outcomes(self) -> tuple[ParseOutcome, ...]:
         return tuple(self.outcomes[source_unit.identifier] for source_unit in self.source_units)
-

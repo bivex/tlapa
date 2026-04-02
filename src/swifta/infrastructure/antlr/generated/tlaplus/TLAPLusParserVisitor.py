@@ -14,13 +14,13 @@ class TLAPLusParserVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by TLAPLusParser#module.
-    def visitModule(self, ctx:TLAPLusParser.ModuleContext):
+    # Visit a parse tree produced by TLAPLusParser#firstModule.
+    def visitFirstModule(self, ctx:TLAPLusParser.FirstModuleContext):
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by TLAPLusParser#beginModule.
-    def visitBeginModule(self, ctx:TLAPLusParser.BeginModuleContext):
+    # Visit a parse tree produced by TLAPLusParser#module.
+    def visitModule(self, ctx:TLAPLusParser.ModuleContext):
         return self.visitChildren(ctx)
 
 

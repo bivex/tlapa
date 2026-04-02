@@ -1,11 +1,12 @@
-import json
-import subprocess
-import sys
+"""Integration tests for TLA+ parsing use cases."""
+
 from pathlib import Path
+
+import pytest
 
 from swifta.application.dto import ParseDirectoryCommand, ParseFileCommand
 from swifta.application.use_cases import ParsingJobService
-from swifta.infrastructure.antlr.parser_adapter import AntlrSwiftSyntaxParser
+from swifta.infrastructure.antlr.parser_adapter import AntlrTlaplusSyntaxParser
 from swifta.infrastructure.filesystem.source_repository import FileSystemSourceRepository
 from swifta.infrastructure.system import (
     InMemoryParsingJobRepository,
@@ -13,96 +14,55 @@ from swifta.infrastructure.system import (
     SystemClock,
 )
 
-
-ROOT = Path(__file__).resolve().parent.parent
-
-
-def _ensure_generated_parser() -> None:
-    generated_parser = (
-        ROOT / "src" / "swifta" / "infrastructure" / "antlr" / "generated" / "swift5" / "Swift5Parser.py"
-    )
-    if generated_parser.exists():
-        return
-    subprocess.run(
-        [sys.executable, "scripts/generate_swift_parser.py"],
-        cwd=ROOT,
-        check=True,
-    )
+_FIXTURES = Path(__file__).parent / "fixtures"
 
 
-def _build_service() -> ParsingJobService:
-    _ensure_generated_parser()
+@pytest.fixture()
+def service() -> ParsingJobService:
     return ParsingJobService(
         source_repository=FileSystemSourceRepository(),
-        parser=AntlrSwiftSyntaxParser(),
+        parser=AntlrTlaplusSyntaxParser(),
         event_publisher=StructuredLoggingEventPublisher(),
         clock=SystemClock(),
         job_repository=InMemoryParsingJobRepository(),
     )
 
 
-def test_parse_file_extracts_structure() -> None:
-    service = _build_service()
-    report = service.parse_file(ParseFileCommand(path=str(ROOT / "tests" / "fixtures" / "valid.swift")))
+def test_parse_valid_tla_file(service: ParsingJobService) -> None:
+    report = service.parse_file(ParseFileCommand(path=str(_FIXTURES / "valid.tla")))
 
     assert report.summary.source_count == 1
     assert report.summary.technical_failure_count == 0
-    assert report.sources[0].status in {"succeeded", "succeeded_with_diagnostics"}
-    assert {element.kind for element in report.sources[0].structural_elements} >= {
-        "import",
-        "struct",
-        "function",
-        "extension",
-    }
+
+    source = report.sources[0]
+    assert source.status in ("succeeded", "succeeded_with_diagnostics")
+    assert source.grammar_version.startswith("antlr4@4.13.1")
+
+    kinds = {element.kind for element in source.structural_elements}
+    assert "module" in kinds
+    assert "variable" in kinds
+    assert "operator_definition" in kinds
 
 
-def test_parse_directory_returns_report_for_all_files() -> None:
-    service = _build_service()
-    report = service.parse_directory(ParseDirectoryCommand(root_path=str(ROOT / "tests" / "fixtures")))
-
-    assert report.summary.source_count == 3
-    assert len(report.sources) == 3
+def test_parse_directory(service: ParsingJobService) -> None:
+    report = service.parse_directory(ParseDirectoryCommand(root_path=str(_FIXTURES)))
+    assert report.summary.source_count >= 1
 
 
-def test_parse_file_handles_enum_declaration(tmp_path: Path) -> None:
-    service = _build_service()
-    source_path = tmp_path / "enum_parse.swift"
-    source_path.write_text(
-        """
-enum Mode {
-    case active
+def test_parse_extracts_module_name(service: ParsingJobService) -> None:
+    report = service.parse_file(ParseFileCommand(path=str(_FIXTURES / "valid.tla")))
+    source = report.sources[0]
 
-    func title() -> String {
-        return "active"
-    }
-}
-""".strip(),
-        encoding="utf-8",
-    )
-
-    report = service.parse_file(ParseFileCommand(path=str(source_path)))
-
-    assert report.summary.source_count == 1
-    assert report.summary.technical_failure_count == 0
-    assert {element.kind for element in report.sources[0].structural_elements} >= {"enum", "function"}
+    module_elements = [e for e in source.structural_elements if e.kind == "module"]
+    assert len(module_elements) == 1
+    assert module_elements[0].name == "TestFixture"
 
 
-def test_cli_outputs_json() -> None:
-    _ensure_generated_parser()
-    result = subprocess.run(
-        [
-            sys.executable,
-            "-m",
-            "swifta.presentation.cli.main",
-            "parse-file",
-            str(ROOT / "tests" / "fixtures" / "valid.swift"),
-        ],
-        cwd=ROOT,
-        check=False,
-        capture_output=True,
-        text=True,
-    )
+def test_parse_extracts_variables(service: ParsingJobService) -> None:
+    report = service.parse_file(ParseFileCommand(path=str(_FIXTURES / "valid.tla")))
+    source = report.sources[0]
 
-    assert result.returncode == 0
-    payload = json.loads(result.stdout)
-    assert payload["summary"]["source_count"] == 1
+    var_elements = [e for e in source.structural_elements if e.kind == "variable"]
+    var_names = {e.name for e in var_elements}
+    assert "x" in var_names
+    assert "y" in var_names

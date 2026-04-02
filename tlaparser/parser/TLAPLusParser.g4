@@ -24,15 +24,15 @@ options { tokenVocab=TLAPLusLexer; }
 // ============================================================================
 
 unit
-    : module+ EOF
+    : firstModule module* EOF
+    ;
+
+firstModule
+    : IDENTIFIER SEPARATOR extends? moduleBody endModule
     ;
 
 module
-    : beginModule extends? moduleBody endModule
-    ;
-
-beginModule
-    : IDENTIFIER SEPARATOR
+    : SEPARATOR IDENTIFIER SEPARATOR extends? moduleBody endModule
     ;
 
 endModule
@@ -51,7 +51,6 @@ moduleBody
         | instance
         | assumption
         | theorem
-        | module
         | useOrHide
         | proof
       )*
@@ -531,13 +530,9 @@ andExpr
 
 // Bulleted junctions (/\, \/ at start of line)
 junctionExpr
-    : AND junctionItem+                                                             #ConjunctionList
-    | OR junctionItem+                                                              #DisjunctionList
-    | equalityExpr                                                                  #JunctionPassThrough
-    ;
-
-junctionItem
-    : (AND | OR) expression
+    : AND expression (AND expression)*                                                   #ConjunctionList
+    | OR expression (OR expression)*                                                    #DisjunctionList
+    | equalityExpr                                                                      #JunctionPassThrough
     ;
 
 // Precedence level 5: Equality-like

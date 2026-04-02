@@ -1,4 +1,4 @@
-"""ANTLR-backed Swift parser adapter."""
+"""ANTLR-backed TLA+ parser adapter."""
 
 from __future__ import annotations
 
@@ -12,7 +12,7 @@ from swifta.domain.model import (
     StructuralElement,
     StructuralElementKind,
 )
-from swifta.domain.ports import SwiftSyntaxParser
+from swifta.domain.ports import TlaplusSyntaxParser
 from swifta.infrastructure.antlr.runtime import (
     ANTLR_GRAMMAR_VERSION,
     load_generated_types,
@@ -20,7 +20,7 @@ from swifta.infrastructure.antlr.runtime import (
 )
 
 
-class AntlrSwiftSyntaxParser(SwiftSyntaxParser):
+class AntlrTlaplusSyntaxParser(TlaplusSyntaxParser):
     def __init__(self) -> None:
         self._generated = load_generated_types()
 
@@ -32,10 +32,10 @@ class AntlrSwiftSyntaxParser(SwiftSyntaxParser):
         started_at = perf_counter()
         try:
             parse_result = parse_source_text(source_unit.content, self._generated)
-            structure_visitor = _build_structure_visitor(self._generated.visitor_type)()
-            structure_visitor.visit(parse_result.tree)
+            visitor = _build_structure_visitor(self._generated.visitor_type)()
+            visitor.visit(parse_result.tree)
 
-            elements = tuple(structure_visitor.elements)
+            elements = tuple(visitor.elements)
             elapsed_ms = round((perf_counter() - started_at) * 1000, 3)
 
             return ParseOutcome.success(
@@ -61,168 +61,215 @@ class AntlrSwiftSyntaxParser(SwiftSyntaxParser):
 
 
 def _build_structure_visitor(visitor_base: type) -> type:
-    class SwiftStructureVisitor(visitor_base):
+    """Build a visitor that walks the TLA+ parse tree and extracts structural elements."""
+
+    class TlaplusStructureVisitor(visitor_base):
         def __init__(self) -> None:
             super().__init__()
             self.elements: list[StructuralElement] = []
-            self._containers: list[str] = []
+            self._module_name: str | None = None
 
-        def visitImport_declaration(self, ctx):
-            import_path = ctx.import_path().getText()
-            self._append(
-                StructuralElementKind.IMPORT,
-                import_path,
-                ctx,
-                signature=f"import {import_path}",
-            )
+        # -- Module-level constructs --
+
+        def visitFirstModule(self, ctx):
+            # Extract module name (first IDENTIFIER after SEPARATOR)
+            if ctx.IDENTIFIER():
+                self._module_name = ctx.IDENTIFIER().getText()
+                self._append(StructuralElementKind.MODULE, self._module_name, ctx)
+            # Visit body children explicitly
+            body = ctx.moduleBody()
+            if body:
+                for child in body.getChildren():
+                    self.visit(child)
             return None
 
-        def visitTypealias_declaration(self, ctx):
-            name = ctx.typealias_name().getText()
-            self._append(
-                StructuralElementKind.TYPE_ALIAS,
-                name,
-                ctx,
-                signature=f"typealias {name}",
-            )
+        def visitModule(self, ctx):
+            # Subsequent modules (SEPARATOR IDENTIFIER SEPARATOR ...)
+            if ctx.IDENTIFIER():
+                self._module_name = ctx.IDENTIFIER().getText()
+                self._append(StructuralElementKind.MODULE, self._module_name, ctx)
+            body = ctx.moduleBody()
+            if body:
+                for child in body.getChildren():
+                    self.visit(child)
             return None
 
-        def visitConstant_declaration(self, ctx):
-            for name in self._extract_pattern_names(ctx.pattern_initializer_list()):
+        def visitExtends(self, ctx):
+            names = [ident.getText() for ident in ctx.IDENTIFIER()]
+            for name in names:
+                self._append(StructuralElementKind.EXTENDS, name, ctx)
+            return None
+
+        # -- Declarations --
+
+        def visitVariableDeclaration(self, ctx):
+            for ident in ctx.IDENTIFIER():
+                self._append(
+                    StructuralElementKind.VARIABLE,
+                    ident.getText(),
+                    ctx,
+                    signature=f"VARIABLE {ident.getText()}",
+                )
+            return None
+
+        def visitParameterDeclaration(self, ctx):
+            for item in ctx.constantDeclItem():
+                name = self._extract_decl_name(item)
                 self._append(
                     StructuralElementKind.CONSTANT,
                     name,
                     ctx,
-                    signature=f"let {name}",
+                    signature=f"CONSTANT {name}",
                 )
             return None
 
-        def visitVariable_declaration(self, ctx):
-            if ctx.variable_name() is not None:
-                variable_name = ctx.variable_name().getText()
+        def visitRecursiveDeclaration(self, ctx):
+            for item in ctx.constantDeclItem():
+                name = self._extract_decl_name(item)
                 self._append(
-                    StructuralElementKind.VARIABLE,
-                    variable_name,
-                    ctx,
-                    signature=f"var {variable_name}",
-                )
-                return None
-
-            for name in self._extract_pattern_names(ctx.pattern_initializer_list()):
-                self._append(
-                    StructuralElementKind.VARIABLE,
+                    StructuralElementKind.RECURSIVE,
                     name,
                     ctx,
-                    signature=f"var {name}",
+                    signature=f"RECURSIVE {name}",
                 )
             return None
 
-        def visitFunction_declaration(self, ctx):
-            name = ctx.function_name().getText()
-            signature = ctx.function_signature().getText()
+        # -- Definitions --
+
+        def visitOperatorDefinition(self, ctx):
+            name = self._extract_def_name(ctx)
             self._append(
-                StructuralElementKind.FUNCTION,
+                StructuralElementKind.OPERATOR_DEFINITION,
                 name,
                 ctx,
-                signature=f"func {name}{signature}",
+                signature=f"{name} == ...",
             )
             return None
 
-        def visitEnum_declaration(self, ctx):
-            name = self._extract_enum_name(ctx)
-            self._append(StructuralElementKind.ENUM, name, ctx, signature=f"enum {name}")
-            return self._with_container(name, lambda: self.visitChildren(ctx))
-
-        def visitStruct_declaration(self, ctx):
-            name = ctx.struct_name().getText()
-            self._append(StructuralElementKind.STRUCT, name, ctx, signature=f"struct {name}")
-            return self._with_container(name, lambda: self.visitChildren(ctx))
-
-        def visitClass_declaration(self, ctx):
-            name = ctx.class_name().getText()
-            self._append(StructuralElementKind.CLASS, name, ctx, signature=f"class {name}")
-            return self._with_container(name, lambda: self.visitChildren(ctx))
-
-        def visitProtocol_declaration(self, ctx):
-            name = ctx.protocol_name().getText()
+        def visitFunctionDefinition(self, ctx):
+            name = self._extract_func_def_name(ctx)
             self._append(
-                StructuralElementKind.PROTOCOL,
+                StructuralElementKind.FUNCTION_DEFINITION,
                 name,
                 ctx,
-                signature=f"protocol {name}",
+                signature=f"{name}[...] == ...",
             )
-            return self._with_container(name, lambda: self.visitChildren(ctx))
+            return None
 
-        def visitExtension_declaration(self, ctx):
-            name = ctx.type_identifier().getText()
+        def visitModuleDefinition(self, ctx):
+            ident = ctx.IDENTIFIER()
+            name = ident.getText() if ident else "module_def"
             self._append(
-                StructuralElementKind.EXTENSION,
+                StructuralElementKind.MODULE_DEFINITION,
                 name,
                 ctx,
-                signature=f"extension {name}",
+                signature=f"{name} == ...",
             )
-            return self._with_container(name, lambda: self.visitChildren(ctx))
+            return None
+
+        # -- Instance --
+
+        def visitInstance(self, ctx):
+            inst = ctx.instantiation()
+            if inst:
+                module_ref = inst.IDENTIFIER().getText() if inst.IDENTIFIER() else "?"
+                self._append(
+                    StructuralElementKind.INSTANCE,
+                    module_ref,
+                    ctx,
+                    signature=f"INSTANCE {module_ref}",
+                )
+            return None
+
+        # -- Assumptions and Theorems --
+
+        def visitAssumption(self, ctx):
+            name = None
+            if ctx.IDENTIFIER():
+                name = ctx.IDENTIFIER().getText()
+            self._append(
+                StructuralElementKind.ASSUMPTION,
+                name or "ASSUME",
+                ctx,
+            )
+            return None
+
+        def visitTheorem(self, ctx):
+            name = None
+            if ctx.IDENTIFIER():
+                name = ctx.IDENTIFIER().getText()
+            self._append(
+                StructuralElementKind.THEOREM,
+                name or "THEOREM",
+                ctx,
+                signature=f"THEOREM {name}" if name else "THEOREM",
+            )
+            return self.visitChildren(ctx)
+
+        def visitProof(self, ctx):
+            self._append(
+                StructuralElementKind.PROOF,
+                "PROOF",
+                ctx,
+            )
+            return self.visitChildren(ctx)
+
+        def visitUseOrHide(self, ctx):
+            kind = StructuralElementKind.USE if ctx.USE_KW() else StructuralElementKind.HIDE
+            self._append(kind, ctx.getText()[:40], ctx)
+            return None
+
+        # -- Helpers --
 
         def _append(self, kind, name: str, ctx, signature: str | None = None) -> None:
-            container = ".".join(self._containers) if self._containers else None
+            container = self._module_name
+            line = ctx.start.line if hasattr(ctx, "start") and ctx.start else 0
+            column = ctx.start.column if hasattr(ctx, "start") and ctx.start else 0
             self.elements.append(
                 StructuralElement(
                     kind=kind,
                     name=name,
-                    line=ctx.start.line,
-                    column=ctx.start.column,
+                    line=line,
+                    column=column,
                     container=container,
                     signature=signature,
                 )
             )
 
-        def _with_container(self, name: str, callback):
-            self._containers.append(name)
-            try:
-                return callback()
-            finally:
-                self._containers.pop()
+        def _extract_decl_name(self, item_ctx) -> str:
+            if item_ctx.IDENTIFIER():
+                return item_ctx.IDENTIFIER().getText()
+            if item_ctx.prefixDecl():
+                return item_ctx.prefixDecl().getText()
+            if item_ctx.infixDecl():
+                return item_ctx.infixDecl().getText()
+            if item_ctx.postfixDecl():
+                return item_ctx.postfixDecl().getText()
+            return "?"
 
-        def _extract_enum_name(self, enum_ctx) -> str:
-            if enum_ctx.union_style_enum() is not None:
-                return enum_ctx.union_style_enum().enum_name().getText()
-            if enum_ctx.raw_value_style_enum() is not None:
-                return enum_ctx.raw_value_style_enum().enum_name().getText()
-            return "enum"
+        def _extract_def_name(self, def_ctx) -> str:
+            ident_lhs = def_ctx.identLhs()
+            if ident_lhs and ident_lhs.IDENTIFIER():
+                return ident_lhs.IDENTIFIER().getText()
+            prefix_lhs = def_ctx.prefixLhs()
+            if prefix_lhs:
+                return prefix_lhs.getText()
+            infix_lhs = def_ctx.infixLhs()
+            if infix_lhs:
+                return infix_lhs.getText()
+            postfix_lhs = def_ctx.postfixLhs()
+            if postfix_lhs:
+                return postfix_lhs.getText()
+            return "?"
 
-        def _extract_pattern_names(self, pattern_initializer_list_ctx) -> tuple[str, ...]:
-            names: list[str] = []
-            for pattern_initializer_ctx in pattern_initializer_list_ctx.pattern_initializer():
-                names.extend(self._extract_names_from_pattern(pattern_initializer_ctx.pattern()))
-            return tuple(names)
+        def _extract_func_def_name(self, func_ctx) -> str:
+            if func_ctx.IDENTIFIER():
+                return func_ctx.IDENTIFIER().getText()
+            id_tuple = func_ctx.identifierTuple()
+            if id_tuple and id_tuple.IDENTIFIER():
+                idents = id_tuple.IDENTIFIER()
+                if idents:
+                    return idents[0].getText()
+            return "?"
 
-        def _extract_names_from_pattern(self, pattern_ctx) -> list[str]:
-            if pattern_ctx is None:
-                return []
-
-            names: list[str] = []
-            identifier_pattern_ctx = getattr(pattern_ctx, "identifier_pattern", None)
-            if callable(identifier_pattern_ctx):
-                identifier = pattern_ctx.identifier_pattern()
-                if identifier is not None:
-                    names.append(identifier.getText())
-
-            tuple_pattern_ctx = getattr(pattern_ctx, "tuple_pattern", None)
-            if callable(tuple_pattern_ctx):
-                tuple_pattern = pattern_ctx.tuple_pattern()
-                if tuple_pattern is not None and tuple_pattern.tuple_pattern_element_list() is not None:
-                    for element in tuple_pattern.tuple_pattern_element_list().tuple_pattern_element():
-                        names.extend(self._extract_names_from_pattern(element.pattern()))
-
-            nested_pattern_accessor = getattr(pattern_ctx, "pattern", None)
-            if callable(nested_pattern_accessor):
-                nested_pattern = pattern_ctx.pattern()
-                if nested_pattern is not None and nested_pattern is not pattern_ctx:
-                    names.extend(self._extract_names_from_pattern(nested_pattern))
-
-            if not names:
-                names.append(pattern_ctx.getText())
-
-            return names
-
-    return SwiftStructureVisitor
+    return TlaplusStructureVisitor

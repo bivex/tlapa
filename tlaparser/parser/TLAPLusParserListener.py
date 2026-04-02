@@ -17,21 +17,21 @@ class TLAPLusParserListener(ParseTreeListener):
         pass
 
 
+    # Enter a parse tree produced by TLAPLusParser#firstModule.
+    def enterFirstModule(self, ctx:TLAPLusParser.FirstModuleContext):
+        pass
+
+    # Exit a parse tree produced by TLAPLusParser#firstModule.
+    def exitFirstModule(self, ctx:TLAPLusParser.FirstModuleContext):
+        pass
+
+
     # Enter a parse tree produced by TLAPLusParser#module.
     def enterModule(self, ctx:TLAPLusParser.ModuleContext):
         pass
 
     # Exit a parse tree produced by TLAPLusParser#module.
     def exitModule(self, ctx:TLAPLusParser.ModuleContext):
-        pass
-
-
-    # Enter a parse tree produced by TLAPLusParser#beginModule.
-    def enterBeginModule(self, ctx:TLAPLusParser.BeginModuleContext):
-        pass
-
-    # Exit a parse tree produced by TLAPLusParser#beginModule.
-    def exitBeginModule(self, ctx:TLAPLusParser.BeginModuleContext):
         pass
 
 
@@ -689,15 +689,6 @@ class TLAPLusParserListener(ParseTreeListener):
 
     # Exit a parse tree produced by TLAPLusParser#JunctionPassThrough.
     def exitJunctionPassThrough(self, ctx:TLAPLusParser.JunctionPassThroughContext):
-        pass
-
-
-    # Enter a parse tree produced by TLAPLusParser#junctionItem.
-    def enterJunctionItem(self, ctx:TLAPLusParser.JunctionItemContext):
-        pass
-
-    # Exit a parse tree produced by TLAPLusParser#junctionItem.
-    def exitJunctionItem(self, ctx:TLAPLusParser.JunctionItemContext):
         pass
 
 
