@@ -67,7 +67,14 @@ def _build_structure_visitor(visitor_base: type) -> type:
         def __init__(self) -> None:
             super().__init__()
             self.elements: list[StructuralElement] = []
+            self._contexts: list[tuple[StructuralElement, object]] = []
             self._module_name: str | None = None
+
+        def get_context(self, element: StructuralElement) -> object | None:
+            for e, ctx in self._contexts:
+                if e is element:
+                    return ctx
+            return None
 
         # -- Module-level constructs --
 
