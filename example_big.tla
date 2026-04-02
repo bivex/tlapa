@@ -27,15 +27,8 @@ NotE == ~(e = 0)
 Imp1 == a = 0 => b = 0
 Iff1 == (a = b) <=> (c = d)
 
-State1 ==
-  /\ a' = a + 1
-  /\ b' = b + 1
-  /\ UNCHANGED <<c, d, e>>
-
-State2 ==
-  /\ c' = c + 1
-  /\ d' = d + 1
-  /\ UNCHANGED <<a, b, e>>
+State1 == a' = a + 1
+State2 == c' = c + 1
 
 Combined == State1 \/ State2
 

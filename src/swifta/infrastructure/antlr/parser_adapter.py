@@ -154,7 +154,7 @@ def _build_structure_visitor(visitor_base: type) -> type:
 
         def visitOperatorDefinition(self, ctx):
             name = self._extract_def_name(ctx)
-            if name is None or not self._is_valid_def_name(name, kind="operator"):
+            if name is None or not self._is_definition_name_valid(name):
                 return None
             self._append(
                 StructuralElementKind.OPERATOR_DEFINITION,
@@ -166,7 +166,7 @@ def _build_structure_visitor(visitor_base: type) -> type:
 
         def visitFunctionDefinition(self, ctx):
             name = self._extract_func_def_name(ctx)
-            if name is None or not self._is_valid_def_name(name, kind="function"):
+            if name is None or not self._is_definition_name_valid(name):
                 return None
             self._append(
                 StructuralElementKind.FUNCTION_DEFINITION,
@@ -181,7 +181,7 @@ def _build_structure_visitor(visitor_base: type) -> type:
             # with module definitions. Skip to reduce noise in structure diagrams.
             return None
 
-        def _is_valid_def_name(self, name: str, kind: str) -> bool:
+        def _is_definition_name_valid(self, name: str) -> bool:
             """Validate definition names to filter out parse artifacts."""
             if not name or " " in name:
                 return False
@@ -273,43 +273,69 @@ def _build_structure_visitor(visitor_base: type) -> type:
             return "?"
 
         def _extract_def_name(self, def_ctx) -> str | None:
-            # Try to get identifier from identLhs first
+            """Extract operator/function name from definition context, handling TLA+ operator symbols."""
+            # Primary extraction from parse tree children
+            name = self._extract_name_from_children(def_ctx)
+            if name and self._is_definition_name_valid(name):
+                return name
+            # Fallback: parse raw text before '=='
+            raw = def_ctx.getText().strip()
+            if "==" in raw:
+                lhs = raw.split("==", 1)[0].strip()
+                if lhs.upper().startswith("LOCAL "):
+                    lhs = lhs[6:].strip()
+                token = lhs.split()[0] if lhs.split() else ""
+                token = token.rstrip("(").rstrip(")").strip()
+                if token and self._is_definition_name_valid(token):
+                    return token
+            return None
+
+        def _extract_name_from_children(self, def_ctx) -> str | None:
+            """Try to extract name from identLhs, prefixLhs, infixLhs, postfixLhs."""
             ident_lhs = def_ctx.identLhs()
             if ident_lhs:
-                ident = ident_lhs.IDENTIFIER()
-                if ident:
-                    return ident.getText()
-                # Fallback: get text from identLhs and take first identifier-like token
-                text = ident_lhs.getText().strip()
-                # Take first token (identifier or operator name) before any whitespace or '('
-                first_token = text.split()[0] if text.split() else None
-                if first_token:
-                    # Remove any trailing '(' or backslash
-                    return first_token.rstrip("(").rstrip("\\")
-                return None
-            # Check prefix/infix/postfix forms (less common)
-            prefix_lhs = def_ctx.prefixLhs()
-            if prefix_lhs:
-                text = prefix_lhs.getText().strip()
-                token = text.split()[0] if text.split() else None
-                if token:
-                    return token.rstrip("(").rstrip("\\")
-                return None
-            infix_lhs = def_ctx.infixLhs()
-            if infix_lhs:
-                text = infix_lhs.getText().strip()
-                token = text.split()[0] if text.split() else None
-                if token:
-                    return token.rstrip("(").rstrip("\\")
-                return None
-            postfix_lhs = def_ctx.postfixLhs()
-            if postfix_lhs:
-                text = postfix_lhs.getText().strip()
-                token = text.split()[0] if text.split() else None
-                if token:
-                    return token.rstrip("(").rstrip("\\")
-                return None
+                name = self._scan_ident_lhs(ident_lhs)
+                if name:
+                    return name
+            for attr in ("prefixLhs", "infixLhs", "postfixLhs"):
+                lhs = getattr(def_ctx, attr)()
+                if lhs:
+                    text = lhs.getText().strip()
+                    if text:
+                        token = text.split()[0] if text.split() else None
+                        if token:
+                            token = token.rstrip("(").rstrip(")").strip()
+                            if token:
+                                return token
             return None
+
+        def _scan_ident_lhs(self, ident_lhs) -> str | None:
+            """Scan identLhs children to find the operator token."""
+            # identLhs can be: IDENTIFIER | prefixOp | infixOp | postfixOp
+            # Look for any child that returns meaningful text
+            for child in ident_lhs.getChildren():
+                txt = child.getText().strip()
+                if txt and not txt.isspace():
+                    # Remove trailing parens if present
+                    name = txt.rstrip("(").rstrip(")").strip()
+                    if name:
+                        return name
+            return None
+
+        def _extract_name_from_text(self, text: str) -> str | None:
+            """Extract name from raw text, handling TLA+ operator syntax."""
+            if not text:
+                return None
+            # Split on whitespace and take first token
+            tokens = text.split()
+            if not tokens:
+                return None
+            first = tokens[0]
+            # Remove trailing '=' or '(' if present
+            first = first.rstrip("=").rstrip("(").strip()
+            if not first:
+                return None
+            return first
 
         def _extract_func_def_name(self, func_ctx) -> str:
             if func_ctx.IDENTIFIER():
