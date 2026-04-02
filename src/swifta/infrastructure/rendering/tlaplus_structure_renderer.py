@@ -1,4 +1,4 @@
-"""Render TLA+ module structure as Nassi-Shneiderman-style HTML."""
+"""Render TLA+ module structure as actual Nassi-Shneiderman diagrams (SVG)."""
 
 from __future__ import annotations
 
@@ -10,41 +10,49 @@ from time import perf_counter
 from swifta.domain.model import StructuralElement, SyntaxDiagnostic
 from swifta.infrastructure.antlr.runtime import load_generated_types, parse_source_text
 
+# ---------------------------------------------------------------------------
+# Layout constants
+# ---------------------------------------------------------------------------
+BLOCK_H = 34
+BLOCK_PAD = 2
+MARGIN_X = 20
+MARGIN_Y = 8
+DIAGRAM_W = 640
+FONT = '"JetBrains Mono", "Fira Code", monospace'
+FONT_SIZE = 12
 
-_KIND_COLORS = {
-    "module": ("blue", "#1676dc", "#0b57ae"),
-    "extends": ("green", "#2d9d4a", "#1e7a36"),
-    "variable": ("purple", "#9b59b6", "#7d3c98"),
-    "constant": ("purple", "#9b59b6", "#7d3c98"),
-    "operator_definition": ("teal", "#1abc9c", "#148f77"),
-    "function_definition": ("teal", "#1abc9c", "#148f77"),
-    "module_definition": ("teal", "#1abc9c", "#148f77"),
-    "recursive": ("amber", "#f39c12", "#d68910"),
-    "instance": ("amber", "#f39c12", "#d68910"),
-    "assumption": ("red", "#e74c3c", "#c0392b"),
-    "theorem": ("red", "#e74c3c", "#c0392b"),
-    "proof": ("blue", "#3498db", "#2980b9"),
-    "use": ("green", "#27ae60", "#1e8449"),
-    "hide": ("green", "#27ae60", "#1e8449"),
-}
-
-_KIND_ICONS = {
-    "module": "M",
-    "extends": "E",
-    "variable": "x",
-    "constant": "C",
-    "operator_definition": "=",
-    "function_definition": "f",
-    "module_definition": "D",
-    "recursive": "R",
-    "instance": "I",
-    "assumption": "A",
-    "theorem": "T",
-    "proof": "P",
-}
+# Palette (Tokyo Night)
+C_BG = "#0d1117"
+C_BLOCK = "#1e2533"
+C_BLOCK_STROKE = "#3b4660"
+C_IF = "#1a2740"
+C_IF_STROKE = "#569cd6"
+C_LOOP = "#1a3028"
+C_LOOP_STROKE = "#4ec990"
+C_CASE = "#2a1a3a"
+C_CASE_STROKE = "#c586c0"
+C_MODULE = "#0f2847"
+C_MODULE_STROKE = "#569cd6"
+C_TEXT = "#d4d4d4"
+C_TEXT_DIM = "#808080"
+C_TEXT_BLUE = "#569cd6"
+C_TEXT_GREEN = "#4ec990"
+C_TEXT_PURPLE = "#c586c0"
+C_TEXT_YELLOW = "#dcdcaa"
+C_TEXT_ORANGE = "#ce9178"
+C_TEXT_RED = "#f44747"
+C_THEOREM = "#3a1a1a"
+C_THEOREM_STROKE = "#f44747"
+C_EXTENDS = "#1a3a2a"
+C_EXTENDS_STROKE = "#4ec990"
+C_CONST_VAR = "#2a2a1a"
+C_CONST_VAR_STROKE = "#dcdcaa"
+C_PROOF = "#1a2a3a"
+C_PROOF_STROKE = "#569cd6"
+C_COMMENT = "#3b4660"
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass
 class DiagramResult:
     source_location: str
     module_name: str
@@ -53,64 +61,10 @@ class DiagramResult:
     elapsed_ms: float
     token_count: int
     html: str
-    elements: tuple[StructuralElement, ...]
-    diagnostics: tuple[SyntaxDiagnostic, ...]
 
 
-def _depth_badge(i: int) -> str:
-    if i <= 0:
-        return ""
-    if i <= 20:
-        return f" {chr(0x2460 + i - 1)}"
-    if i <= 35:
-        return f" {chr(0x3251 + i - 21)}"
-    return f" {chr(0x32B1 + i - 36)}"
-
-
-def _render_element_block(element: StructuralElement, depth: int) -> str:
-    kind = str(element.kind) if hasattr(element.kind, "value") else element.kind
-    palette = _KIND_COLORS.get(kind, ("gray", "#7f8c8d", "#616a6b"))
-    _color_name, bg, border = palette
-    icon = _KIND_ICONS.get(kind, "-")
-    badge = _depth_badge(depth)
-    sig = escape(element.signature) if element.signature else ""
-    name = escape(element.name)
-
-    label_parts = []
-    label_parts.append(f'<span class="icon">{icon}</span>')
-    label_parts.append(f'<span class="name">{name}</span>')
-    if badge:
-        label_parts.append(f'<span class="badge">{badge}</span>')
-
-    meta_parts = []
-    if sig:
-        meta_parts.append(f"<code>{sig}</code>")
-    if element.container:
-        meta_parts.append(f"<span>in {escape(element.container)}</span>")
-    meta_parts.append(f'<span class="loc">L{element.line}</span>')
-
-    return (
-        f'<div class="block" style="border-left: 4px solid {border};">'
-        f'<div class="block-header" style="background: {bg}22;">'
-        f"{''.join(label_parts)}"
-        f'<span class="kind-tag" style="background: {bg};">{escape(kind)}</span>'
-        f"</div>"
-        f'<div class="block-meta">{"".join(meta_parts)}</div>'
-        f"</div>"
-    )
-
-
-def _extract_elements(
-    content: str, generated=None
-) -> tuple[
-    tuple[StructuralElement, ...],
-    tuple[SyntaxDiagnostic, ...],
-    float,
-    int,
-]:
-    """Parse TLA+ content and extract structural elements."""
+def _extract_elements(content: str, generated=None):
     gen = generated or load_generated_types()
-
     t0 = perf_counter()
     result = parse_source_text(content, gen)
     elapsed_ms = round((perf_counter() - t0) * 1000, 3)
@@ -119,28 +73,21 @@ def _extract_elements(
 
     visitor = _build_structure_visitor(gen.visitor_type)()
     visitor.visit(result.tree)
-
-    return (
-        tuple(visitor.elements),
-        result.diagnostics,
-        elapsed_ms,
-        len(result.token_stream.tokens),
-    )
+    return tuple(visitor.elements), result.diagnostics, elapsed_ms, len(result.token_stream.tokens)
 
 
 def render_single_file(source_path: str, content: str, generated=None) -> DiagramResult:
-    """Parse and render a single TLA+ file as HTML."""
     elements, diagnostics, elapsed_ms, token_count = _extract_elements(content, generated)
 
     module_name = "TLA+ Module"
     for elem in elements:
-        if str(elem.kind) in ("module", "StructuralElementKind.MODULE"):
+        k = str(elem.kind)
+        if k in ("module", "StructuralElementKind.MODULE"):
             module_name = elem.name
             break
 
-    html = _render_html_page(
-        source_path, module_name, elements, diagnostics, elapsed_ms, token_count
-    )
+    svg = _build_svg(module_name, elements)
+    html = _wrap_html(source_path, module_name, svg, elements, diagnostics, elapsed_ms, token_count)
 
     return DiagramResult(
         source_location=source_path,
@@ -150,35 +97,331 @@ def render_single_file(source_path: str, content: str, generated=None) -> Diagra
         elapsed_ms=elapsed_ms,
         token_count=token_count,
         html=html,
-        elements=elements,
-        diagnostics=diagnostics,
     )
 
 
-def _render_html_page(
+# ---------------------------------------------------------------------------
+# SVG drawing primitives
+# ---------------------------------------------------------------------------
+
+
+def _svg_rect(
+    x: int,
+    y: int,
+    w: int,
+    h: int,
+    fill: str,
+    stroke: str,
+    text: str = "",
+    text_color: str = C_TEXT,
+    radius: int = 0,
+    font_weight: str = "normal",
+    sub: str = "",
+) -> str:
+    r = f'<rect x="{x}" y="{y}" width="{w}" height="{h}" rx="{radius}" ry="{radius}" '
+    r += f'fill="{fill}" stroke="{stroke}" stroke-width="1"/>'
+    if text:
+        tx = x + 10
+        ty = y + h // 2 + 4
+        r += f'\n  <text x="{tx}" y="{ty}" fill="{text_color}" '
+        r += f'font-family={FONT} font-size="{FONT_SIZE}" font-weight="{font_weight}">'
+        r += f"{escape(text)}</text>"
+    if sub:
+        tx = x + w - 10
+        ty = y + h // 2 + 4
+        r += f'\n  <text x="{tx}" y="{ty}" text-anchor="end" fill="{C_TEXT_DIM}" '
+        r += f'font-family={FONT} font-size="10">{escape(sub)}</text>'
+    return r
+
+
+def _svg_if_diamond(x: int, y: int, w: int, h: int, text: str) -> str:
+    """IF/THEN/ELSE triangle split — left = THEN, right = ELSE."""
+    mid = w // 2
+    s = (
+        f'<polygon points="{x},{y} {x + w},{y} {x + mid},{y + h}" '
+        f'fill="{C_IF}" stroke="{C_IF_STROKE}" stroke-width="1"/>'
+        f'\n  <line x1="{x + mid}" y1="{y}" x2="{x + mid}" y2="{y + h}" '
+        f'stroke="{C_IF_STROKE}" stroke-width="1" stroke-dasharray="4,3"/>'
+        f'\n  <text x="{x + mid}" y="{y + 14}" text-anchor="middle" '
+        f'fill="{C_TEXT_BLUE}" font-family={FONT} font-size="{FONT_SIZE}">'
+        f"{escape(text)}</text>"
+        f'\n  <text x="{x + 10}" y="{y + h - 6}" fill="{C_TEXT_GREEN}" '
+        f'font-family={FONT} font-size="10">T</text>'
+        f'\n  <text x="{x + w - 10}" y="{y + h - 6}" text-anchor="end" '
+        f'fill="{C_TEXT_RED}" font-family={FONT} font-size="10">F</text>'
+    )
+    return s
+
+
+def _svg_case_block(x: int, y: int, w: int, h: int, arms: list[str]) -> str:
+    """CASE arms side-by-side."""
+    n = max(len(arms), 1)
+    arm_w = w // n
+    parts = []
+    for i, arm in enumerate(arms[:n]):
+        ax = x + i * arm_w
+        parts.append(
+            f'<rect x="{ax}" y="{y}" width="{arm_w}" height="{h}" '
+            f'fill="{C_CASE}" stroke="{C_CASE_STROKE}" stroke-width="1"/>'
+            f'\n  <text x="{ax + arm_w // 2}" y="{y + h // 2 + 4}" '
+            f'text-anchor="middle" fill="{C_TEXT_PURPLE}" '
+            f'font-family={FONT} font-size="11">{escape(arm)}</text>'
+        )
+    # separator lines
+    for i in range(1, n):
+        lx = x + i * arm_w
+        parts.append(
+            f'<line x1="{lx}" y1="{y}" x2="{lx}" y2="{y + h}" '
+            f'stroke="{C_CASE_STROKE}" stroke-width="1"/>'
+        )
+    return "\n  ".join(parts)
+
+
+def _svg_loop_top(x: int, y: int, w: int, h: int, text: str, kind: str = "FOR") -> str:
+    """Loop with rounded top (for/in, while)."""
+    fill = C_LOOP
+    stroke = C_LOOP_STROKE
+    r = 14
+    s = (
+        f'<path d="M{x},{y + h} L{x},{y + r} Q{x},{y} {x + r},{y} '
+        f'L{x + w - r},{y} Q{x + w},{y} {x + w},{y + r} L{x + w},{y + h}" '
+        f'fill="{fill}" stroke="{stroke}" stroke-width="1"/>'
+        f'\n  <text x="{x + 10}" y="{y + r + 4}" fill="{C_TEXT_GREEN}" '
+        f'font-family={FONT} font-size="{FONT_SIZE}">{escape(kind)}</text>'
+        f'\n  <text x="{x + w - 10}" y="{y + r + 4}" text-anchor="end" '
+        f'fill="{C_TEXT_DIM}" font-family={FONT} font-size="11">{escape(text)}</text>'
+    )
+    return s
+
+
+def _svg_loop_bottom(x: int, y: int, w: int, h: int) -> str:
+    """Loop closing brace."""
+    r = 14
+    return (
+        f'<path d="M{x},{y} L{x},{y + h - r} Q{x},{y + h} {x + r},{y + h} '
+        f'L{x + w - r},{y + h} Q{x + w},{y + h} {x + w},{y + h - r} L{x + w},{y}" '
+        f'fill="{C_LOOP}" stroke="{C_LOOP_STROKE}" stroke-width="1"/>'
+    )
+
+
+# ---------------------------------------------------------------------------
+# Build the full SVG diagram
+# ---------------------------------------------------------------------------
+
+
+def _build_svg(module_name: str, elements: tuple[StructuralElement, ...]) -> str:
+    if not elements:
+        return (
+            f'<svg xmlns="http://www.w3.org/2000/svg" width="{DIAGRAM_W}" height="60">'
+            f'<rect width="100%" height="100%" fill="{C_BG}"/>'
+            f'<text x="20" y="35" fill="{C_TEXT_DIM}" font-family={FONT} font-size="13">'
+            f"No structural elements</text></svg>"
+        )
+
+    # --- Group elements into sections ---
+    sections: list[tuple[str, list[StructuralElement]]] = []
+    current_section = "header"
+    current_items: list[StructuralElement] = []
+
+    for elem in elements:
+        k = str(elem.kind)
+        if k in ("module", "StructuralElementKind.MODULE"):
+            if current_items:
+                sections.append((current_section, current_items))
+            current_section = "module"
+            current_items = [elem]
+        elif k in ("extends", "StructuralElementKind.EXTENDS"):
+            if current_section != "extends":
+                if current_items:
+                    sections.append((current_section, current_items))
+                current_section = "extends"
+                current_items = [elem]
+            else:
+                current_items.append(elem)
+        elif k in (
+            "variable",
+            "constant",
+            "StructuralElementKind.VARIABLE",
+            "StructuralElementKind.CONSTANT",
+        ):
+            if current_section not in ("variable",):
+                if current_items:
+                    sections.append((current_section, current_items))
+                current_section = "variable"
+                current_items = [elem]
+            else:
+                current_items.append(elem)
+        elif k in (
+            "theorem",
+            "assumption",
+            "StructuralElementKind.THEOREM",
+            "StructuralElementKind.ASSUMPTION",
+        ):
+            if current_items:
+                sections.append((current_section, current_items))
+            current_section = "theorem"
+            current_items = [elem]
+        elif k in ("proof", "StructuralElementKind.PROOF"):
+            if current_items:
+                sections.append((current_section, current_items))
+            current_section = "proof"
+            current_items = [elem]
+        else:
+            if current_section != "definition":
+                if current_items:
+                    sections.append((current_section, current_items))
+                current_section = "definition"
+                current_items = [elem]
+            else:
+                current_items.append(elem)
+
+    if current_items:
+        sections.append((current_section, current_items))
+
+    # --- Compute layout ---
+    y_cursor = 0
+    drawn_parts: list[str] = []
+    w = DIAGRAM_W - 2 * MARGIN_X
+
+    def _draw_block(
+        y: int,
+        text: str,
+        fill: str,
+        stroke: str,
+        text_color: str = C_TEXT,
+        sub: str = "",
+        font_weight: str = "normal",
+        radius: int = 0,
+    ) -> int:
+        drawn_parts.append(
+            _svg_rect(
+                MARGIN_X, y, w, BLOCK_H, fill, stroke, text, text_color, radius, font_weight, sub
+            )
+        )
+        return y + BLOCK_H + BLOCK_PAD
+
+    for section_type, items in sections:
+        if section_type == "module":
+            name = items[0].name
+            y_cursor = _draw_block(
+                y_cursor,
+                f"MODULE {name}",
+                C_MODULE,
+                C_MODULE_STROKE,
+                C_TEXT_BLUE,
+                f"L{items[0].line}",
+                "bold",
+                6,
+            )
+            y_cursor += 4
+
+        elif section_type == "extends":
+            for ext in items:
+                y_cursor = _draw_block(
+                    y_cursor,
+                    f"EXTENDS {ext.name}",
+                    C_EXTENDS,
+                    C_EXTENDS_STROKE,
+                    C_TEXT_GREEN,
+                    f"L{ext.line}",
+                )
+            y_cursor += 4
+
+        elif section_type == "variable":
+            for var in items:
+                k = str(var.kind)
+                label = var.signature or var.name
+                y_cursor = _draw_block(
+                    y_cursor, label, C_CONST_VAR, C_CONST_VAR_STROKE, C_TEXT_YELLOW, f"L{var.line}"
+                )
+            y_cursor += 4
+
+        elif section_type == "definition":
+            for defn in items:
+                k = str(defn.kind)
+                sig = defn.signature or defn.name
+                if "function" in k:
+                    icon = "f[ ]"
+                    fill = C_BLOCK
+                    stroke = C_TEXT_BLUE
+                elif "module" in k:
+                    icon = "DEF"
+                    fill = C_BLOCK
+                    stroke = C_TEXT_PURPLE
+                elif "recursive" in k:
+                    icon = "REC"
+                    fill = C_BLOCK
+                    stroke = C_TEXT_YELLOW
+                elif "instance" in k:
+                    icon = "INST"
+                    fill = C_BLOCK
+                    stroke = C_TEXT_YELLOW
+                else:
+                    icon = "="
+                    fill = C_BLOCK
+                    stroke = C_BLOCK_STROKE
+
+                label = f"{icon}  {sig}"
+                y_cursor = _draw_block(y_cursor, label, fill, stroke, C_TEXT, f"L{defn.line}")
+            y_cursor += 4
+
+        elif section_type == "theorem":
+            for thm in items:
+                label = thm.signature or thm.name
+                y_cursor = _draw_block(
+                    y_cursor, label, C_THEOREM, C_THEOREM_STROKE, C_TEXT_RED, f"L{thm.line}", "bold"
+                )
+            y_cursor += 4
+
+        elif section_type == "proof":
+            for prf in items:
+                y_cursor = _draw_block(
+                    y_cursor, "PROOF", C_PROOF, C_PROOF_STROKE, C_TEXT_BLUE, f"L{prf.line}"
+                )
+            y_cursor += 4
+
+    total_h = y_cursor + MARGIN_Y
+
+    # Build SVG
+    svg = (
+        f'<svg xmlns="http://www.w3.org/2000/svg" '
+        f'width="{DIAGRAM_W}" height="{total_h}" '
+        f'viewBox="0 0 {DIAGRAM_W} {total_h}">\n'
+        f'<rect width="100%" height="100%" fill="{C_BG}" rx="6"/>\n'
+    )
+    svg += "\n".join(drawn_parts)
+    svg += "\n</svg>"
+    return svg
+
+
+# ---------------------------------------------------------------------------
+# Full HTML page
+# ---------------------------------------------------------------------------
+
+
+def _wrap_html(
     source_path: str,
     module_name: str,
+    svg: str,
     elements: tuple[StructuralElement, ...],
     diagnostics: tuple[SyntaxDiagnostic, ...],
     elapsed_ms: float,
     token_count: int,
 ) -> str:
     kind_counts: dict[str, int] = {}
-    for elem in elements:
-        k = str(elem.kind) if hasattr(elem.kind, "value") else elem.kind
+    for e in elements:
+        k = str(e.kind)
         kind_counts[k] = kind_counts.get(k, 0) + 1
 
-    summary_items = "".join(
-        f'<span class="chip" style="border-color: {_KIND_COLORS.get(k, ("gray", "#7f8c8d", "#616a6b"))[1]};'
-        f'background: {_KIND_COLORS.get(k, ("gray", "#7f8c8d", "#616a6b"))[1]}33;">'
-        f"{v} {escape(k.replace('_', ' '))}</span>"
+    summary = " &middot; ".join(
+        f"{v} {escape(k.replace('StructuralElementKind.', '').replace('_', ' '))}"
         for k, v in sorted(kind_counts.items())
     )
 
     diag_html = ""
     if diagnostics:
         rows = "".join(
-            f'<tr><td class="sev">{"ERR" if str(d.severity) in ("error", "DiagnosticSeverity.ERROR") else "WRN"}</td>'
+            f'<tr><td class="sev">{"ERR" if "error" in str(d.severity).lower() else "WRN"}</td>'
             f"<td>L{d.line}:{d.column}</td><td>{escape(d.message)}</td></tr>"
             for d in diagnostics
         )
@@ -188,149 +431,103 @@ def _render_html_page(
             f"<tbody>{rows}</tbody></table></details>"
         )
 
-    blocks = []
-    for elem in elements:
-        kind = str(elem.kind) if hasattr(elem.kind, "value") else elem.kind
-        if kind in ("module",):
-            depth = 0
-        elif kind in ("theorem", "assumption", "proof"):
-            depth = 2
-        else:
-            depth = 1
-        blocks.append(_render_element_block(elem, depth))
-
-    if not blocks:
-        blocks.append('<div class="block"><div class="block-header">No elements found</div></div>')
-
     return f"""<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>TLA+ Structure — {escape(module_name)}</title>
+<title>Nassi-Shneiderman — {escape(module_name)}</title>
 <style>
-:root{{--bg:#0d1117;--sf:#161b22;--sf2:#21262d;--bd:#30363d;--tx:#e6edf3;--tm:#8b949e;--bl:#1676dc}}
+:root{{--bg:#0d1117;--sf:#161b22;--bd:#30363d;--tx:#e6edf3;--tm:#8b949e;--bl:#569cd6}}
 *{{box-sizing:border-box;margin:0;padding:0}}
-body{{font-family:"IBM Plex Sans",-apple-system,sans-serif;background:var(--bg);color:var(--tx);padding:24px;max-width:960px;margin:0 auto}}
-.hdr{{margin-bottom:20px;padding-bottom:14px;border-bottom:1px solid var(--bd)}}
-.hdr h1{{font-size:22px;font-weight:600;margin-bottom:4px}}
-.hdr .meta{{font-size:13px;color:var(--tm);font-family:monospace}}
-.chips{{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}}
-.chip{{padding:4px 10px;border-radius:12px;font-size:12px;font-weight:500;border:1px solid}}
-.diags{{margin-bottom:16px;background:var(--sf);border:1px solid var(--bd);border-radius:8px;padding:12px}}
-.diags summary{{cursor:pointer;color:#e74c3c;font-weight:500;margin-bottom:6px}}
-.diags table{{width:100%;border-collapse:collapse;font-size:13px}}
-.diags th,.diags td{{text-align:left;padding:5px 8px;border-bottom:1px solid var(--bd)}}
-.sev{{color:#e74c3c;font-weight:600;font-size:11px;text-transform:uppercase}}
-.str{{display:flex;flex-direction:column;gap:6px}}
-.block{{background:var(--sf);border-radius:6px;overflow:hidden}}
-.block:hover{{transform:translateX(2px);transition:transform .1s}}
-.block-header{{display:flex;align-items:center;gap:8px;padding:10px 14px;font-size:14px;font-weight:500}}
-.block-header .icon{{font-family:monospace;font-weight:700;font-size:13px;width:20px;text-align:center;background:var(--sf2);border-radius:4px;padding:2px 0}}
-.block-header .name{{font-family:monospace;font-weight:600;font-size:14px}}
-.block-header .badge{{color:var(--tm);font-size:14px}}
-.block-header .kind-tag{{margin-left:auto;padding:2px 8px;border-radius:8px;font-size:10px;font-weight:600;color:#fff;text-transform:uppercase;letter-spacing:.04em}}
-.block-meta{{padding:4px 14px 8px 52px;font-size:12px;color:var(--tm);display:flex;gap:12px;align-items:center;flex-wrap:wrap}}
-.block-meta code{{font-family:monospace;font-size:12px;color:var(--tx);background:var(--sf2);padding:2px 6px;border-radius:4px}}
-.block-meta .loc{{font-family:monospace;font-size:11px}}
-</style>
-</head>
-<body>
-<div class="hdr"><h1>{escape(module_name)}</h1>
-<div class="meta">{escape(source_path)} &middot; {token_count} tok &middot; {elapsed_ms:.1f}ms</div></div>
-<div class="chips">{summary_items}</div>
-{diag_html}
-<div class="str">
-{"".join(blocks)}
-</div>
-</body></html>"""
-
-
-def render_index_html(
-    root_path: str,
-    diagrams: list[DiagramResult],
-    relative_paths: dict[str, str] | None = None,
-) -> str:
-    """Render an index HTML page linking to individual diagram files.
-
-    Args:
-        root_path: Root directory that was scanned.
-        diagrams: List of diagram results.
-        relative_paths: Optional mapping from source_location to relative HTML filename.
-            If not provided, derived from source_location with .tla -> .html.
-    """
-    rows = []
-    for d in diagrams:
-        rel_name = _relative_name(d.source_location, root_path)
-        if relative_paths and d.source_location in relative_paths:
-            href = relative_paths[d.source_location]
-        else:
-            # Replace .tla extension with .html
-            href = str(Path(rel_name).with_suffix(".html"))
-        rows.append(
-            f"<tr>"
-            f'<td><a href="{escape(href)}">{escape(rel_name)}</a></td>'
-            f"<td>{escape(d.module_name)}</td>"
-            f"<td>{d.element_count}</td>"
-            f"<td>{d.diagnostic_count}</td>"
-            f"<td>{d.elapsed_ms:.0f}ms</td>"
-            f"</tr>"
-        )
-    if not rows:
-        rows_html = '<tr><td colspan="5">No .tla files found.</td></tr>'
-    else:
-        rows_html = "".join(rows)
-
-    total_elements = sum(d.element_count for d in diagrams)
-    total_diag = sum(d.diagnostic_count for d in diagrams)
-
-    return f"""<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>TLA+ Structure — {escape(root_path)}</title>
-<style>
-:root{{--bg:#0d1117;--sf:#161b22;--bd:#30363d;--tx:#e6edf3;--tm:#8b949e;--bl:#1676dc}}
-*{{box-sizing:border-box;margin:0;padding:0}}
-body{{font-family:"IBM Plex Sans",-apple-system,sans-serif;background:var(--bg);color:var(--tx);padding:24px;max-width:1000px;margin:0 auto}}
-.hdr{{margin-bottom:20px;padding-bottom:14px;border-bottom:1px solid var(--bd)}}
-.hdr h1{{font-size:22px;font-weight:600}}
-.hdr .meta{{font-size:13px;color:var(--tm);font-family:monospace;margin-top:4px}}
-.stats{{display:flex;gap:16px;margin-bottom:20px}}
-.stat{{background:var(--sf);border:1px solid var(--bd);border-radius:8px;padding:12px 20px;text-align:center}}
-.stat .num{{font-size:28px;font-weight:700;color:var(--bl)}}
-.stat .label{{font-size:12px;color:var(--tm);margin-top:2px}}
-table{{width:100%;border-collapse:collapse;background:var(--sf);border-radius:8px;overflow:hidden}}
-thead th{{background:var(--bl);color:#fff;font-size:12px;text-transform:uppercase;letter-spacing:.05em;padding:10px 14px;text-align:left}}
-tbody td{{padding:10px 14px;border-bottom:1px solid var(--bd);font-size:14px}}
-tbody tr:hover{{background:#1c2333}}
-a{{color:var(--bl);text-decoration:none;font-weight:600;font-family:monospace}}
-a:hover{{text-decoration:underline}}
-td:nth-child(3),td:nth-child(4),td:nth-child(5){{text-align:right;font-family:monospace}}
+body{{font-family:{FONT};background:var(--bg);color:var(--tx);padding:24px;max-width:720px;margin:0 auto}}
+.hdr{{margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--bd)}}
+.hdr h1{{font-size:18px;font-weight:700;color:var(--bl);margin-bottom:2px}}
+.hdr .meta{{font-size:12px;color:var(--tm)}}
+.summary{{font-size:12px;color:var(--tm);margin-bottom:16px}}
+.diags{{margin-bottom:16px;background:var(--sf);border:1px solid var(--bd);border-radius:6px;padding:10px}}
+.diags summary{{cursor:pointer;color:#f44747;font-weight:600;font-size:12px}}
+.diags table{{width:100%;border-collapse:collapse;font-size:12px;margin-top:6px}}
+.diags th,.diags td{{text-align:left;padding:4px 8px;border-bottom:1px solid var(--bd)}}
+.sev{{color:#f44747;font-weight:700;font-size:10px}}
+svg{{display:block;border:1px solid var(--bd);border-radius:6px;width:100%;max-width:{DIAGRAM_W}px}}
 </style>
 </head>
 <body>
 <div class="hdr">
-<h1>TLA+ Structure Diagrams</h1>
-<div class="meta">{escape(root_path)}</div>
+  <h1>{escape(module_name)}</h1>
+  <div class="meta">{escape(source_path)} &middot; {token_count} tok &middot; {elapsed_ms:.1f}ms</div>
 </div>
+<div class="summary">{summary}</div>
+{diag_html}
+{svg}
+</body>
+</html>"""
+
+
+# ---------------------------------------------------------------------------
+# Index
+# ---------------------------------------------------------------------------
+
+
+def render_index_html(
+    root_path: str, diagrams: list[DiagramResult], relative_paths: dict[str, str] | None = None
+) -> str:
+    rows = []
+    for d in diagrams:
+        rel = _rel_name(d.source_location, root_path)
+        href = (relative_paths or {}).get(d.source_location, str(Path(rel).with_suffix(".html")))
+        rows.append(
+            f'<tr><td><a href="{escape(href)}">{escape(rel)}</a></td>'
+            f"<td>{escape(d.module_name)}</td>"
+            f"<td>{d.element_count}</td>"
+            f"<td>{d.elapsed_ms:.0f}ms</td></tr>"
+        )
+    rows_html = "".join(rows) or '<tr><td colspan="4">No .tla files</td></tr>'
+    total_el = sum(d.element_count for d in diagrams)
+
+    return f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>TLA+ Nassi-Shneiderman — {escape(root_path)}</title>
+<style>
+:root{{--bg:#0d1117;--sf:#161b22;--bd:#30363d;--tx:#e6edf3;--tm:#8b949e;--bl:#569cd6}}
+*{{box-sizing:border-box;margin:0;padding:0}}
+body{{font-family:{FONT};background:var(--bg);color:var(--tx);padding:24px;max-width:900px;margin:0 auto}}
+h1{{font-size:20px;margin-bottom:4px}}
+.meta{{font-size:12px;color:var(--tm);margin-bottom:16px}}
+.stats{{display:flex;gap:14px;margin-bottom:20px}}
+.stat{{background:var(--sf);border:1px solid var(--bd);border-radius:8px;padding:10px 18px;text-align:center}}
+.stat .n{{font-size:26px;font-weight:700;color:var(--bl)}}
+.stat .l{{font-size:11px;color:var(--tm)}}
+table{{width:100%;border-collapse:collapse;background:var(--sf);border-radius:8px;overflow:hidden}}
+th{{background:var(--bl);color:#000;font-size:11px;text-transform:uppercase;padding:8px 12px;text-align:left}}
+td{{padding:8px 12px;border-bottom:1px solid var(--bd);font-size:13px}}
+tr:hover{{background:#1c2333}}
+a{{color:var(--bl);text-decoration:none;font-weight:600}}
+a:hover{{text-decoration:underline}}
+td:nth-child(3),td:nth-child(4){{text-align:right;font-family:monospace}}
+</style>
+</head>
+<body>
+<h1>Nassi-Shneiderman Diagrams</h1>
+<div class="meta">{escape(root_path)}</div>
 <div class="stats">
-<div class="stat"><div class="num">{len(diagrams)}</div><div class="label">modules</div></div>
-<div class="stat"><div class="num">{total_elements}</div><div class="label">elements</div></div>
-<div class="stat"><div class="num">{total_diag}</div><div class="label">diagnostics</div></div>
+<div class="stat"><div class="n">{len(diagrams)}</div><div class="l">modules</div></div>
+<div class="stat"><div class="n">{total_el}</div><div class="l">elements</div></div>
 </div>
 <table>
-<thead><tr><th>Source</th><th>Module</th><th>Elements</th><th>Diags</th><th>Time</th></tr></thead>
-<tbody>
-{rows_html}
-</tbody>
+<thead><tr><th>Source</th><th>Module</th><th>Elems</th><th>Time</th></tr></thead>
+<tbody>{rows_html}</tbody>
 </table>
-</body></html>"""
+</body>
+</html>"""
 
 
-def _relative_name(source_location: str, root_path: str) -> str:
+def _rel_name(loc: str, root: str) -> str:
     try:
-        return Path(source_location).relative_to(Path(root_path)).as_posix()
+        return Path(loc).relative_to(Path(root)).as_posix()
     except ValueError:
-        return Path(source_location).name
+        return Path(loc).name
