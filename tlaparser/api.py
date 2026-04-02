@@ -72,6 +72,12 @@ def parse_tla(source: str, start_rule: str = "unit") -> TLAPLusParser:
     """
     input_stream = InputStream(source)
     lexer = TLAPLusLexer(input_stream)
+
+    # If we're not parsing a full module (unit), start in SPEC mode
+    # so the lexer doesn't skip everything in DEFAULT mode
+    if start_rule != "unit":
+        lexer.mode(TLAPLusLexer.SPEC_MODE)
+
     token_stream = CommonTokenStream(lexer)
     parser = TLAPLusParser(token_stream)
 

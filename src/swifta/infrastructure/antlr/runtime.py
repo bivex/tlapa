@@ -1,4 +1,4 @@
-"""Shared ANTLR runtime helpers."""
+"""Shared ANTLR runtime helpers for TLA+ parsing."""
 
 from __future__ import annotations
 
@@ -14,10 +14,12 @@ from swifta.domain.errors import GeneratedParserNotAvailableError
 from swifta.domain.model import GrammarVersion, SyntaxDiagnostic
 from swifta.infrastructure.antlr.error_listener import CollectingErrorListener
 
-
 ANTLR_GRAMMAR_VERSION = GrammarVersion(
-    "antlr4@4.13.2+python-compat:antlr/grammars-v4/swift/swift5 (targets Swift 5.4)"
+    "antlr4@4.13.1+python:tlaplus/tla+ (converted from official JavaCC grammar)"
 )
+
+# TLA+ lexer mode constants (must match TLAPLusLexer.g4)
+_SPEC_MODE = 1
 
 
 @dataclass(frozen=True, slots=True)
@@ -38,24 +40,24 @@ class ParseTreeResult:
 def load_generated_types() -> GeneratedParserTypes:
     try:
         lexer_module = importlib.import_module(
-            "swifta.infrastructure.antlr.generated.swift5.Swift5Lexer"
+            "swifta.infrastructure.antlr.generated.tlaplus.TLAPLusLexer"
         )
         parser_module = importlib.import_module(
-            "swifta.infrastructure.antlr.generated.swift5.Swift5Parser"
+            "swifta.infrastructure.antlr.generated.tlaplus.TLAPLusParser"
         )
         visitor_module = importlib.import_module(
-            "swifta.infrastructure.antlr.generated.swift5.Swift5ParserVisitor"
+            "swifta.infrastructure.antlr.generated.tlaplus.TLAPLusParserVisitor"
         )
     except ModuleNotFoundError as error:
         raise GeneratedParserNotAvailableError(
-            "generated Swift parser artifacts are missing; run "
-            "`uv run python scripts/generate_swift_parser.py` first"
+            "generated TLA+ parser artifacts are missing; run "
+            "`uv run python scripts/generate_tlaplus_parser.py` first"
         ) from error
 
     return GeneratedParserTypes(
-        lexer_type=lexer_module.Swift5Lexer,
-        parser_type=parser_module.Swift5Parser,
-        visitor_type=visitor_module.Swift5ParserVisitor,
+        lexer_type=lexer_module.TLAPLusLexer,
+        parser_type=parser_module.TLAPLusParser,
+        visitor_type=visitor_module.TLAPLusParserVisitor,
     )
 
 
@@ -63,32 +65,38 @@ def parse_source_text(
     source_text: str,
     generated_types: GeneratedParserTypes | None = None,
 ) -> ParseTreeResult:
+    """Parse a complete TLA+ module (with ---- MODULE header)."""
     return _parse_entry_text(
         source_text,
-        entry_rule_name="top_level",
+        entry_rule_name="unit",
         generated_types=generated_types,
+        force_spec_mode=False,
     )
 
 
-def parse_code_block_text(
+def parse_expression_text(
     source_text: str,
     generated_types: GeneratedParserTypes | None = None,
 ) -> ParseTreeResult:
+    """Parse a standalone TLA+ expression (no module header needed)."""
     return _parse_entry_text(
         source_text,
-        entry_rule_name="code_block",
+        entry_rule_name="expression",
         generated_types=generated_types,
+        force_spec_mode=True,
     )
 
 
-def parse_statement_text(
+def parse_definition_text(
     source_text: str,
     generated_types: GeneratedParserTypes | None = None,
 ) -> ParseTreeResult:
+    """Parse a TLA+ definition (no module header needed)."""
     return _parse_entry_text(
         source_text,
-        entry_rule_name="statement",
+        entry_rule_name="operatorOrFunctionDefinition",
         generated_types=generated_types,
+        force_spec_mode=True,
     )
 
 
@@ -97,21 +105,26 @@ def _parse_entry_text(
     *,
     entry_rule_name: str,
     generated_types: GeneratedParserTypes | None = None,
+    force_spec_mode: bool = False,
 ) -> ParseTreeResult:
     generated = generated_types or load_generated_types()
 
     try:
-        return _parse_entry_text_fast(source_text, generated, entry_rule_name)
+        return _parse_entry_text_fast(source_text, generated, entry_rule_name, force_spec_mode)
     except ParseCancellationException:
-        return _parse_entry_text_full(source_text, generated, entry_rule_name)
+        return _parse_entry_text_full(source_text, generated, entry_rule_name, force_spec_mode)
 
 
 def _parse_entry_text_fast(
     source_text: str,
     generated: GeneratedParserTypes,
     entry_rule_name: str,
+    force_spec_mode: bool,
 ) -> ParseTreeResult:
     lexer = generated.lexer_type(InputStream(source_text))
+    if force_spec_mode:
+        lexer.mode(_SPEC_MODE)
+
     lexer_errors = CollectingErrorListener()
     lexer.removeErrorListeners()
     lexer.addErrorListener(lexer_errors)
@@ -137,8 +150,12 @@ def _parse_entry_text_full(
     source_text: str,
     generated: GeneratedParserTypes,
     entry_rule_name: str,
+    force_spec_mode: bool,
 ) -> ParseTreeResult:
     lexer = generated.lexer_type(InputStream(source_text))
+    if force_spec_mode:
+        lexer.mode(_SPEC_MODE)
+
     lexer_errors = CollectingErrorListener()
     lexer.removeErrorListeners()
     lexer.addErrorListener(lexer_errors)
