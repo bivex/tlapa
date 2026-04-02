@@ -38,7 +38,10 @@ fragment CASE2c : [WS] ([a-zA-EG-Z0-9])? (LETTER | DIGIT)* '.' './\\' ;
 fragment CASE3 : ('WF' | 'SF') ((LETTER | DIGIT) (LETTER | '_' | DIGIT)*)? ;
 
 // Standard identifiers (letters not starting with W or S, or reserved)
-fragment CASE6 : [a-zA-Z] (LETTER | '_' | DIGIT)* ;
+// Split into F-starting and non-F-starting to avoid ANTLR ATN optimization bug
+// where CASE2's F exclusion bleeds into CASE6
+fragment CASE6_F : [Ff] (LETTER | '_' | DIGIT)* ;
+fragment CASE6_OTHER : [a-eA-Eg-zG-Z] (LETTER | '_' | DIGIT)* ;
 fragment CASE6b : [a-zA-Z] (LETTER | DIGIT)* '.' '\\/' ;
 fragment CASE6c : [a-zA-Z] (LETTER | DIGIT)* '.' './\\' ;
 
@@ -397,7 +400,10 @@ IDENTIFIER
     | CASE1
     | CASE2
     | CASE3
-    | CASE6
+    | CASE6_F
+    | CASE6_OTHER
+    | CASE6b
+    | CASE6c
     | CASEN
     | '@'
     | NUMBER_SET
@@ -417,7 +423,7 @@ PRAGMA_BLOCK_COMMENT : BLOCK_COMMENT_START -> pushMode(IN_COMMENT_MODE) ;
 
 PRAGMA_NUMBER : DIGIT+ | '0' ;
 PRAGMA_BEGIN_MODULE : '----' '-'* ' '* 'MODULE' -> type(BEGIN_MODULE), mode(SPEC_MODE) ;
-PRAGMA_IDENTIFIER : CASE0 | CASE1 | CASE2 | CASE3 | CASE6 | CASEN | '@' | NUMBER_SET ;
+PRAGMA_IDENTIFIER : CASE0 | CASE1 | CASE2 | CASE3 | CASE6_F | CASE6_OTHER | CASE6b | CASE6c | CASEN | '@' | NUMBER_SET ;
 
 PRAGMA_CHAR : . -> skip ;
 
