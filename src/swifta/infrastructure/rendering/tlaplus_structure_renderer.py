@@ -249,21 +249,37 @@ body{{font-family:"IBM Plex Sans",-apple-system,sans-serif;background:var(--bg);
 def render_index_html(
     root_path: str,
     diagrams: list[DiagramResult],
+    relative_paths: dict[str, str] | None = None,
 ) -> str:
-    """Render an index HTML page linking to individual diagram files."""
-    rows = "".join(
-        f"<tr>"
-        f'<td><a href="{escape(_relative_name(d.source_location, root_path))}.html">'
-        f"{escape(_relative_name(d.source_location, root_path))}</a></td>"
-        f"<td>{escape(d.module_name)}</td>"
-        f"<td>{d.element_count}</td>"
-        f"<td>{d.diagnostic_count}</td>"
-        f"<td>{d.elapsed_ms:.0f}ms</td>"
-        f"</tr>"
-        for d in diagrams
-    )
+    """Render an index HTML page linking to individual diagram files.
+
+    Args:
+        root_path: Root directory that was scanned.
+        diagrams: List of diagram results.
+        relative_paths: Optional mapping from source_location to relative HTML filename.
+            If not provided, derived from source_location with .tla -> .html.
+    """
+    rows = []
+    for d in diagrams:
+        rel_name = _relative_name(d.source_location, root_path)
+        if relative_paths and d.source_location in relative_paths:
+            href = relative_paths[d.source_location]
+        else:
+            # Replace .tla extension with .html
+            href = str(Path(rel_name).with_suffix(".html"))
+        rows.append(
+            f"<tr>"
+            f'<td><a href="{escape(href)}">{escape(rel_name)}</a></td>'
+            f"<td>{escape(d.module_name)}</td>"
+            f"<td>{d.element_count}</td>"
+            f"<td>{d.diagnostic_count}</td>"
+            f"<td>{d.elapsed_ms:.0f}ms</td>"
+            f"</tr>"
+        )
     if not rows:
-        rows = '<tr><td colspan="5">No .tla files found.</td></tr>'
+        rows_html = '<tr><td colspan="5">No .tla files found.</td></tr>'
+    else:
+        rows_html = "".join(rows)
 
     total_elements = sum(d.element_count for d in diagrams)
     total_diag = sum(d.diagnostic_count for d in diagrams)
@@ -307,7 +323,7 @@ td:nth-child(3),td:nth-child(4),td:nth-child(5){{text-align:right;font-family:mo
 <table>
 <thead><tr><th>Source</th><th>Module</th><th>Elements</th><th>Diags</th><th>Time</th></tr></thead>
 <tbody>
-{rows}
+{rows_html}
 </tbody>
 </table>
 </body></html>"""

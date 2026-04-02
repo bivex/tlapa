@@ -125,7 +125,12 @@ def _nassi_dir(args) -> int:
 
     # Write index.html
     index_path = output_dir / "index.html"
-    index_path.write_text(render_index_html(str(root), diagrams), encoding="utf-8")
+    rel_paths = {
+        w["source_location"]: w["relative_output_path"]
+        for w in written
+        if "relative_output_path" in w
+    }
+    index_path.write_text(render_index_html(str(root), diagrams, rel_paths), encoding="utf-8")
 
     payload = {
         "root_path": str(root),
