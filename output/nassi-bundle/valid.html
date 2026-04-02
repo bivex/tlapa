@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>TLA+ Structure — TestFixture</title>
+<style>
+:root{--bg:#0d1117;--sf:#161b22;--sf2:#21262d;--bd:#30363d;--tx:#e6edf3;--tm:#8b949e;--bl:#1676dc}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:"IBM Plex Sans",-apple-system,sans-serif;background:var(--bg);color:var(--tx);padding:24px;max-width:960px;margin:0 auto}
+.hdr{margin-bottom:20px;padding-bottom:14px;border-bottom:1px solid var(--bd)}
+.hdr h1{font-size:22px;font-weight:600;margin-bottom:4px}
+.hdr .meta{font-size:13px;color:var(--tm);font-family:monospace}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
+.chip{padding:4px 10px;border-radius:12px;font-size:12px;font-weight:500;border:1px solid}
+.diags{margin-bottom:16px;background:var(--sf);border:1px solid var(--bd);border-radius:8px;padding:12px}
+.diags summary{cursor:pointer;color:#e74c3c;font-weight:500;margin-bottom:6px}
+.diags table{width:100%;border-collapse:collapse;font-size:13px}
+.diags th,.diags td{text-align:left;padding:5px 8px;border-bottom:1px solid var(--bd)}
+.sev{color:#e74c3c;font-weight:600;font-size:11px;text-transform:uppercase}
+.str{display:flex;flex-direction:column;gap:6px}
+.block{background:var(--sf);border-radius:6px;overflow:hidden}
+.block:hover{transform:translateX(2px);transition:transform .1s}
+.block-header{display:flex;align-items:center;gap:8px;padding:10px 14px;font-size:14px;font-weight:500}
+.block-header .icon{font-family:monospace;font-weight:700;font-size:13px;width:20px;text-align:center;background:var(--sf2);border-radius:4px;padding:2px 0}
+.block-header .name{font-family:monospace;font-weight:600;font-size:14px}
+.block-header .badge{color:var(--tm);font-size:14px}
+.block-header .kind-tag{margin-left:auto;padding:2px 8px;border-radius:8px;font-size:10px;font-weight:600;color:#fff;text-transform:uppercase;letter-spacing:.04em}
+.block-meta{padding:4px 14px 8px 52px;font-size:12px;color:var(--tm);display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.block-meta code{font-family:monospace;font-size:12px;color:var(--tx);background:var(--sf2);padding:2px 6px;border-radius:4px}
+.block-meta .loc{font-family:monospace;font-size:11px}
+</style>
+</head>
+<body>
+<div class="hdr"><h1>TestFixture</h1>
+<div class="meta">/Volumes/External/Code/tlapa/tests/fixtures/valid.tla &middot; 63 tok &middot; 29.1ms</div></div>
+<div class="chips"><span class="chip" style="border-color: #1676dc;background: #1676dc33;">1 module</span><span class="chip" style="border-color: #1abc9c;background: #1abc9c33;">3 operator definition</span><span class="chip" style="border-color: #9b59b6;background: #9b59b633;">2 variable</span></div>
+<details class="diags"><summary>3 diagnostic(s)</summary><table><thead><tr><th></th><th>Loc</th><th>Message</th></tr></thead><tbody><tr><td class="sev">ERR</td><td>L14:0</td><td>no viable alternative at input &#x27;Spec==Init/\[][Next]_&lt;&lt;x,y&gt;&gt;Inv&#x27;</td></tr><tr><td class="sev">ERR</td><td>L12:16</td><td>mismatched input &#x27;[]&#x27; expecting IDENTIFIER</td></tr><tr><td class="sev">ERR</td><td>L12:23</td><td>mismatched input &#x27;]_&#x27; expecting END_MODULE</td></tr></tbody></table></details>
+<div class="str">
+<div class="block" style="border-left: 4px solid #0b57ae;"><div class="block-header" style="background: #1676dc22;"><span class="icon">M</span><span class="name">TestFixture</span><span class="kind-tag" style="background: #1676dc;">module</span></div><div class="block-meta"><span>in TestFixture</span><span class="loc">L1</span></div></div><div class="block" style="border-left: 4px solid #7d3c98;"><div class="block-header" style="background: #9b59b622;"><span class="icon">x</span><span class="name">x</span><span class="badge"> ①</span><span class="kind-tag" style="background: #9b59b6;">variable</span></div><div class="block-meta"><code>VARIABLE x</code><span>in TestFixture</span><span class="loc">L4</span></div></div><div class="block" style="border-left: 4px solid #7d3c98;"><div class="block-header" style="background: #9b59b622;"><span class="icon">x</span><span class="name">y</span><span class="badge"> ①</span><span class="kind-tag" style="background: #9b59b6;">variable</span></div><div class="block-meta"><code>VARIABLE y</code><span>in TestFixture</span><span class="loc">L4</span></div></div><div class="block" style="border-left: 4px solid #148f77;"><div class="block-header" style="background: #1abc9c22;"><span class="icon">=</span><span class="name">Init</span><span class="badge"> ①</span><span class="kind-tag" style="background: #1abc9c;">operator_definition</span></div><div class="block-meta"><code>Init == ...</code><span>in TestFixture</span><span class="loc">L6</span></div></div><div class="block" style="border-left: 4px solid #148f77;"><div class="block-header" style="background: #1abc9c22;"><span class="icon">=</span><span class="name">Next</span><span class="badge"> ①</span><span class="kind-tag" style="background: #1abc9c;">operator_definition</span></div><div class="block-meta"><code>Next == ...</code><span>in TestFixture</span><span class="loc">L9</span></div></div><div class="block" style="border-left: 4px solid #148f77;"><div class="block-header" style="background: #1abc9c22;"><span class="icon">=</span><span class="name">Init/\[][</span><span class="badge"> ①</span><span class="kind-tag" style="background: #1abc9c;">operator_definition</span></div><div class="block-meta"><code>Init/\[][ == ...</code><span>in TestFixture</span><span class="loc">L12</span></div></div>
+</div>
+</body></html>
