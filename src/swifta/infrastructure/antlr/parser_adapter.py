@@ -72,10 +72,16 @@ def _build_structure_visitor(visitor_base: type) -> type:
         # -- Module-level constructs --
 
         def visitFirstModule(self, ctx):
-            # Extract module name from the beginModule child
+            # Extract module name from the beginModule child; require proper header with SEPARATOR '----'
             bm = ctx.beginModule()
-            if bm and bm.IDENTIFIER():
-                name = bm.IDENTIFIER().getText()
+            if not bm:
+                return None
+            sep_tok = bm.SEPARATOR()
+            if not sep_tok or sep_tok.getText() != "----":
+                return None
+            ident = bm.IDENTIFIER()
+            if ident:
+                name = ident.getText()
                 self._module_name = name
                 self._append(StructuralElementKind.MODULE, name, ctx)
             # Visit body children explicitly
@@ -86,24 +92,18 @@ def _build_structure_visitor(visitor_base: type) -> type:
             return None
 
         def visitModule(self, ctx):
-            # Subsequent modules (SEPARATOR IDENTIFIER SEPARATOR ...)
+            # Subsequent modules; same header check
             bm = ctx.beginModule()
-            if bm and bm.IDENTIFIER():
-                name = bm.IDENTIFIER().getText()
+            if not bm:
+                return None
+            sep_tok = bm.SEPARATOR()
+            if not sep_tok or sep_tok.getText() != "----":
+                return None
+            ident = bm.IDENTIFIER()
+            if ident:
+                name = ident.getText()
                 self._module_name = name
                 self._append(StructuralElementKind.MODULE, name, ctx)
-            body = ctx.moduleBody()
-            if body:
-                for child in body.getChildren():
-                    self.visit(child)
-            return None
-
-        def visitModule(self, ctx):
-            # Subsequent modules (SEPARATOR IDENTIFIER SEPARATOR ...)
-            bm = ctx.beginModule()
-            if bm and bm.IDENTIFIER():
-                self._module_name = bm.IDENTIFIER().getText()
-                self._append(StructuralElementKind.MODULE, self._module_name, ctx)
             body = ctx.moduleBody()
             if body:
                 for child in body.getChildren():
@@ -154,6 +154,8 @@ def _build_structure_visitor(visitor_base: type) -> type:
 
         def visitOperatorDefinition(self, ctx):
             name = self._extract_def_name(ctx)
+            if name is None or not self._is_valid_def_name(name, kind="operator"):
+                return None
             self._append(
                 StructuralElementKind.OPERATOR_DEFINITION,
                 name,
@@ -164,6 +166,8 @@ def _build_structure_visitor(visitor_base: type) -> type:
 
         def visitFunctionDefinition(self, ctx):
             name = self._extract_func_def_name(ctx)
+            if name is None or not self._is_valid_def_name(name, kind="function"):
+                return None
             self._append(
                 StructuralElementKind.FUNCTION_DEFINITION,
                 name,
@@ -173,15 +177,20 @@ def _build_structure_visitor(visitor_base: type) -> type:
             return None
 
         def visitModuleDefinition(self, ctx):
-            ident = ctx.IDENTIFIER()
-            name = ident.getText() if ident else "module_def"
-            self._append(
-                StructuralElementKind.MODULE_DEFINITION,
-                name,
-                ctx,
-                signature=f"{name} == ...",
-            )
+            # ModuleDefinition is rarely used in typical TLA+; parser often confuses expressions
+            # with module definitions. Skip to reduce noise in structure diagrams.
             return None
+
+        def _is_valid_def_name(self, name: str, kind: str) -> bool:
+            """Validate definition names to filter out parse artifacts."""
+            if not name or " " in name:
+                return False
+            # Backslash operators (e.g., \in, \cup, \subseteq) — only pure backslash+letters allowed
+            if name.startswith("\\"):
+                after = name[1:]
+                return after.isalpha() and len(name) <= 12
+            # Standard identifiers: alphanumeric, underscore, dot (for container-qualified)
+            return all(c.isalnum() or c in "_." for c in name)
 
         # -- Instance --
 
@@ -263,20 +272,44 @@ def _build_structure_visitor(visitor_base: type) -> type:
                 return item_ctx.postfixDecl().getText()
             return "?"
 
-        def _extract_def_name(self, def_ctx) -> str:
+        def _extract_def_name(self, def_ctx) -> str | None:
+            # Try to get identifier from identLhs first
             ident_lhs = def_ctx.identLhs()
-            if ident_lhs and ident_lhs.IDENTIFIER():
-                return ident_lhs.IDENTIFIER().getText()
+            if ident_lhs:
+                ident = ident_lhs.IDENTIFIER()
+                if ident:
+                    return ident.getText()
+                # Fallback: get text from identLhs and take first identifier-like token
+                text = ident_lhs.getText().strip()
+                # Take first token (identifier or operator name) before any whitespace or '('
+                first_token = text.split()[0] if text.split() else None
+                if first_token:
+                    # Remove any trailing '(' or backslash
+                    return first_token.rstrip("(").rstrip("\\")
+                return None
+            # Check prefix/infix/postfix forms (less common)
             prefix_lhs = def_ctx.prefixLhs()
             if prefix_lhs:
-                return prefix_lhs.getText()
+                text = prefix_lhs.getText().strip()
+                token = text.split()[0] if text.split() else None
+                if token:
+                    return token.rstrip("(").rstrip("\\")
+                return None
             infix_lhs = def_ctx.infixLhs()
             if infix_lhs:
-                return infix_lhs.getText()
+                text = infix_lhs.getText().strip()
+                token = text.split()[0] if text.split() else None
+                if token:
+                    return token.rstrip("(").rstrip("\\")
+                return None
             postfix_lhs = def_ctx.postfixLhs()
             if postfix_lhs:
-                return postfix_lhs.getText()
-            return "?"
+                text = postfix_lhs.getText().strip()
+                token = text.split()[0] if text.split() else None
+                if token:
+                    return token.rstrip("(").rstrip("\\")
+                return None
+            return None
 
         def _extract_func_def_name(self, func_ctx) -> str:
             if func_ctx.IDENTIFIER():
