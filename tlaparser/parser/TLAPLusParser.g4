@@ -32,7 +32,7 @@ module
     ;
 
 beginModule
-    : SEPARATOR MODULE_KW IDENTIFIER SEPARATOR
+    : IDENTIFIER SEPARATOR
     ;
 
 endModule
