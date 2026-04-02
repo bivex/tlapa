@@ -50,7 +50,11 @@ fragment CASEN : DIGIT+ LETTER (LETTER | DIGIT | '_')* ;
 // ============================================================================
 
 // Module header marker: ---- ... MODULE
-BEGIN_MODULE : '----' '-'* ' '* 'MODULE' -> mode(SPEC_MODE) ;
+// This is a hidden token (like JavaCC's #BEGIN_MODULE) - triggers mode switch
+// but is NOT emitted to the parser.  The module name is parsed as IDENTIFIER
+// in the new SPEC_MODE.
+fragment MODULE_MARKER : '----' '-'* ' '* 'MODULE' ;
+BEGIN_MODULE : MODULE_MARKER -> skip, mode(SPEC_MODE) ;
 BEGIN_PRAGMA : '--->' -> mode(PRAGMA_MODE) ;
 
 // Skip everything else in default mode
