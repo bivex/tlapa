@@ -72,10 +72,12 @@ def _build_structure_visitor(visitor_base: type) -> type:
         # -- Module-level constructs --
 
         def visitFirstModule(self, ctx):
-            # Extract module name (first IDENTIFIER after SEPARATOR)
-            if ctx.IDENTIFIER():
-                self._module_name = ctx.IDENTIFIER().getText()
-                self._append(StructuralElementKind.MODULE, self._module_name, ctx)
+            # Extract module name from the beginModule child
+            bm = ctx.beginModule()
+            if bm and bm.IDENTIFIER():
+                name = bm.IDENTIFIER().getText()
+                self._module_name = name
+                self._append(StructuralElementKind.MODULE, name, ctx)
             # Visit body children explicitly
             body = ctx.moduleBody()
             if body:
@@ -85,8 +87,22 @@ def _build_structure_visitor(visitor_base: type) -> type:
 
         def visitModule(self, ctx):
             # Subsequent modules (SEPARATOR IDENTIFIER SEPARATOR ...)
-            if ctx.IDENTIFIER():
-                self._module_name = ctx.IDENTIFIER().getText()
+            bm = ctx.beginModule()
+            if bm and bm.IDENTIFIER():
+                name = bm.IDENTIFIER().getText()
+                self._module_name = name
+                self._append(StructuralElementKind.MODULE, name, ctx)
+            body = ctx.moduleBody()
+            if body:
+                for child in body.getChildren():
+                    self.visit(child)
+            return None
+
+        def visitModule(self, ctx):
+            # Subsequent modules (SEPARATOR IDENTIFIER SEPARATOR ...)
+            bm = ctx.beginModule()
+            if bm and bm.IDENTIFIER():
+                self._module_name = bm.IDENTIFIER().getText()
                 self._append(StructuralElementKind.MODULE, self._module_name, ctx)
             body = ctx.moduleBody()
             if body:
