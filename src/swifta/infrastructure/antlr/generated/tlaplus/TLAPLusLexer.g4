@@ -37,10 +37,10 @@ fragment CASE2c : [WS] ([a-zA-EG-Z0-9])? (LETTER | DIGIT)* '.' './\\' ;
 // WF_ and SF_ identifiers
 fragment CASE3 : ('WF' | 'SF') ((LETTER | DIGIT) (LETTER | '_' | DIGIT)*)? ;
 
-// Standard identifiers (letters not starting with W, S, U, or reserved)
-fragment CASE6 : [a-zA-EG-Z] (LETTER | '_' | DIGIT)* ;
-fragment CASE6b : [a-zA-EG-Z] (LETTER | DIGIT)* '.' '\\/' ;
-fragment CASE6c : [a-zA-EG-Z] (LETTER | DIGIT)* '.' './\\' ;
+// Standard identifiers (letters not starting with W or S, or reserved)
+fragment CASE6 : [a-zA-Z] (LETTER | '_' | DIGIT)* ;
+fragment CASE6b : [a-zA-Z] (LETTER | DIGIT)* '.' '\\/' ;
+fragment CASE6c : [a-zA-Z] (LETTER | DIGIT)* '.' './\\' ;
 
 // Number followed by letter identifier
 fragment CASEN : DIGIT+ LETTER (LETTER | DIGIT | '_')* ;
@@ -177,14 +177,14 @@ BOR  : BOR_FRAG ;
 
 fragment BAND_FRAG
     : (DIGIT (LETTER | DIGIT)* '.' './' '\\')
-    | ([WS] [a-zA-EG-Z0-9]? (LETTER | DIGIT)* '.' './' '\\')
-    | ([a-zA-EG-Z] (LETTER | DIGIT)* '.' './' '\\')
+    | ([WS] [a-zA-Z0-9]? (LETTER | DIGIT)* '.' './' '\\')
+    | ([a-zA-Z] (LETTER | DIGIT)* '.' './' '\\')
     ;
 
 fragment BOR_FRAG
     : (DIGIT (LETTER | DIGIT)* '.' '\\' '/')
-    | ([WS] [a-zA-EG-Z0-9]? (LETTER | DIGIT)* '.' '\\' '/')
-    | ([a-zA-EG-Z] (LETTER | DIGIT)* '.' '\\' '/')
+    | ([WS] [a-zA-Z0-9]? (LETTER | DIGIT)* '.' '\\' '/')
+    | ([a-zA-Z] (LETTER | DIGIT)* '.' '\\' '/')
     ;
 
 // Postfix operators
