@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TLA+ Structure Diagrams</title>
+  <style>
+    :root {
+      --bg: #0d1117;
+      --surface: #161b22;
+      --border: #30363d;
+      --text: #e6edf3;
+      --text-muted: #8b949e;
+      --blue: #1676dc;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, "IBM Plex Sans", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      padding: 40px;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    h1 { font-size: 24px; margin-bottom: 8px; }
+    .subtitle { color: var(--text-muted); margin-bottom: 32px; font-size: 14px; }
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 20px;
+      margin-bottom: 16px;
+      transition: border-color 0.2s;
+    }
+    .card:hover { border-color: var(--blue); }
+    .card h2 { font-size: 18px; margin-bottom: 6px; }
+    .card p { color: var(--text-muted); font-size: 13px; margin-bottom: 12px; }
+    .card a {
+      color: var(--blue);
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 14px;
+    }
+    .card a:hover { text-decoration: underline; }
+    .stats { display: flex; gap: 16px; margin-bottom: 12px; }
+    .stat {
+      background: var(--bg);
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-family: monospace;
+    }
+  </style>
+</head>
+<body>
+  <h1>TLA+ Structure Diagrams</h1>
+  <p class="subtitle">Generated from ANTLR4 parser — Nassi-Shneiderman-style module structure visualization</p>
+
+  <div class="card">
+    <h2>valid.tla</h2>
+    <p>Simple TLA+ module with variables, definitions, and a theorem.</p>
+    <div class="stats">
+      <span class="stat">6 elements</span>
+      <span class="stat">3 diagnostics</span>
+      <span class="stat">57ms</span>
+    </div>
+    <a href="valid.tla.html">View Diagram →</a>
+  </div>
+
+  <div class="card">
+    <h2>allocator.tla</h2>
+    <p>Resource allocator specification with constants, variables, operator definitions, and temporal properties.</p>
+    <div class="stats">
+      <span class="stat">7 elements</span>
+      <span class="stat">5 diagnostics</span>
+      <span class="stat">44ms</span>
+    </div>
+    <a href="allocator.tla.html">View Diagram →</a>
+  </div>
+</body>
+</html>
