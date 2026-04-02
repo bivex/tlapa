@@ -187,7 +187,7 @@ nonExpPrefixOp
 
 infixOp
     : DOUBLE_SLASH
-    | AND_SYM
+    | AND
     | NOT_EQUALS
     | SLASH
     | OR
@@ -526,7 +526,7 @@ orExpr
 
 // Precedence level 4: Conjunction
 andExpr
-    : andExpr (AND_SYM | LAND) junctionExpr                                         #AndBinaryExpr
+    : andExpr (AND | LAND) junctionExpr                                         #AndBinaryExpr
     | junctionExpr                                                                  #AndPassThrough
     ;
 
@@ -578,7 +578,7 @@ addExpr
     : addExpr (PLUS | PLUS_PLUS | MINUS | DASH_DASH | OPLUS | OPLUS_UC | OMINUS | OMINUS_UC
               | UPLUS | UPLUS_UC | SQCUP | SQCUP_UC | SQCAP | SQCAP_UC
               | CAP | CAP_UC | CUP | CUP_UC | BACKSLASH | WR | WR_UC
-              | OR | LAND | LOR | AND_SYM
+              | OR | LAND | LOR | AND
               | OPLUS_PAREN | OMINUS_PAREN) multExpr                                 #AddBinaryExpr
     | multExpr                                                                       #AddPassThrough
     ;
