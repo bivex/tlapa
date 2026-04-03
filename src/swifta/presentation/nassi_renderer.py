@@ -30,6 +30,7 @@ BH = 30  # block height
 BP = 4  # padding between blocks
 INDENT = 16  # indent per nesting level
 COND_H = 32  # IF condition triangle height
+MIN_HALF = 120  # minimum half-width for IF branches
 
 # ---------------------------------------------------------------------------
 # Colour palette (dark theme)
@@ -49,6 +50,7 @@ C_THEN = "#3fb950"
 C_ELSE = "#f85149"
 C_ARM = "#bc8cff"
 C_COND_TEXT = "#58a6ff"
+C_DIVIDER = "#30363d"
 
 # ---------------------------------------------------------------------------
 # SVG helpers
@@ -103,15 +105,62 @@ def _svg_triangle(x: float, y: float, w: float, h: float, fill: str, stroke: str
     )
 
 
-def _svg_divider(y: float, x1: float, x2: float, label: str = "", color: str = C_TEXT_DIM) -> str:
-    """Thin divider line with optional label."""
-    parts = [f'<line x1="{x1}" y1="{y}" x2="{x2}" y2="{y}" stroke="{color}" stroke-width="0.5" opacity="0.5"/>']
-    if label:
-        parts.append(
-            f'<text x="{x1 + 4}" y="{y - 2}" fill="{color}" '
-            f'font-family="JetBrains Mono,monospace" font-size="9" opacity="0.7">{label}</text>'
-        )
-    return "".join(parts)
+def _svg_divider_v(x: float, y1: float, y2: float, color: str = C_COND_ST) -> str:
+    """Vertical divider line (for IF side-by-side branches)."""
+    return (
+        f'<line x1="{x}" y1="{y1}" x2="{x}" y2="{y2}" '
+        f'stroke="{color}" stroke-width="1.5" opacity="0.6"/>'
+    )
+
+
+def _svg_padding(x: float, y: float, w: float, h: float) -> str:
+    """Empty padding rect to equalise branch heights."""
+    return (
+        f'<rect x="{x}" y="{y}" width="{w}" height="{h}" '
+        f'fill="{C_ACTION}" stroke="{C_DIVIDER}" stroke-width="0.5" opacity="0.15"/>'
+    )
+
+
+# ---------------------------------------------------------------------------
+# Height measurement (no rendering)
+# ---------------------------------------------------------------------------
+
+def _measure(block: Block | None, w: float) -> float:
+    """Compute the pixel height needed to render *block* at width *w*."""
+    if block is None or isinstance(block, EmptyBlock):
+        return 0
+
+    if isinstance(block, ActionBlock):
+        return BH + BP
+
+    if isinstance(block, SequenceBlock):
+        total = 0.0
+        for child in block.children:
+            total += _measure(child, w)
+        return total
+
+    if isinstance(block, SelectionBlock):
+        half = max(w / 2, MIN_HALF)
+        h = COND_H + BP
+        then_h = _measure(block.then_branch, half)
+        else_h = _measure(block.else_branch, half)
+        h += max(then_h, else_h)
+        return h
+
+    if isinstance(block, CaseBlock):
+        h = BH + BP  # header
+        for _, body in block.arms:
+            h += BH + BP  # arm label row
+            h += _measure(body, w - INDENT)
+        return h
+
+    if isinstance(block, ScopeBlock):
+        h = BH + BP  # header
+        for child in block.children:
+            h += _measure(child, w - INDENT)
+        return h
+
+    return BH + BP
 
 
 # ---------------------------------------------------------------------------
@@ -122,10 +171,6 @@ def render_nassi_diagram(root: Block, op_name: str, variant: str = "seq") -> str
     """Render NSD block tree to SVG string."""
     parts: list[str] = []
     y = MY
-
-    # --- Measure pass (compute total height) ---
-    # We do a two-pass approach: first measure, then draw.
-    # For simplicity we draw in one pass and compute height at the end.
 
     def draw(block: Block, x: float, y: float, w: float, depth: int = 0) -> float:
         """Draw a block. Returns new y position."""
@@ -180,7 +225,7 @@ def render_nassi_diagram(root: Block, op_name: str, variant: str = "seq") -> str
 
 
 # ---------------------------------------------------------------------------
-# Selection (IF/THEN/ELSE)
+# Selection (IF/THEN/ELSE) — side-by-side NSD layout
 # ---------------------------------------------------------------------------
 
 def _draw_selection(block: SelectionBlock, x: float, y: float, w: float,
@@ -189,21 +234,40 @@ def _draw_selection(block: SelectionBlock, x: float, y: float, w: float,
     then_br = block.then_branch
     else_br = block.else_branch
 
-    # 1. Draw triangle header
+    half_w = max(w / 2, MIN_HALF)
+
+    # Measure branch heights
+    then_h = _measure(then_br, half_w) if then_br and not isinstance(then_br, EmptyBlock) else 0
+    else_h = _measure(else_br, half_w) if else_br and not isinstance(else_br, EmptyBlock) else 0
+    max_h = max(then_h, else_h)
+
+    # 1. Draw triangle header (full width)
     parts.append(_svg_triangle(x, y, w, COND_H, C_COND_BG, C_COND_ST, cond))
     y += COND_H + BP
+    branch_top = y
 
-    # 2. THEN branch — full width
+    # 2. Draw THEN branch (left half)
+    then_used = 0.0
     if then_br and not isinstance(then_br, EmptyBlock):
-        y = draw_block(then_br, x, y, w, depth + 1, parts)
+        then_used = draw_block(then_br, x, y, half_w, depth + 1, parts)
 
-    # 3. ELSE branch — full width, with divider
+    # 3. Padding for THEN if shorter
+    if then_h < max_h:
+        parts.append(_svg_padding(x, y + then_h, half_w, max_h - then_h - BP))
+
+    # 4. Draw ELSE branch (right half)
+    else_used = 0.0
     if else_br and not isinstance(else_br, EmptyBlock):
-        parts.append(_svg_divider(y, x, x + w, "ELSE", C_ELSE))
-        y += BP * 2
-        y = draw_block(else_br, x, y, w, depth + 1, parts)
+        else_used = draw_block(else_br, x + half_w, y, half_w, depth + 1, parts)
 
-    return y
+    # 5. Padding for ELSE if shorter
+    if else_h < max_h:
+        parts.append(_svg_padding(x + half_w, y + else_h, half_w, max_h - else_h - BP))
+
+    # 6. Vertical divider between branches
+    parts.append(_svg_divider_v(x + half_w, branch_top, branch_top + max_h))
+
+    return y + max_h
 
 
 def draw_block(block: Block, x: float, y: float, w: float,
