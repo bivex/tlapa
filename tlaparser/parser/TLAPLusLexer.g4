@@ -74,8 +74,8 @@ SPEC_SKIP : [ \t\n\r] -> skip ;
 
 // Comments
 fragment BLOCK_COMMENT_START : '(*.' | '(*' ;
-SPEC_BLOCK_COMMENT_OPEN : BLOCK_COMMENT_START -> pushMode(IN_COMMENT_MODE) ;
-SPEC_LINE_COMMENT : '\\*' -> pushMode(IN_EOL_COMMENT_MODE) ;
+SPEC_BLOCK_COMMENT_OPEN : BLOCK_COMMENT_START -> pushMode(IN_COMMENT_MODE), channel(HIDDEN) ;
+SPEC_LINE_COMMENT : '\\*' -> pushMode(IN_EOL_COMMENT_MODE), channel(HIDDEN) ;
 
 // Structural markers
 SEPARATOR : '----' '-'* ;
