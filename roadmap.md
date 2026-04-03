@@ -25,6 +25,7 @@ This document outlines the completion tasks for the TLA+ parser implementation b
 - [x] **Action expressions `[A]_v`**: Added `LSB expression ARSB reducedExpression` alternative to `primaryExpression` for standalone action formulas (e.g., `[][Next]_<<vars>>`)
 - [x] **Double-index EXCEPT**: `[voted_for EXCEPT ![node][msg.from] = TRUE]` works correctly
 - [x] **fieldVal** accepts any expression as left side of `|->` (e.g., `[msg.last_log_index |-> ...]`)
+- [x] **maybeBound rule**: Fixed `IN_KW` → `IN` so bounded CHOOSE (`CHOOSE x \in S : P(x)`) parses correctly
 
 ### Example Files
 - [x] All 54 example TLA+ files parse without errors (was 48 OK / 6 FAIL)
@@ -35,20 +36,9 @@ This document outlines the completion tasks for the TLA+ parser implementation b
 - [x] SVG rendering with dark theme
 - [x] Single file and directory batch processing
 - [x] Index page generation for multi-file specs
-
----
-
-## 🔄 In Progress / Partially Done
-
-### Parser Adapter
-- [x] ~~Fix operator extraction after grammar changes~~ (mostly working)
-- [x] Remove dead code (unreachable strings after return, duplicate methods)
-- [x] Handle all edge cases in operator signature extraction
-- [x] Improve diagnostics for ill-formed specs
-
----
-
-## ⏳ Future Milestones
+- [x] Embedded Nassi diagrams in structural HTML (inline SVG after matching elements)
+- [x] THEOREM and PROOF diagram support in Nassi builder
+- [x] Proof step diagrams (HAVE, TAKE, WITNESS, PICK, CASE, ASSERT, QED, USE/HIDE, DEFINE)
 
 ### Grammar Completeness
 - [x] Add support for temporal operators (`[]`, `<>`, `WF_`, `SF_`)
@@ -60,16 +50,34 @@ This document outlines the completion tasks for the TLA+ parser implementation b
 - [x] `USE` and `HIDE` clauses
 
 ### Error Reporting
-- [ ] More precise error messages with suggested fixes
-- [ ] Error recovery to continue parsing after errors
-- [ ] Warning level diagnostics (non-fatal issues)
-- [ ] Source location tracking with proper line/column
+- [x] More precise error messages with TLA+-specific suggested fixes (22 hint patterns)
+- [x] Error recovery to continue parsing after errors (SLL fast path + LL full path with DefaultErrorStrategy)
+- [x] Warning level diagnostics (non-fatal issues) with false-positive classification
+- [x] Source location tracking with line/column + end_line/end_column ranges
+
+### Parser Adapter
+- [x] Fix operator extraction after grammar changes
+- [x] Remove dead code (unreachable strings after return, duplicate methods)
+- [x] Handle all edge cases in operator signature extraction (infix, prefix, postfix)
+- [x] Improve diagnostics for ill-formed specs
+- [x] Proof/step visitors (visitProof, visitStep, visitQedStep, HAVE, TAKE, WITNESS, PICK, CASE, ASSERT)
+- [x] Diagnostic classification with false-positive filtering
+
+### Performance & Scalability
+- [x] Parse result caching (LRU cache, SHA-256 hashing, configurable maxsize)
+
+### Testing
+- [x] 31 tests covering temporal operators, proof syntax, LAMBDA/CHOOSE, USE/HIDE, parse cache, error reporting, warning diagnostics, diagnostic DTOs
+
+---
+
+## ⏳ Future Milestones
 
 ### Performance & Scalability
 - [ ] Incremental parsing for large specs
-- [ ] Parse result caching
 - [ ] Background parsing for IDE integration
 - [ ] Memory usage optimization
+- [ ] Performance benchmarks (<100ms for 500 lines)
 
 ### Tooling & Integration
 - [ ] Language Server Protocol (LSP) support
@@ -88,7 +96,9 @@ This document outlines the completion tasks for the TLA+ parser implementation b
 
 ## 🐛 Known Issues
 
-_(All previously known issues have been resolved. See Grammar Bug Fixes above.)_
+- **Step numbers on proof step diagrams**: `_get_step_number()` works for `QedStepContext` but not for `StepContext` children (e.g., `AssertStepContext`) because the visitor's context map stores inner step contexts without parent pointers.
+- **BY clause with multiple references**: `BY <1>, <2>` doesn't parse; only single references like `BY <1>` work.
+- **Instantiation steps in proofs**: `instantiation` rule exists in grammar but NassiBuilder doesn't handle it.
 
 ---
 
@@ -96,6 +106,8 @@ _(All previously known issues have been resolved. See Grammar Bug Fixes above.)_
 
 - [x] All specs in `example/` directory parse without errors (54/54)
 - [x] Nassi-Shneiderman diagrams generated for all operators
+- [x] Parse result caching implemented
+- [x] Error recovery with diagnostic collection
 - [ ] 90%+ compatibility with TLA+ community specs (tlaplus/examples)
 - [ ] Parse performance < 100ms for typical specs (500 lines)
 - [ ] Zero crashes on malformed input (graceful error reporting)

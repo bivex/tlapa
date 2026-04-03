@@ -134,6 +134,8 @@ def _map_source_outcome(outcome: ParseOutcome) -> SourceParseReportDTO:
                 message=diagnostic.message,
                 line=diagnostic.line,
                 column=diagnostic.column,
+                end_line=diagnostic.end_line,
+                end_column=diagnostic.end_column,
             )
             for diagnostic in outcome.diagnostics
         ),

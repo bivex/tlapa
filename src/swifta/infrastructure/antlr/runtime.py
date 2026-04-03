@@ -9,7 +9,7 @@ from dataclasses import dataclass
 
 from antlr4 import CommonTokenStream, InputStream
 from antlr4.atn.PredictionMode import PredictionMode
-from antlr4.error.ErrorStrategy import DefaultErrorStrategy
+from antlr4.error.ErrorStrategy import BailErrorStrategy, DefaultErrorStrategy
 from antlr4.error.Errors import ParseCancellationException
 
 from swifta.domain.errors import GeneratedParserNotAvailableError
@@ -202,8 +202,7 @@ def _parse_entry_text_fast(
     token_stream = CommonTokenStream(lexer)
     parser = generated.parser_type(token_stream)
     parser._interp.predictionMode = PredictionMode.SLL
-    # Use DefaultErrorStrategy for better recovery instead of BailErrorStrategy
-    parser._errHandler = DefaultErrorStrategy()
+    parser._errHandler = BailErrorStrategy()
     parser.removeErrorListeners()
 
     tree = getattr(parser, entry_rule_name)()
@@ -236,6 +235,7 @@ def _parse_entry_text_full(
     parser_errors = CollectingErrorListener()
     parser.removeErrorListeners()
     parser.addErrorListener(parser_errors)
+    parser._errHandler = DefaultErrorStrategy()
 
     tree = getattr(parser, entry_rule_name)()
     token_stream.fill()

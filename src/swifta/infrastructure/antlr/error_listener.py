@@ -46,6 +46,51 @@ _TLA_FIXES: list[tuple[str, str, str]] = [
         "operator definitions should use '==', not '='",
         "definition",
     ),
+    (
+        r"mismatched input 'IF'",
+        "IF-THEN-ELSE requires THEN and ELSE branches: IF cond THEN a ELSE b",
+        "if_then_else",
+    ),
+    (
+        r"mismatched input 'THEN'",
+        "THEN must follow the condition in IF-THEN-ELSE",
+        "if_then_else",
+    ),
+    (
+        r"mismatched input 'ELSE'",
+        "ELSE must follow the THEN branch in IF-THEN-ELSE",
+        "if_then_else",
+    ),
+    (
+        r"mismatched input 'LET'",
+        "LET-IN expressions require: LET def == ... IN expr",
+        "let_in",
+    ),
+    (
+        r"missing 'IN'",
+        "LET-IN expression is missing the IN keyword",
+        "let_in",
+    ),
+    (
+        r"missing 'THEN'",
+        "IF-THEN-ELSE is missing THEN after the condition",
+        "if_then_else",
+    ),
+    (
+        r"missing 'ELSE'",
+        "IF-THEN-ELSE is missing ELSE after the THEN branch",
+        "if_then_else",
+    ),
+    (
+        r"token recognition error at: '=='",
+        "use '==' for definitions (two equal signs)",
+        "definition",
+    ),
+    (
+        r"missing SEPARATOR",
+        "module body must follow the module header '---- MODULE Name ----'",
+        "begin_module",
+    ),
     (r"expecting", "unexpected token; check operator spelling and TLA+ syntax", "syntax"),
 ]
 
@@ -57,12 +102,28 @@ class CollectingErrorListener(ErrorListener):
 
     def syntaxError(self, recognizer, offendingSymbol, line, column, msg, e):
         enhanced = _enhance_message(msg)
+        end_line = line
+        end_column = column
+        if offendingSymbol and hasattr(offendingSymbol, "stop"):
+            try:
+                stop = offendingSymbol.stop
+                if stop is not None and hasattr(stop, "line"):
+                    end_line = stop.line if hasattr(stop, "line") else line
+                    end_column = (stop.column + 1) if hasattr(stop, "column") else column
+            except (AttributeError, TypeError):
+                pass
+        elif offendingSymbol and hasattr(offendingSymbol, "text"):
+            text_len = len(offendingSymbol.text) if offendingSymbol.text else 1
+            end_line = line
+            end_column = column + text_len
         self.diagnostics.append(
             SyntaxDiagnostic(
                 severity=DiagnosticSeverity.ERROR,
                 message=enhanced,
                 line=line,
                 column=column,
+                end_line=end_line,
+                end_column=end_column,
             )
         )
 
@@ -73,12 +134,19 @@ class WarningCollectingListener(ErrorListener):
         self.diagnostics: list[SyntaxDiagnostic] = []
 
     def syntaxError(self, recognizer, offendingSymbol, line, column, msg, e):
+        end_line = line
+        end_column = column
+        if offendingSymbol and hasattr(offendingSymbol, "text"):
+            text_len = len(offendingSymbol.text) if offendingSymbol.text else 1
+            end_column = column + text_len
         self.diagnostics.append(
             SyntaxDiagnostic(
                 severity=DiagnosticSeverity.WARNING,
                 message=msg,
                 line=line,
                 column=column,
+                end_line=end_line,
+                end_column=end_column,
             )
         )
 
@@ -92,6 +160,10 @@ def _enhance_message(message: str) -> str:
 
 def format_diagnostic(diag: SyntaxDiagnostic, source_lines: list[str] | None = None) -> str:
     loc = f"L{diag.line}:{diag.column}"
+    if diag.end_line and diag.end_line != diag.line:
+        loc += f"-L{diag.end_line}:{diag.end_column}"
+    elif diag.end_column and diag.end_column != diag.column:
+        loc += f"-{diag.end_column}"
     sev = diag.severity.value.upper()
     msg = diag.message
     ctx = ""

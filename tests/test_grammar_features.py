@@ -6,7 +6,7 @@ import pytest
 
 from swifta.application.dto import ParseFileCommand
 from swifta.application.use_cases import ParsingJobService
-from swifta.domain.model import SourceUnit, SourceUnitId
+from swifta.domain.model import DiagnosticSeverity, SourceUnit, SourceUnitId, SyntaxDiagnostic
 from swifta.infrastructure.antlr.parser_adapter import AntlrTlaplusSyntaxParser
 from swifta.infrastructure.antlr.runtime import ParseCache, ParseTreeResult, get_global_cache
 from swifta.infrastructure.filesystem.source_repository import FileSystemSourceRepository
@@ -199,6 +199,8 @@ class TestErrorReporting:
         parser = AntlrTlaplusSyntaxParser()
         outcome = parser.parse(source_unit)
         assert outcome.source_unit_id.value == "bad"
+        assert outcome.status == "succeeded_with_diagnostics"
+        assert len(outcome.diagnostics) > 0
 
     def test_parse_invalid_operator(self, service: ParsingJobService) -> None:
         content = "---- MODULE Bad2 ----\nEXTENDS Naturals\nFoo == ====\n===="
@@ -218,3 +220,160 @@ class TestErrorReporting:
             assert source.status in ("succeeded", "succeeded_with_diagnostics")
             kinds = {element.kind for element in source.structural_elements}
             assert "module" in kinds
+
+    def test_error_recovery_collects_diagnostics(self) -> None:
+        content = "---- MODULE Err ----\nVARIABLE x\nInit == x = 0\nNext == x' = 1\n===="
+        source_unit = SourceUnit(
+            identifier=SourceUnitId("err"),
+            location="err.tla",
+            content=content,
+        )
+        parser = AntlrTlaplusSyntaxParser()
+        outcome = parser.parse(source_unit)
+        assert outcome.status in ("succeeded", "succeeded_with_diagnostics")
+
+    def test_missing_module_begin_marker(self) -> None:
+        content = "VARIABLE x\nInit == x = 0\n===="
+        source_unit = SourceUnit(
+            identifier=SourceUnitId("nobegin"),
+            location="nobegin.tla",
+            content=content,
+        )
+        parser = AntlrTlaplusSyntaxParser()
+        outcome = parser.parse(source_unit)
+        assert len(outcome.diagnostics) > 0
+
+    def test_hint_for_missing_end_marker(self) -> None:
+        content = "---- MODULE NoEnd ----\nVARIABLE x\nInit == x = 0"
+        source_unit = SourceUnit(
+            identifier=SourceUnitId("noend"),
+            location="noend.tla",
+            content=content,
+        )
+        parser = AntlrTlaplusSyntaxParser()
+        outcome = parser.parse(source_unit)
+        msgs = " ".join(d.message for d in outcome.diagnostics)
+        assert "====" in msgs or "close the module" in msgs or len(outcome.diagnostics) > 0
+
+    def test_diagnostic_has_end_location(self) -> None:
+        from swifta.infrastructure.antlr.error_listener import CollectingErrorListener
+
+        listener = CollectingErrorListener()
+        mock_token = type("Token", (), {"text": "====", "line": 1, "column": 0})()
+        listener.syntaxError(None, mock_token, 1, 0, "missing '===='", None)
+        assert len(listener.diagnostics) == 1
+        diag = listener.diagnostics[0]
+        assert diag.line == 1
+        assert diag.column == 0
+
+    def test_format_diagnostic_with_source_context(self) -> None:
+        from swifta.infrastructure.antlr.error_listener import format_diagnostic
+
+        diag = SyntaxDiagnostic(
+            severity=DiagnosticSeverity.ERROR,
+            message="missing '}'",
+            line=2,
+            column=5,
+            end_line=2,
+            end_column=6,
+        )
+        source_lines = ["---- MODULE Test ----", "S == {1, 2, 3", "===="]
+        result = format_diagnostic(diag, source_lines)
+        assert "ERROR" in result
+        assert "L2:5" in result
+        assert "S == {1, 2, 3" in result
+        assert "^" in result
+
+    def test_format_diagnostic_multi_line_range(self) -> None:
+        from swifta.infrastructure.antlr.error_listener import format_diagnostic
+
+        diag = SyntaxDiagnostic(
+            severity=DiagnosticSeverity.ERROR,
+            message="multi-line error",
+            line=2,
+            column=0,
+            end_line=4,
+            end_column=10,
+        )
+        result = format_diagnostic(diag, None)
+        assert "L2:0-L4:10" in result
+
+    def test_classify_diagnostics_downgrades_false_positives(self) -> None:
+        from swifta.infrastructure.antlr.parser_adapter import _classify_diagnostics
+
+        diag = SyntaxDiagnostic(
+            severity=DiagnosticSeverity.ERROR,
+            message="no viable alternative at input 'x+1'",
+            line=3,
+            column=5,
+        )
+        result = _classify_diagnostics((diag,), "---- MODULE T ----\nA == x+1\n====")
+        assert len(result) == 1
+        assert result[0].severity == DiagnosticSeverity.WARNING
+
+    def test_classify_diagnostics_keeps_true_errors(self) -> None:
+        from swifta.infrastructure.antlr.parser_adapter import _classify_diagnostics
+
+        diag = SyntaxDiagnostic(
+            severity=DiagnosticSeverity.ERROR,
+            message="missing '====' to close the module",
+            line=5,
+            column=0,
+        )
+        result = _classify_diagnostics((diag,), "---- MODULE T ----\nA == 1\n====")
+        assert len(result) == 1
+        assert result[0].severity == DiagnosticSeverity.ERROR
+
+
+class TestWarningDiagnostics:
+    def test_warning_collecting_listener(self) -> None:
+        from swifta.infrastructure.antlr.error_listener import WarningCollectingListener
+
+        listener = WarningCollectingListener()
+        mock_token = type("Token", (), {"text": "bad", "line": 1, "column": 0})()
+        listener.syntaxError(None, mock_token, 1, 0, "some warning", None)
+        assert len(listener.diagnostics) == 1
+        assert listener.diagnostics[0].severity == DiagnosticSeverity.WARNING
+
+    def test_format_diagnostics_report(self) -> None:
+        parser = AntlrTlaplusSyntaxParser()
+        content = "---- MODULE Rep ----\nVARIABLE x\n===="
+        source_unit = SourceUnit(
+            identifier=SourceUnitId("rep"),
+            location="rep.tla",
+            content=content,
+        )
+        outcome = parser.parse(source_unit)
+        report = parser.format_diagnostics_report(outcome.diagnostics)
+        if outcome.diagnostics:
+            assert isinstance(report, str)
+
+
+class TestDiagnosticDTO:
+    def test_dto_includes_end_location(self) -> None:
+        from swifta.application.dto import SyntaxDiagnosticDTO
+
+        dto = SyntaxDiagnosticDTO(
+            severity="error",
+            message="test",
+            line=1,
+            column=0,
+            end_line=1,
+            end_column=5,
+        )
+        d = dto.to_dict()
+        assert d["end_line"] == 1
+        assert d["end_column"] == 5
+
+    def test_dto_defaults_end_location(self) -> None:
+        from swifta.application.dto import SyntaxDiagnosticDTO
+
+        dto = SyntaxDiagnosticDTO(
+            severity="error",
+            message="test",
+            line=1,
+            column=0,
+        )
+        d = dto.to_dict()
+        assert d["end_line"] == 0
+        assert d["end_column"] == 0

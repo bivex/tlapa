@@ -81,6 +81,8 @@ class SyntaxDiagnostic:
     message: str
     line: int
     column: int
+    end_line: int = 0
+    end_column: int = 0
 
 
 @dataclass(frozen=True, slots=True)

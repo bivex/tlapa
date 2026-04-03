@@ -93,6 +93,17 @@ _TRUE_PATTERNS = (
     "unexpected token; check operator spelling and TLA+ syntax",
     "use '<<' for tuple start, not '<'",
     "use '>>' for tuple end, not '>'",
+    "use '==' for definitions",
+    "use '==' for operator definitions",
+    "operator definitions should use '=='",
+    "IF-THEN-ELSE requires THEN and ELSE branches",
+    "THEN must follow the condition in IF-THEN-ELSE",
+    "ELSE must follow the THEN branch in IF-THEN-ELSE",
+    "LET-IN expressions require",
+    "LET-IN expression is missing the IN keyword",
+    "IF-THEN-ELSE is missing THEN",
+    "IF-THEN-ELSE is missing ELSE",
+    "module body must follow the module header",
 )
 
 
@@ -245,6 +256,8 @@ def _downgrade_diagnostic(diag: SyntaxDiagnostic) -> SyntaxDiagnostic:
         message=diag.message,
         line=diag.line,
         column=diag.column,
+        end_line=diag.end_line,
+        end_column=diag.end_column,
     )
 
 

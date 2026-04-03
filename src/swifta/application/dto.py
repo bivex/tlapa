@@ -24,6 +24,8 @@ class SyntaxDiagnosticDTO:
     message: str
     line: int
     column: int
+    end_line: int = 0
+    end_column: int = 0
 
     def to_dict(self) -> dict[str, object]:
         return {
@@ -31,6 +33,8 @@ class SyntaxDiagnosticDTO:
             "message": self.message,
             "line": self.line,
             "column": self.column,
+            "end_line": self.end_line,
+            "end_column": self.end_column,
         }
 
 
@@ -126,4 +130,3 @@ class ParsingJobReportDTO:
             "summary": self.summary.to_dict(),
             "sources": [source.to_dict() for source in self.sources],
         }
-
