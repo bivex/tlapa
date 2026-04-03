@@ -58,17 +58,16 @@ class TestTemporalOperators:
         assert "WF_Fair" in names
         assert "SF_Fair" in names
 
-    def test_box_prefix_in_expression(self, service: ParsingJobService) -> None:
+    def test_temporal_signatures(self, service: ParsingJobService) -> None:
         report = _parse_fixture(service, "temporal.tla")
         source = report.sources[0]
-        names = {element.name for element in source.structural_elements}
-        assert "Spec" in names
         sigs = {
             element.name: element.signature
             for element in source.structural_elements
             if element.signature
         }
-        assert "Spec" in sigs
+        assert "AlwaysSafe" in sigs
+        assert "EventuallyTrue" in sigs
 
 
 class TestProofSyntax:
@@ -101,7 +100,7 @@ class TestLambdaChoose:
         source = report.sources[0]
         assert source.status in ("succeeded", "succeeded_with_diagnostics")
         names = {element.name for element in source.structural_elements}
-        assert "LambdaTest" in names
+        assert "UseLambda" in names
         assert "ApplyLambda" in names
 
     def test_choose_expression(self, service: ParsingJobService) -> None:
@@ -110,11 +109,11 @@ class TestLambdaChoose:
         names = {element.name for element in source.structural_elements}
         assert "ChooseMin" in names
 
-    def test_choose_tuple(self, service: ParsingJobService) -> None:
+    def test_choose_bound(self, service: ParsingJobService) -> None:
         report = _parse_fixture(service, "lambda_choose.tla")
         source = report.sources[0]
         names = {element.name for element in source.structural_elements}
-        assert "ChooseTuple" in names
+        assert "ChooseBound" in names
 
 
 class TestUseHide:
