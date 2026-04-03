@@ -350,7 +350,7 @@ maybeBound
 
 proof
     : terminalProof
-    | (PROOF_KW)? (OBVIOUS_KW | OMITTED_KW)
+    | (PROOF_KW)? BY_KW? (OBVIOUS_KW | OMITTED_KW)
     | (PROOF_KW)? step* qedStep
     ;
 
@@ -358,6 +358,7 @@ terminalProof
     : (PROOF_KW)? BY_KW ONLY_KW?
       ((MODULE_KW IDENTIFIER | expression) (COMMA (MODULE_KW IDENTIFIER | expression))*)?
       (DF_KW (MODULE_KW IDENTIFIER | expression) (COMMA (MODULE_KW IDENTIFIER | expression))*)?
+      (OBVIOUS_KW | OMITTED_KW)?
     ;
 
 useOrHide
@@ -391,6 +392,8 @@ step
       | pickStep
       | caseStep
       | assertStep
+      | terminalProof
+      | (OBVIOUS_KW | OMITTED_KW)
       )
       proof?
     ;

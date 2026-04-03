@@ -130,14 +130,15 @@ class TestUseHide:
         # Proof steps (TAKE, WITNESS, HAVE) are extracted under 'proof' kind
         proof_elems = [e for e in source.structural_elements if e.kind == "proof"]
         proof_names = {e.name for e in proof_elems}
-        assert "TAKE" in proof_names
-        assert "WITNESS" in proof_names
-        assert "HAVE" in proof_names
-        # Verify signatures contain expected content
-        take_sigs = [e.signature for e in proof_elems if e.name == "TAKE"]
-        witness_sigs = [e.signature for e in proof_elems if e.name == "WITNESS"]
+        assert any("TAKE" in n for n in proof_names)
+        assert any("WITNESS" in n for n in proof_names)
+        assert any("HAVE" in n for n in proof_names)
+        take_sigs = [e.signature for e in proof_elems if "TAKE" in e.name]
+        witness_sigs = [e.signature for e in proof_elems if "WITNESS" in e.name]
         assert any("TAKEn\\inNat" in sig for sig in take_sigs if sig)
         assert any("WITNESS n+1" in sig for sig in witness_sigs if sig)
+        assert any("OBVIOUS" in n for n in proof_names)
+        assert any("QED" in n for n in proof_names)
 
 
 class TestParseCache:

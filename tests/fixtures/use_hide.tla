@@ -13,5 +13,5 @@ PROOF
     <4> TAKE n \in Nat
     <5> WITNESS n + 1
     <6> OBVIOUS
-QED
+    <7> QED
 ====

@@ -486,87 +486,144 @@ def _build_structure_visitor(visitor_base: type) -> type:
         def visitStep(self, ctx):
             self._proof_step_counter += 1
             children = list(ctx.getChildren()) if hasattr(ctx, "children") and ctx.children else []
+            step_num = self._extract_step_start(ctx)
             for child in children:
                 child_name = type(child).__name__
                 if child_name == "DefStepContext":
-                    self._visit_def_step(child)
+                    self._visit_def_step(child, step_num)
                 elif child_name == "HaveStepContext":
-                    self._visit_have_step(child)
+                    self._visit_have_step(child, step_num)
                 elif child_name == "TakeStepContext":
-                    self._visit_take_step(child)
+                    self._visit_take_step(child, step_num)
                 elif child_name == "WitnessStepContext":
-                    self._visit_witness_step(child)
+                    self._visit_witness_step(child, step_num)
                 elif child_name == "PickStepContext":
-                    self._visit_pick_step(child)
+                    self._visit_pick_step(child, step_num)
                 elif child_name == "CaseStepContext":
-                    self._visit_case_step(child)
+                    self._visit_case_step(child, step_num)
                 elif child_name == "AssertStepContext":
-                    self._visit_assert_step(child)
+                    self._visit_assert_step(child, step_num)
+                elif child_name == "TerminalProofContext":
+                    self._visit_terminal_proof_step(child, step_num)
+                elif child_name == "TerminalNodeImpl":
+                    token_text = child.getText() if hasattr(child, "getText") else ""
+                    if token_text in ("OBVIOUS", "OMITTED"):
+                        self._visit_obvious_step(token_text, step_num, ctx)
+                elif child_name == "UseOrHideContext":
+                    self.visitUseOrHide(child)
+                elif child_name == "ProofContext":
+                    pass
                 else:
                     self.visit(child)
             return None
 
-        def visitQedStep(self, ctx):
+        def _extract_step_start(self, step_ctx) -> str | None:
+            for child in step_ctx.children or []:
+                if type(child).__name__ == "StepStartTokenContext":
+                    text = child.getText().strip()
+                    if text:
+                        return text
+            return None
+
+        def _step_prefix(self, step_num: str | None) -> str:
+            return f"{step_num} " if step_num else ""
+
+        def _visit_terminal_proof_step(self, ctx, step_num: str | None) -> None:
+            text = _truncate(ctx.getText(), 80) if ctx.getText() else "BY"
+            prefix = self._step_prefix(step_num)
             self._append(
                 StructuralElementKind.PROOF,
-                "QED",
+                f"{prefix}BY",
                 ctx,
-                signature="QED",
+                signature=f"{prefix}{text}",
+            )
+
+        def _visit_obvious_step(self, keyword: str, step_num: str | None, ctx) -> None:
+            prefix = self._step_prefix(step_num)
+            self._append(
+                StructuralElementKind.PROOF,
+                f"{prefix}{keyword}",
+                ctx,
+                signature=f"{prefix}{keyword}",
+            )
+
+        def visitQedStep(self, ctx):
+            step_num = self._extract_step_start(ctx)
+            prefix = self._step_prefix(step_num)
+            self._append(
+                StructuralElementKind.PROOF,
+                f"{prefix}QED",
+                ctx,
+                signature=f"{prefix}QED",
             )
             return self.visitChildren(ctx)
 
-        def _visit_def_step(self, ctx):
+        def _visit_def_step(self, ctx, step_num: str | None = None) -> None:
             for defn in ctx.operatorOrFunctionDefinition():
                 self.visit(defn)
-            return None
 
-        def _visit_have_step(self, ctx):
+        def _visit_have_step(self, ctx, step_num: str | None = None) -> None:
             expr_ctx = ctx.expression()
             if expr_ctx:
+                prefix = self._step_prefix(step_num)
                 self._append(
                     StructuralElementKind.PROOF,
-                    "HAVE",
+                    f"{prefix}HAVE",
                     expr_ctx,
-                    signature=f"HAVE {expr_ctx.getText()[:60]}",
+                    signature=f"{prefix}HAVE {expr_ctx.getText()[:60]}",
                 )
-            return None
 
-        def _visit_take_step(self, ctx):
+        def _visit_take_step(self, ctx, step_num: str | None = None) -> None:
             text = _truncate(ctx.getText(), 80) if ctx.getText() else "TAKE"
-            self._append(StructuralElementKind.PROOF, "TAKE", ctx, signature=text)
-            return None
-
-        def _visit_witness_step(self, ctx):
-            exprs = ctx.expression()
-            witness_text = ", ".join(e.getText() for e in exprs) if exprs else ""
+            prefix = self._step_prefix(step_num)
             self._append(
                 StructuralElementKind.PROOF,
-                "WITNESS",
+                f"{prefix}TAKE",
                 ctx,
-                signature=f"WITNESS {witness_text}",
+                signature=f"{prefix}{text}",
             )
-            return None
 
-        def _visit_pick_step(self, ctx):
+        def _visit_witness_step(self, ctx, step_num: str | None = None) -> None:
+            exprs = ctx.expression()
+            witness_text = ", ".join(e.getText() for e in exprs) if exprs else ""
+            prefix = self._step_prefix(step_num)
+            self._append(
+                StructuralElementKind.PROOF,
+                f"{prefix}WITNESS",
+                ctx,
+                signature=f"{prefix}WITNESS {witness_text}",
+            )
+
+        def _visit_pick_step(self, ctx, step_num: str | None = None) -> None:
             text = _truncate(ctx.getText(), 80) if ctx.getText() else "PICK"
-            self._append(StructuralElementKind.PROOF, "PICK", ctx, signature=text)
-            return None
+            prefix = self._step_prefix(step_num)
+            self._append(
+                StructuralElementKind.PROOF,
+                f"{prefix}PICK",
+                ctx,
+                signature=f"{prefix}{text}",
+            )
 
-        def _visit_case_step(self, ctx):
+        def _visit_case_step(self, ctx, step_num: str | None = None) -> None:
             expr_ctx = ctx.expression()
             if expr_ctx:
+                prefix = self._step_prefix(step_num)
                 self._append(
                     StructuralElementKind.PROOF,
-                    "CASE",
+                    f"{prefix}CASE",
                     expr_ctx,
-                    signature=f"CASE {expr_ctx.getText()[:60]}",
+                    signature=f"{prefix}CASE {expr_ctx.getText()[:60]}",
                 )
-            return None
 
-        def _visit_assert_step(self, ctx):
+        def _visit_assert_step(self, ctx, step_num: str | None = None) -> None:
             text = _truncate(ctx.getText(), 80) if ctx.getText() else "ASSERT"
-            self._append(StructuralElementKind.PROOF, "ASSERT", ctx, signature=text)
-            return None
+            prefix = self._step_prefix(step_num)
+            self._append(
+                StructuralElementKind.PROOF,
+                f"{prefix}ASSERT",
+                ctx,
+                signature=f"{prefix}{text}",
+            )
 
         # -- Helpers --
 
