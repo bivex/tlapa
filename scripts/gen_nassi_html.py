@@ -388,9 +388,8 @@ def main() -> int:
             self._module_name = None
 
         def visitFirstModule(self, ctx):
-            bm = ctx.beginModule()
-            if bm and bm.IDENTIFIER():
-                self._module_name = bm.IDENTIFIER().getText()
+            if ctx.IDENTIFIER():
+                self._module_name = ctx.IDENTIFIER().getText()
                 self._add("module", self._module_name, ctx)
             body = ctx.moduleBody()
             if body:
@@ -399,9 +398,8 @@ def main() -> int:
             return None
 
         def visitModule(self, ctx):
-            bm = ctx.beginModule()
-            if bm and bm.IDENTIFIER():
-                self._module_name = bm.IDENTIFIER().getText()
+            if ctx.IDENTIFIER():
+                self._module_name = ctx.IDENTIFIER().getText()
                 self._add("module", self._module_name, ctx)
             body = ctx.moduleBody()
             if body:
