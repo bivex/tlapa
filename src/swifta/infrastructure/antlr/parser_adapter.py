@@ -260,16 +260,16 @@ def _build_structure_visitor(visitor_base: type) -> type:
             container = self._module_name
             line = ctx.start.line if hasattr(ctx, "start") and ctx.start else 0
             column = ctx.start.column if hasattr(ctx, "start") and ctx.start else 0
-            self.elements.append(
-                StructuralElement(
-                    kind=kind,
-                    name=name,
-                    line=line,
-                    column=column,
-                    container=container,
-                    signature=signature,
-                )
+            element = StructuralElement(
+                kind=kind,
+                name=name,
+                line=line,
+                column=column,
+                container=container,
+                signature=signature,
             )
+            self.elements.append(element)
+            self._contexts.append((element, ctx))
 
         def _extract_decl_name(self, item_ctx) -> str:
             if item_ctx.IDENTIFIER():

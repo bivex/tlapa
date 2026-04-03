@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python:*)",
+      "Bash(python3 -m swifta nassi-file example_many_operators.tla --out /tmp/test_nsd.html)",
+      "Bash(python3:*)",
+      "Bash(PYTHONPATH=src python3 -c \"from swifta.presentation.nassi_builder import NassiBuilder; print\\('import OK'\\)\" 2>&1)",
+      "Bash(PYTHONPATH=src python3 -m swifta.presentation.cli.main nassi-file example_many_operators.tla --out /tmp/test_nsd.html 2>&1)",
+      "Bash(PYTHONPATH=src python3 -m swifta.presentation.cli.main nassi-file tests/fixtures/valid.tla --out /tmp/test_nsd_valid.html 2>&1)"
+    ]
+  }
+}

@@ -10,6 +10,7 @@ from swifta.presentation.nassi_blocks import (
     SequenceBlock,
     SelectionBlock,
     CaseBlock,
+    ScopeBlock,
 )
 
 # Constants (reuse from tlaplus_structure_renderer or define locally)
@@ -143,6 +144,17 @@ def render_nassi_diagram(root: Block, module_name: str, variant: str = "seq") ->
                 y_cur = draw_block(
                     body, x + INDENT_STEP, y_body, width - 2 * INDENT_STEP, indent + 1
                 )
+            return y_cur
+        elif isinstance(block, ScopeBlock):
+            drawn_parts.append(
+                _svg_rect(
+                    x, y, width, BLOCK_H, "#1a2744", C_BLOCK_STROKE,
+                    block.label or "SCOPE", C_TEXT, 0, "bold",
+                )
+            )
+            y_cur = y + BLOCK_H + BLOCK_PAD
+            for child in block.children:
+                y_cur = draw_block(child, x + INDENT_STEP, y_cur, width - 2 * INDENT_STEP, indent + 1)
             return y_cur
         else:
             # Unknown block type – render as text

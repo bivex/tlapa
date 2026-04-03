@@ -16,7 +16,6 @@ from swifta.infrastructure.rendering.tlaplus_structure_renderer import (
     render_index_html,
     render_single_file,
 )
-from swifta.presentation.nassi_blocks import ActionBlock, SequenceBlock
 from swifta.presentation.nassi_renderer import render_nassi_diagram
 from swifta.infrastructure.system import (
     InMemoryParsingJobRepository,
@@ -62,42 +61,67 @@ def main(argv: list[str] | None = None) -> int:
 
 
 def _nassi_file(args) -> int:
+    from swifta.domain.model import SourceUnit, SourceUnitId, StructuralElementKind
+    from swifta.presentation.nassi_builder import NassiBuilder
+
     source_path = Path(args.path).expanduser().resolve()
     content = source_path.read_text(encoding="utf-8")
 
-    # Parse using the adapter to get structural elements (we'll extract them)
+    # Parse to get structural info
     parser = AntlrTlaplusSyntaxParser()
-    outcome = parser.parse_file(str(source_path))
-    elements = outcome.structural_elements
-    module_name = outcome.module_name or "TLA+ Module"
+    source_unit = SourceUnit(
+        identifier=SourceUnitId(source_path.stem),
+        location=str(source_path),
+        content=content,
+    )
+    outcome = parser.parse(source_unit)
 
-    # Build simple NSD: sequence of elements
-    from swifta.presentation.nassi_blocks import ActionBlock, SequenceBlock
+    # Extract module name from first MODULE element
+    module_name = source_path.stem
+    for elem in outcome.structural_elements:
+        if elem.kind == StructuralElementKind.MODULE:
+            module_name = elem.name
+            break
 
-    blocks = [
-        ActionBlock(
-            text=f"{elem.kind.value.title()}: {elem.name or '<anonymous>'} (line {elem.line})"
+    # Build per-operator NSD diagrams
+    builder = NassiBuilder()
+    operator_diagrams = builder.build_all_operators(content)
+
+    # Generate HTML with one SVG per operator
+    svg_sections: list[str] = []
+    for op_name, block_tree, line_no in operator_diagrams:
+        svg = render_nassi_diagram(block_tree, op_name)
+        svg_sections.append(
+            f'<div class="operator">'
+            f'<h2>{op_name} <span class="line">line {line_no}</span></h2>'
+            f'{svg}'
+            f'</div>'
         )
-        for elem in elements
-    ]
-    root = SequenceBlock(children=blocks) if blocks else ActionBlock(text="(no elements)")
-
-    svg = render_nassi_diagram(root, module_name)
 
     out_path = _resolve_output_path(args.path, args.out)
     out_path.parent.mkdir(parents=True, exist_ok=True)
+
+    operators_html = "\n".join(svg_sections) if svg_sections else "<p>No operator definitions found.</p>"
+
     html = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <title>NSD — {module_name}</title>
 <style>
-:root{{--bg:#0d1117;--tx:#e6edf3;--mono:"JetBrains Mono","Fira Code",monospace}}
+:root{{--bg:#0d1117;--tx:#e6edf3;--accent:#58a6ff;--mono:"JetBrains Mono","Fira Code",monospace}}
 body{{background:var(--bg);color:var(--tx);font-family:var(--mono);padding:24px;margin:0}}
+h1{{font-size:20px;border-bottom:1px solid #30363d;padding-bottom:8px}}
+.operator{{margin:24px 0 32px 0}}
+h2{{font-size:15px;color:var(--accent);margin:0 0 8px 0}}
+h2 .line{{color:#8b949e;font-weight:normal;font-size:12px}}
+svg{{display:block;max-width:100%}}
 </style>
 </head>
 <body>
-{svg}
+<h1>NSD: {module_name}</h1>
+<p>{len(operator_diagrams)} operator definitions &middot; {len(outcome.diagnostics)} diagnostics</p>
+{operators_html}
 </body>
 </html>"""
     out_path.write_text(html, encoding="utf-8")
@@ -105,9 +129,8 @@ body{{background:var(--bg);color:var(--tx);font-family:var(--mono);padding:24px;
     payload = {
         "source_location": str(source_path),
         "module_name": module_name,
-        "element_count": len(elements),
+        "operator_count": len(operator_diagrams),
         "diagnostic_count": len(outcome.diagnostics),
-        "elapsed_ms": 0,  # not measured here
         "output_path": str(out_path),
     }
     print(json.dumps(payload, indent=2))
