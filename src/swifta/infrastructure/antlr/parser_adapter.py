@@ -79,19 +79,21 @@ def _build_structure_visitor(visitor_base: type) -> type:
         # -- Module-level constructs --
 
         def visitFirstModule(self, ctx):
-            # Extract module name from the beginModule child; require proper header with SEPARATOR '----'
-            bm = ctx.beginModule()
-            if not bm:
+            # firstModule: IDENTIFIER SEPARATOR extends? moduleBody endModule
+            # Check SEPARATOR token (should start with "----" for proper TLA+ module)
+            sep_tok = ctx.SEPARATOR()
+            if not sep_tok:
                 return None
-            sep_tok = bm.SEPARATOR()
-            if not sep_tok or sep_tok.getText() != "----":
+            sep_text = sep_tok.getText()
+            if not sep_text.startswith("----"):
                 return None
-            ident = bm.IDENTIFIER()
+            # Module name is the leading IDENTIFIER
+            ident = ctx.IDENTIFIER()
             if ident:
                 name = ident.getText()
                 self._module_name = name
                 self._append(StructuralElementKind.MODULE, name, ctx)
-            # Visit body children explicitly
+            # Visit module body children to extract operators, etc.
             body = ctx.moduleBody()
             if body:
                 for child in body.getChildren():
@@ -100,13 +102,13 @@ def _build_structure_visitor(visitor_base: type) -> type:
 
         def visitModule(self, ctx):
             # Subsequent modules; same header check
-            bm = ctx.beginModule()
-            if not bm:
+            sep_tok = ctx.SEPARATOR()
+            if not sep_tok:
                 return None
-            sep_tok = bm.SEPARATOR()
-            if not sep_tok or sep_tok.getText() != "----":
+            sep_text = sep_tok.getText()
+            if not sep_text.startswith("----"):
                 return None
-            ident = bm.IDENTIFIER()
+            ident = ctx.IDENTIFIER()
             if ident:
                 name = ident.getText()
                 self._module_name = name

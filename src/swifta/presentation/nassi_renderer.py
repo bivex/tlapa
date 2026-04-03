@@ -283,7 +283,7 @@ def draw_block(block: Block, x: float, y: float, w: float,
     if isinstance(block, SequenceBlock):
         cy = y
         for child in block.children:
-            cy = draw_block(child, x, cy, w, depth)
+            cy = draw_block(child, x, cy, w, depth, parts)
         return cy
     if isinstance(block, SelectionBlock):
         return _draw_selection(block, x, y, w, depth, parts)

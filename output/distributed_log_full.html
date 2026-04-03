@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>NSD — DistributedLog</title>
+<style>
+:root{--bg:#0d1117;--tx:#e6edf3;--accent:#58a6ff;--mono:"JetBrains Mono","Fira Code",monospace}
+body{background:var(--bg);color:var(--tx);font-family:var(--mono);padding:24px;margin:0}
+h1{font-size:20px;border-bottom:1px solid #30363d;padding-bottom:8px}
+.operator{margin:24px 0 32px 0}
+h2{font-size:15px;color:var(--accent);margin:0 0 8px 0}
+h2 .line{color:#8b949e;font-weight:normal;font-size:12px}
+svg{display:block;max-width:100%}
+</style>
+</head>
+<body>
+<h1>NSD: DistributedLog</h1>
+<p>14 operator definitions &middot; 8 diagnostics</p>
+<div class="operator"><h2>LogEntry <span class="line">line 11</span></h2><svg xmlns="http://www.w3.org/2000/svg" width="800" height="66" viewBox="0 0 800 66">
+<rect width="100%" height="100%" fill="#0d1117" rx="8"/>
+<rect x="20" y="16" width="760" height="30" rx="4" ry="4" fill="#161b22" stroke="#30363d" stroke-width="1"/><text x="400.0" y="35.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">[term:Nat,command:STRING]</text>
+</svg></div>
+<div class="operator"><h2>NodeState <span class="line">line 13</span></h2><svg xmlns="http://www.w3.org/2000/svg" width="800" height="66" viewBox="0 0 800 66">
+<rect width="100%" height="100%" fill="#0d1117" rx="8"/>
+<rect x="20" y="16" width="760" height="30" rx="4" ry="4" fill="#161b22" stroke="#30363d" stroke-width="1"/><text x="400.0" y="35.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">{&quot;follower&quot;,&quot;candidate&quot;,&quot;leader&quot;}</text>
+</svg></div>
+<div class="operator"><h2>MessageType <span class="line">line 15</span></h2><svg xmlns="http://www.w3.org/2000/svg" width="800" height="66" viewBox="0 0 800 66">
+<rect width="100%" height="100%" fill="#0d1117" rx="8"/>
+<rect x="20" y="16" width="760" height="30" rx="4" ry="4" fill="#161b22" stroke="#30363d" stroke-width="1"/><text x="400.0" y="35.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">{&quot;RequestVote&quot;,&quot;RequestVoteReply&quot;,&quot;AppendEntries&quot;,&quot;AppendEntriesReply&quot;}</text>
+</svg></div>
+<div class="operator"><h2>Message <span class="line">line 17</span></h2><svg xmlns="http://www.w3.org/2000/svg" width="800" height="66" viewBox="0 0 800 66">
+<rect width="100%" height="100%" fill="#0d1117" rx="8"/>
+<rect x="20" y="16" width="760" height="30" rx="4" ry="4" fill="#161b22" stroke="#30363d" stroke-width="1"/><text x="400.0" y="35.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">[type:MessageType,to:STRING,from:STRING,term:Nat,last_log_index:Nat,last_log_te…</text>
+</svg></div>
+<div class="operator"><h2>SafeLogAt <span class="line">line 32</span></h2><svg xmlns="http://www.w3.org/2000/svg" width="800" height="102" viewBox="0 0 800 102">
+<rect width="100%" height="100%" fill="#0d1117" rx="8"/>
+<polygon points="20,16 780,16 400.0,48" fill="#1a2233" stroke="#58a6ff" stroke-width="1.5"/><text x="400.0" y="30.4" text-anchor="middle" fill="#58a6ff" font-family="JetBrains Mono,Fira Code,monospace" font-size="11" font-weight="bold">idx\inDOMAINlog</text><text x="40" y="41.6" text-anchor="start" fill="#3fb950" font-family="JetBrains Mono,monospace" font-size="9" font-weight="bold">T</text><text x="760" y="41.6" text-anchor="end" fill="#f85149" font-family="JetBrains Mono,monospace" font-size="9" font-weight="bold">F</text>
+<rect x="400.0" y="52" width="380.0" height="34" fill="#f85149" fill-opacity="0.12" stroke="none"/>
+<rect x="20" y="52" width="380.0" height="30" rx="4" ry="4" fill="#161b22" stroke="#30363d" stroke-width="1"/><text x="210.0" y="71.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">log[idx]</text>
+<rect x="400.0" y="52" width="380.0" height="30" rx="4" ry="4" fill="#161b22" stroke="#30363d" stroke-width="1"/><text x="590.0" y="71.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">[term|-&gt;0,command|-&gt;&quot;&quot;]</text>
+<line x1="400.0" y1="52" x2="400.0" y2="86" stroke="#58a6ff" stroke-width="1.5" opacity="0.6"/>
+</svg></div>
+<div class="operator"><h2>LastLogIndex <span class="line">line 34</span></h2><svg xmlns="http://www.w3.org/2000/svg" width="800" height="66" viewBox="0 0 800 66">
+<rect width="100%" height="100%" fill="#0d1117" rx="8"/>
+<rect x="20" y="16" width="760" height="30" rx="4" ry="4" fill="#161b22" stroke="#30363d" stroke-width="1"/><text x="400.0" y="35.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">Len(log)</text>
+</svg></div>
+<div class="operator"><h2>LastLogTerm <span class="line">line 36</span></h2><svg xmlns="http://www.w3.org/2000/svg" width="800" height="102" viewBox="0 0 800 102">
+<rect width="100%" height="100%" fill="#0d1117" rx="8"/>
+<polygon points="20,16 780,16 400.0,48" fill="#1a2233" stroke="#58a6ff" stroke-width="1.5"/><text x="400.0" y="30.4" text-anchor="middle" fill="#58a6ff" font-family="JetBrains Mono,Fira Code,monospace" font-size="11" font-weight="bold">Len(log)=0</text><text x="40" y="41.6" text-anchor="start" fill="#3fb950" font-family="JetBrains Mono,monospace" font-size="9" font-weight="bold">T</text><text x="760" y="41.6" text-anchor="end" fill="#f85149" font-family="JetBrains Mono,monospace" font-size="9" font-weight="bold">F</text>
+<rect x="400.0" y="52" width="380.0" height="34" fill="#f85149" fill-opacity="0.12" stroke="none"/>
+<rect x="20" y="52" width="380.0" height="30" rx="4" ry="4" fill="#161b22" stroke="#30363d" stroke-width="1"/><text x="210.0" y="71.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">0</text>
+<rect x="400.0" y="52" width="380.0" height="30" rx="4" ry="4" fill="#161b22" stroke="#30363d" stroke-width="1"/><text x="590.0" y="71.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">log[Len(log)].term</text>
+<line x1="400.0" y1="52" x2="400.0" y2="86" stroke="#58a6ff" stroke-width="1.5" opacity="0.6"/>
+</svg></div>
+<div class="operator"><h2>LogMoreUpToDate <span class="line">line 38</span></h2><svg xmlns="http://www.w3.org/2000/svg" width="800" height="202" viewBox="0 0 800 202">
+<rect width="100%" height="100%" fill="#0d1117" rx="8"/>
+<rect x="20" y="16" width="760" height="30" rx="6" ry="6" fill="#1a2744" stroke="#d2a8ff" stroke-width="1"/><text x="400.0" y="35.2" text-anchor="middle" fill="#d2a8ff" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="bold">LET...IN</text>
+<rect x="36" y="50" width="744" height="30" rx="4" ry="4" fill="#161b22" stroke="#30363d" stroke-width="1"/><text x="408.0" y="69.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">term_a==LastLogTerm(log_a)</text>
+<rect x="36" y="84" width="744" height="30" rx="4" ry="4" fill="#161b22" stroke="#30363d" stroke-width="1"/><text x="408.0" y="103.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">term_b==LastLogTerm(log_b)</text>
+<rect x="36" y="118" width="744" height="30" rx="4" ry="4" fill="#161b22" stroke="#30363d" stroke-width="1"/><text x="408.0" y="137.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">term_a&gt;term_b</text>
+<rect x="36" y="152" width="744" height="30" rx="4" ry="4" fill="#161b22" stroke="#30363d" stroke-width="1"/><text x="408.0" y="171.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">(term_a=term_b/\Len(log_a)&gt;Len(log_b))</text>
+</svg></div>
+<div class="operator"><h2>MatchEntry <span class="line">line 40</span></h2><svg xmlns="http://www.w3.org/2000/svg" width="800" height="100" viewBox="0 0 800 100">
+<rect width="100%" height="100%" fill="#0d1117" rx="8"/>
+<rect x="20" y="16" width="760" height="30" rx="4" ry="4" fill="#161b22" stroke="#30363d" stroke-width="1"/><text x="400.0" y="35.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">index\inDOMAINlog</text>
+<rect x="20" y="50" width="760" height="30" rx="4" ry="4" fill="#161b22" stroke="#30363d" stroke-width="1"/><text x="400.0" y="69.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">log[index].term=term</text>
+</svg></div>
+<div class="operator"><h2>Init <span class="line">line 42</span></h2><svg xmlns="http://www.w3.org/2000/svg" width="800" height="338" viewBox="0 0 800 338">
+<rect width="100%" height="100%" fill="#0d1117" rx="8"/>
+<rect x="20" y="16" width="760" height="30" rx="4" ry="4" fill="#161b22" stroke="#30363d" stroke-width="1"/><text x="400.0" y="35.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">node_state\in[Nodes-&gt;NodeState]</text>
+<rect x="20" y="50" width="760" height="30" rx="4" ry="4" fill="#161b22" stroke="#30363d" stroke-width="1"/><text x="400.0" y="69.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">current_leader\in[Nodes-&gt;STRING]</text>
+<rect x="20" y="84" width="760" height="30" rx="4" ry="4" fill="#161b22" stroke="#30363d" stroke-width="1"/><text x="400.0" y="103.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">logs\in[Nodes-&gt;[0..MaxLogSize-&gt;LogEntry]]</text>
+<rect x="20" y="118" width="760" height="30" rx="4" ry="4" fill="#161b22" stroke="#30363d" stroke-width="1"/><text x="400.0" y="137.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">commit_index\inNat</text>
+<rect x="20" y="152" width="760" height="30" rx="4" ry="4" fill="#161b22" stroke="#30363d" stroke-width="1"/><text x="400.0" y="171.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">current_term\inNat</text>
+<rect x="20" y="186" width="760" height="30" rx="4" ry="4" fill="#161b22" stroke="#30363d" stroke-width="1"/><text x="400.0" y="205.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">voted_for\in[Nodes-&gt;[Nodes-&gt;BOOLEAN]]</text>
+<rect x="20" y="220" width="760" height="30" rx="4" ry="4" fill="#161b22" stroke="#30363d" stroke-width="1"/><text x="400.0" y="239.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">timers\in[Nodes-&gt;Nat]</text>
+<rect x="20" y="254" width="760" height="30" rx="4" ry="4" fill="#161b22" stroke="#30363d" stroke-width="1"/><text x="400.0" y="273.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">messages={}</text>
+<rect x="20" y="288" width="760" height="30" rx="4" ry="4" fill="#161b22" stroke="#30363d" stroke-width="1"/><text x="400.0" y="307.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">msg_id=0</text>
+</svg></div>
+<div class="operator"><h2>Tick <span class="line">line 53</span></h2><svg xmlns="http://www.w3.org/2000/svg" width="800" height="374" viewBox="0 0 800 374">
+<rect width="100%" height="100%" fill="#0d1117" rx="8"/>
+<rect x="20" y="16" width="760" height="30" rx="4" ry="4" fill="#0d1f0d" stroke="#3fb950" stroke-width="1"/><text x="400.0" y="35.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">msg_id'=msg_id+1</text>
+<rect x="20" y="50" width="760" height="30" rx="4" ry="4" fill="#0d1f0d" stroke="#3fb950" stroke-width="1"/><text x="400.0" y="69.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">node_state'=node_state</text>
+<rect x="20" y="84" width="760" height="30" rx="4" ry="4" fill="#0d1f0d" stroke="#3fb950" stroke-width="1"/><text x="400.0" y="103.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">current_leader'=current_leader</text>
+<rect x="20" y="118" width="760" height="30" rx="4" ry="4" fill="#0d1f0d" stroke="#3fb950" stroke-width="1"/><text x="400.0" y="137.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">logs'=logs</text>
+<rect x="20" y="152" width="760" height="30" rx="4" ry="4" fill="#0d1f0d" stroke="#3fb950" stroke-width="1"/><text x="400.0" y="171.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">commit_index'=commit_index</text>
+<rect x="20" y="186" width="760" height="30" rx="4" ry="4" fill="#0d1f0d" stroke="#3fb950" stroke-width="1"/><text x="400.0" y="205.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">current_term'=current_term</text>
+<rect x="20" y="220" width="760" height="30" rx="4" ry="4" fill="#0d1f0d" stroke="#3fb950" stroke-width="1"/><text x="400.0" y="239.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">voted_for'=voted_for</text>
+<polygon points="20,254 780,254 400.0,286" fill="#1a2233" stroke="#58a6ff" stroke-width="1.5"/><text x="400.0" y="268.4" text-anchor="middle" fill="#58a6ff" font-family="JetBrains Mono,Fira Code,monospace" font-size="11" font-weight="bold">timers[n]&gt;0</text><text x="40" y="279.6" text-anchor="start" fill="#3fb950" font-family="JetBrains Mono,monospace" font-size="9" font-weight="bold">T</text><text x="760" y="279.6" text-anchor="end" fill="#f85149" font-family="JetBrains Mono,monospace" font-size="9" font-weight="bold">F</text>
+<rect x="400.0" y="290" width="380.0" height="34" fill="#f85149" fill-opacity="0.12" stroke="none"/>
+<rect x="20" y="290" width="380.0" height="30" rx="4" ry="4" fill="#161b22" stroke="#30363d" stroke-width="1"/><text x="210.0" y="309.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">timers[n]-1</text>
+<rect x="400.0" y="290" width="380.0" height="30" rx="4" ry="4" fill="#161b22" stroke="#30363d" stroke-width="1"/><text x="590.0" y="309.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">0</text>
+<line x1="400.0" y1="290" x2="400.0" y2="324" stroke="#58a6ff" stroke-width="1.5" opacity="0.6"/>
+<rect x="20" y="324" width="760" height="30" rx="4" ry="4" fill="#0d1f0d" stroke="#3fb950" stroke-width="1"/><text x="400.0" y="343.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">messages'=messages</text>
+</svg></div>
+<div class="operator"><h2>ElectionTimeout <span class="line">line 64</span></h2><svg xmlns="http://www.w3.org/2000/svg" width="800" height="376" viewBox="0 0 800 376">
+<rect width="100%" height="100%" fill="#0d1117" rx="8"/>
+<rect x="20" y="16" width="760" height="30" rx="4" ry="4" fill="#161b22" stroke="#30363d" stroke-width="1"/><text x="400.0" y="35.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">node_state[node]=&quot;follower&quot;</text>
+<rect x="20" y="50" width="760" height="30" rx="4" ry="4" fill="#161b22" stroke="#30363d" stroke-width="1"/><text x="400.0" y="69.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">timers[node]=0</text>
+<rect x="20" y="84" width="760" height="30" rx="4" ry="4" fill="#0d1f0d" stroke="#3fb950" stroke-width="1"/><text x="400.0" y="103.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">node_state'=[node_stateEXCEPT![node]=&quot;candidate&quot;]</text>
+<rect x="20" y="118" width="760" height="30" rx="4" ry="4" fill="#0d1f0d" stroke="#3fb950" stroke-width="1"/><text x="400.0" y="137.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">current_term'=current_term+1</text>
+<polygon points="20,152 780,152 400.0,184" fill="#1a2233" stroke="#58a6ff" stroke-width="1.5"/><text x="400.0" y="166.4" text-anchor="middle" fill="#58a6ff" font-family="JetBrains Mono,Fira Code,monospace" font-size="11" font-weight="bold">n=node</text><text x="40" y="177.6" text-anchor="start" fill="#3fb950" font-family="JetBrains Mono,monospace" font-size="9" font-weight="bold">T</text><text x="760" y="177.6" text-anchor="end" fill="#f85149" font-family="JetBrains Mono,monospace" font-size="9" font-weight="bold">F</text>
+<rect x="400.0" y="188" width="380.0" height="34" fill="#f85149" fill-opacity="0.12" stroke="none"/>
+<rect x="20" y="188" width="380.0" height="30" rx="4" ry="4" fill="#161b22" stroke="#30363d" stroke-width="1"/><text x="210.0" y="207.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">[n\inNodes|-&gt;TRUE]</text>
+<rect x="400.0" y="188" width="380.0" height="30" rx="4" ry="4" fill="#161b22" stroke="#30363d" stroke-width="1"/><text x="590.0" y="207.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">voted_for[n]</text>
+<line x1="400.0" y1="188" x2="400.0" y2="222" stroke="#58a6ff" stroke-width="1.5" opacity="0.6"/>
+<polygon points="20,222 780,222 400.0,254" fill="#1a2233" stroke="#58a6ff" stroke-width="1.5"/><text x="400.0" y="236.4" text-anchor="middle" fill="#58a6ff" font-family="JetBrains Mono,Fira Code,monospace" font-size="11" font-weight="bold">n=node</text><text x="40" y="247.6" text-anchor="start" fill="#3fb950" font-family="JetBrains Mono,monospace" font-size="9" font-weight="bold">T</text><text x="760" y="247.6" text-anchor="end" fill="#f85149" font-family="JetBrains Mono,monospace" font-size="9" font-weight="bold">F</text>
+<rect x="400.0" y="258" width="380.0" height="34" fill="#f85149" fill-opacity="0.12" stroke="none"/>
+<rect x="20" y="258" width="380.0" height="30" rx="4" ry="4" fill="#161b22" stroke="#30363d" stroke-width="1"/><text x="210.0" y="277.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">ElectionTimeoutMax</text>
+<rect x="400.0" y="258" width="380.0" height="30" rx="4" ry="4" fill="#161b22" stroke="#30363d" stroke-width="1"/><text x="590.0" y="277.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">timers[n]</text>
+<line x1="400.0" y1="258" x2="400.0" y2="292" stroke="#58a6ff" stroke-width="1.5" opacity="0.6"/>
+<rect x="20" y="292" width="760" height="30" rx="4" ry="4" fill="#0d1f0d" stroke="#3fb950" stroke-width="1"/><text x="400.0" y="311.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">messages'=messages</text>
+<rect x="20" y="326" width="760" height="30" rx="4" ry="4" fill="#0d1f0d" stroke="#3fb950" stroke-width="1"/><text x="400.0" y="345.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">{[type|-&gt;&quot;RequestVote&quot;,to|-&gt;n',from|-&gt;node,term|-&gt;current_term',last_log_index|…</text>
+</svg></div>
+<div class="operator"><h2>BecomeLeader <span class="line">line 83</span></h2><svg xmlns="http://www.w3.org/2000/svg" width="800" height="100" viewBox="0 0 800 100">
+<rect width="100%" height="100%" fill="#0d1117" rx="8"/>
+<rect x="20" y="16" width="760" height="30" rx="4" ry="4" fill="#161b22" stroke="#30363d" stroke-width="1"/><text x="400.0" y="35.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">node_state[node]=&quot;candidate&quot;</text>
+<rect x="20" y="50" width="760" height="30" rx="4" ry="4" fill="#0d1f0d" stroke="#3fb950" stroke-width="1"/><text x="400.0" y="69.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">\An\inNodes\{node}:voted_for[n][node]/\node_state'=[node_stateEXCEPT![node]=&quot;le…</text>
+</svg></div>
+<div class="operator"><h2>StepDown <span class="line">line 103</span></h2><svg xmlns="http://www.w3.org/2000/svg" width="800" height="306" viewBox="0 0 800 306">
+<rect width="100%" height="100%" fill="#0d1117" rx="8"/>
+<rect x="20" y="16" width="760" height="30" rx="4" ry="4" fill="#161b22" stroke="#30363d" stroke-width="1"/><text x="400.0" y="35.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">node_state[node]\in{&quot;follower&quot;,&quot;candidate&quot;}</text>
+<rect x="20" y="50" width="760" height="30" rx="4" ry="4" fill="#161b22" stroke="#30363d" stroke-width="1"/><text x="400.0" y="69.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">new_term&gt;current_term</text>
+<rect x="20" y="84" width="760" height="30" rx="4" ry="4" fill="#0d1f0d" stroke="#3fb950" stroke-width="1"/><text x="400.0" y="103.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">node_state'=[node_stateEXCEPT![node]=&quot;follower&quot;]</text>
+<rect x="20" y="118" width="760" height="30" rx="4" ry="4" fill="#0d1f0d" stroke="#3fb950" stroke-width="1"/><text x="400.0" y="137.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">current_leader'=[current_leaderEXCEPT![node]=&quot;&quot;]</text>
+<rect x="20" y="152" width="760" height="30" rx="4" ry="4" fill="#0d1f0d" stroke="#3fb950" stroke-width="1"/><text x="400.0" y="171.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">current_term'=new_term</text>
+<polygon points="20,186 780,186 400.0,218" fill="#1a2233" stroke="#58a6ff" stroke-width="1.5"/><text x="400.0" y="200.4" text-anchor="middle" fill="#58a6ff" font-family="JetBrains Mono,Fira Code,monospace" font-size="11" font-weight="bold">n=node</text><text x="40" y="211.6" text-anchor="start" fill="#3fb950" font-family="JetBrains Mono,monospace" font-size="9" font-weight="bold">T</text><text x="760" y="211.6" text-anchor="end" fill="#f85149" font-family="JetBrains Mono,monospace" font-size="9" font-weight="bold">F</text>
+<rect x="400.0" y="222" width="380.0" height="34" fill="#f85149" fill-opacity="0.12" stroke="none"/>
+<rect x="20" y="222" width="380.0" height="30" rx="4" ry="4" fill="#161b22" stroke="#30363d" stroke-width="1"/><text x="210.0" y="241.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">ElectionTimeoutMin</text>
+<rect x="400.0" y="222" width="380.0" height="30" rx="4" ry="4" fill="#161b22" stroke="#30363d" stroke-width="1"/><text x="590.0" y="241.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">timers[n]</text>
+<line x1="400.0" y1="222" x2="400.0" y2="256" stroke="#58a6ff" stroke-width="1.5" opacity="0.6"/>
+<rect x="20" y="256" width="760" height="30" rx="4" ry="4" fill="#0d1f0d" stroke="#3fb950" stroke-width="1"/><text x="400.0" y="275.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">voted_for'=[voted_forEXCEPT![node]=[n\inNodes|-&gt;FALSE]]</text>
+</svg></div>
+</body>
+</html>

@@ -112,9 +112,7 @@ class NassiBuilder:
         if tname == "OrBinaryExprContext":
             return self._build_or_binary(ctx)
 
-        # Inline /\ and \/ at the addExpr level
-        if tname == "AddBinaryExprContext":
-            return self._build_add_binary(ctx)
+        # Note: AddBinaryExprContext (arithmetic ops) is handled generically below.
 
         # ---- Quantifier / CHOOSE → leaf ----
         if tname in ("QuantifierExpressionContext", "TemporalQuantifierExpressionContext",
@@ -187,10 +185,6 @@ class NassiBuilder:
                 return self._build_and_binary(child)
             if tname == "OrBinaryExprContext":
                 return self._build_or_binary(child)
-            if tname == "AddBinaryExprContext":
-                result = self._build_add_binary(child)
-                if not isinstance(result, ActionBlock):
-                    return result
 
             # Recurse into non-structural children
             result = self._scan_children(child)
@@ -268,11 +262,14 @@ class NassiBuilder:
         return ScopeBlock(label="LET...IN", children=children)
 
     def _build_conjunction_list(self, ctx) -> Block:
-        children = [self._build(item.expression()) for item in ctx.junctionItem()]
+        # In the TLA+ grammar, ConjunctionListContext has multiple expression() children (ignoring AND tokens)
+        exprs = ctx.expression()
+        children = [self._build(e) for e in exprs]
         return SequenceBlock(children=children) if children else EmptyBlock()
 
     def _build_disjunction_list(self, ctx) -> Block:
-        children = [self._build(item.expression()) for item in ctx.junctionItem()]
+        exprs = ctx.expression()
+        children = [self._build(e) for e in exprs]
         return SequenceBlock(children=children) if children else EmptyBlock()
 
     def _build_and_binary(self, ctx) -> Block:

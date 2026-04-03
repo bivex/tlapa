@@ -71,8 +71,8 @@ SPEC_SKIP : [ \t\n\r] -> skip ;
 
 // Comments
 fragment BLOCK_COMMENT_START : '(*.' | '(*' ;
-SPEC_BLOCK_COMMENT_OPEN : BLOCK_COMMENT_START -> pushMode(IN_COMMENT_MODE) ;
-SPEC_LINE_COMMENT : '\\*' -> pushMode(IN_EOL_COMMENT_MODE) ;
+SPEC_BLOCK_COMMENT_OPEN : BLOCK_COMMENT_START -> pushMode(IN_COMMENT_MODE), skip ;
+SPEC_LINE_COMMENT : '\\*' -> pushMode(IN_EOL_COMMENT_MODE), skip ;
 
 // Structural markers
 SEPARATOR : '----' '-'* ;
@@ -427,9 +427,9 @@ PRAGMA_CHAR : . -> skip ;
 
 mode IN_COMMENT_MODE ;
 
-COMMENT_NESTED_OPEN  : BLOCK_COMMENT_START -> pushMode(EMBEDDED_COMMENT_MODE) ;
-COMMENT_CLOSE        : '*)' -> popMode ;
-COMMENT_TEXT         : ~[*)]+ | [*] ~')' | ')' ~'*' ;
+COMMENT_NESTED_OPEN  : BLOCK_COMMENT_START -> pushMode(EMBEDDED_COMMENT_MODE), skip ;
+COMMENT_CLOSE        : '*)' -> popMode, skip ;
+COMMENT_TEXT         : ( ~[*)]+ | [*] ~')' | ')' ~'*' ) -> skip ;
 
 // ============================================================================
 // Embedded nested comment mode
@@ -437,9 +437,9 @@ COMMENT_TEXT         : ~[*)]+ | [*] ~')' | ')' ~'*' ;
 
 mode EMBEDDED_COMMENT_MODE ;
 
-EMBEDDED_NESTED_OPEN  : BLOCK_COMMENT_START -> pushMode(EMBEDDED_COMMENT_MODE) ;
-EMBEDDED_CLOSE        : '*)' -> popMode ;
-EMBEDDED_TEXT         : ~[*)]+ | [*] ~')' | ')' ~'*' ;
+EMBEDDED_NESTED_OPEN  : BLOCK_COMMENT_START -> pushMode(EMBEDDED_COMMENT_MODE), skip ;
+EMBEDDED_CLOSE        : '*)' -> popMode, skip ;
+EMBEDDED_TEXT         : ( ~[*)]+ | [*] ~')' | ')' ~'*' ) -> skip ;
 
 // ============================================================================
 // End-of-line comment mode
@@ -447,5 +447,5 @@ EMBEDDED_TEXT         : ~[*)]+ | [*] ~')' | ')' ~'*' ;
 
 mode IN_EOL_COMMENT_MODE ;
 
-EOL_COMMENT_NEWLINE : [\n\r] -> popMode ;
-EOL_COMMENT_TEXT    : ~[\n\r]+ ;
+EOL_COMMENT_NEWLINE : [\n\r] -> popMode, skip ;
+EOL_COMMENT_TEXT    : ~[\n\r]+ -> skip ;
