@@ -356,39 +356,52 @@ class NassiBuilder:
 
         return SequenceBlock(children=blocks) if blocks else ActionBlock(text="PROOF")
 
+    def _get_step_number(self, ctx) -> str | None:
+        """Extract step number from proof step context (e.g., '<1>', '<2>1.')."""
+        # Check current context
+        if hasattr(ctx, "stepStartToken"):
+            token = ctx.stepStartToken()
+            if token:
+                return token.getText()
+        # Walk up parents to find a StepContext with stepStartToken
+        parent = getattr(ctx, "parent", None)
+        while parent:
+            if hasattr(parent, "stepStartToken"):
+                token = parent.stepStartToken()
+                if token:
+                    return token.getText()
+            parent = getattr(parent, "parent", None)
+        return None
+
     def _build_step(self, ctx) -> Block | None:
         """Build a block for a proof step."""
+        prefix = self._get_step_number(ctx)
+
         # QED step
         if type(ctx).__name__ == "QedStepContext":
-            return ActionBlock(text="QED")
+            block = ActionBlock(text="QED")
+        elif hasattr(ctx, "useOrHide") and ctx.useOrHide():
+            block = self._build_use_or_hide(ctx.useOrHide())
+        elif hasattr(ctx, "defStep") and ctx.defStep():
+            block = self._build_def_step(ctx.defStep())
+        elif hasattr(ctx, "haveStep") and ctx.haveStep():
+            block = self._build_have_step(ctx.haveStep())
+        elif hasattr(ctx, "takeStep") and ctx.takeStep():
+            block = self._build_take_step(ctx.takeStep())
+        elif hasattr(ctx, "witnessStep") and ctx.witnessStep():
+            block = self._build_witness_step(ctx.witnessStep())
+        elif hasattr(ctx, "pickStep") and ctx.pickStep():
+            block = self._build_pick_step(ctx.pickStep())
+        elif hasattr(ctx, "caseStep") and ctx.caseStep():
+            block = self._build_case_step(ctx.caseStep())
+        elif hasattr(ctx, "assertStep") and ctx.assertStep():
+            block = self._build_assert_step(ctx.assertStep())
+        else:
+            block = None
 
-        # Map step type to builder
-        if hasattr(ctx, "useOrHide") and ctx.useOrHide():
-            return self._build_use_or_hide(ctx.useOrHide())
-        if hasattr(ctx, "defStep") and ctx.defStep():
-            return self._build_def_step(ctx.defStep())
-        if hasattr(ctx, "haveStep") and ctx.haveStep():
-            return self._build_have_step(ctx.haveStep())
-        if hasattr(ctx, "takeStep") and ctx.takeStep():
-            return self._build_take_step(ctx.takeStep())
-        if hasattr(ctx, "witnessStep") and ctx.witnessStep():
-            return self._build_witness_step(ctx.witnessStep())
-        if hasattr(ctx, "pickStep") and ctx.pickStep():
-            return self._build_pick_step(ctx.pickStep())
-        if hasattr(ctx, "caseStep") and ctx.caseStep():
-            return self._build_case_step(ctx.caseStep())
-        if hasattr(ctx, "assertStep") and ctx.assertStep():
-            return self._build_assert_step(ctx.assertStep())
-
-        # Recurse into children to find nested proofs
-        for child in ctx.getChildren() if hasattr(ctx, "getChildren") else []:
-            if hasattr(child, "getRuleIndex"):
-                child_name = type(child).__name__
-                if child_name == "ProofContext":
-                    block = self._build_proof(child)
-                    if block:
-                        return block
-        return None
+        if block and prefix:
+            block = ActionBlock(text=f"{prefix} {block.text}")
+        return block
 
     def _build_use_or_hide(self, ctx) -> Block:
         text = _truncate(ctx.getText(), 60)

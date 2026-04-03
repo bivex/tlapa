@@ -63,10 +63,22 @@ _KIND_ICONS = {
     "recursive": "↺",
     "instance": "⇒",
     "assumption": "assume",
-    "theorem": "theorem",
-    "proof": "proof",
-    "use": "use",
-    "hide": "hide",
+    "theorem": "📜",
+    "proof": "📝",
+    "use": "🔗",
+    "hide": "🙈",
+    # Proof step icons
+    "HAVE": "📒",
+    "QED": "✅",
+    "OBVIOUS": "✨",
+    "ASSERT": "📢",
+    "TAKE": "✋",
+    "WITNESS": "👀",
+    "PICK": "🤏",
+    "CASE": "📦",
+    "DEFINE": "📝",
+    "OMITTED": "⏭️",
+    "BY": "➡️",
 }
 
 
