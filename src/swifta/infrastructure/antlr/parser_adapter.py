@@ -586,24 +586,41 @@ def _build_structure_visitor(visitor_base: type) -> type:
         def _build_signature(self, raw_lhs: str, name: str) -> str:
             if raw_lhs == name:
                 return f"{name} == ..."
+
+            # For function-style operators: name(params) or name(param1, param2)
             if ":" in raw_lhs:
                 parts = raw_lhs.split(":", 1)
                 params = parts[0].strip()
                 if params:
                     return f"{name}({params}) == ..."
                 return f"{name} == ..."
-            return f"{raw_lhs} == ..." if raw_lhs else f"{name} == ..."
+
+            # For infix operators, show the pattern
+            if raw_lhs and raw_lhs != name:
+                return f"{raw_lhs} == ..."
+
+            return f"{name} == ..."
 
         def _raw_def_lhs(self, def_ctx) -> str:
             ident_lhs = def_ctx.identLhs()
             if ident_lhs:
                 return ident_lhs.getText().strip()
-            for attr in ("prefixLhs", "infixLhs", "postfixLhs"):
-                lhs = getattr(def_ctx, attr)()
-                if lhs:
-                    text = lhs.getText().strip()
-                    if text:
-                        return text
+
+            # Handle infix operators: a \op b
+            infix_lhs = def_ctx.infixLhs()
+            if infix_lhs:
+                return infix_lhs.getText().strip()
+
+            # Handle prefix operators: \op a
+            prefix_lhs = def_ctx.prefixLhs()
+            if prefix_lhs:
+                return prefix_lhs.getText().strip()
+
+            # Handle postfix operators: a \op
+            postfix_lhs = def_ctx.postfixLhs()
+            if postfix_lhs:
+                return postfix_lhs.getText().strip()
+
             raw = def_ctx.getText().strip()
             if "==" in raw:
                 lhs = raw.split("==", 1)[0].strip()
@@ -618,16 +635,31 @@ def _build_structure_visitor(visitor_base: type) -> type:
                 name = self._scan_ident_lhs(ident_lhs)
                 if name:
                     return name
-            for attr in ("prefixLhs", "infixLhs", "postfixLhs"):
-                lhs = getattr(def_ctx, attr)()
-                if lhs:
-                    text = lhs.getText().strip()
-                    if text:
-                        token = text.split()[0] if text.split() else None
-                        if token:
-                            token = token.rstrip("(").rstrip(")").strip()
-                            if token:
-                                return token
+
+            # Handle infix operators: a \op b
+            infix_lhs = def_ctx.infixLhs()
+            if infix_lhs:
+                # Find the InfixOp child and extract the operator name
+                for child in infix_lhs.getChildren():
+                    if hasattr(child, "getRuleIndex") and "InfixOp" in type(child).__name__:
+                        op_text = child.getText().strip()
+                        if op_text:
+                            return op_text
+
+            # Handle prefix operators: \op a
+            prefix_lhs = def_ctx.prefixLhs()
+            if prefix_lhs:
+                text = prefix_lhs.getText().strip()
+                if text:
+                    return text
+
+            # Handle postfix operators: a \op
+            postfix_lhs = def_ctx.postfixLhs()
+            if postfix_lhs:
+                text = postfix_lhs.getText().strip()
+                if text:
+                    return text
+
             return None
 
         def _scan_ident_lhs(self, ident_lhs) -> str | None:

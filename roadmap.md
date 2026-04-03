@@ -43,8 +43,8 @@ This document outlines the completion tasks for the TLA+ parser implementation b
 ### Parser Adapter
 - [x] ~~Fix operator extraction after grammar changes~~ (mostly working)
 - [x] Remove dead code (unreachable strings after return, duplicate methods)
-- [ ] Handle all edge cases in operator signature extraction
-- [ ] Improve diagnostics for ill-formed specs
+- [x] Handle all edge cases in operator signature extraction
+- [x] Improve diagnostics for ill-formed specs
 
 ---
 

@@ -36,6 +36,16 @@ _TLA_FIXES: list[tuple[str, str, str]] = [
         "backslash operators must be followed by a keyword (e.g., \\in, \\E, \\A)",
         "backslash",
     ),
+    (
+        r"mismatched input '=' expecting DEF",
+        "use '==' for operator definitions, not '='",
+        "definition",
+    ),
+    (
+        r"extraneous input '=' expecting",
+        "operator definitions should use '==', not '='",
+        "definition",
+    ),
     (r"expecting", "unexpected token; check operator spelling and TLA+ syntax", "syntax"),
 ]
 
