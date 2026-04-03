@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>NSD — SimpleDistributed</title>
+<style>
+:root{--bg:#0d1117;--tx:#e6edf3;--accent:#58a6ff;--mono:"JetBrains Mono","Fira Code",monospace}
+body{background:var(--bg);color:var(--tx);font-family:var(--mono);padding:24px;margin:0}
+h1{font-size:20px;border-bottom:1px solid #30363d;padding-bottom:8px}
+.operator{margin:24px 0 32px 0}
+h2{font-size:15px;color:var(--accent);margin:0 0 8px 0}
+h2 .line{color:#8b949e;font-weight:normal;font-size:12px}
+svg{display:block;max-width:100%}
+</style>
+</head>
+<body>
+<h1>NSD: SimpleDistributed</h1>
+<p>9 operator definitions &middot; 16 diagnostics</p>
+<div class="operator"><h2>NodeState <span class="line">line 5</span></h2><svg xmlns="http://www.w3.org/2000/svg" width="800" height="66" viewBox="0 0 800 66">
+<rect width="100%" height="100%" fill="#0d1117" rx="8"/>
+<rect x="20" y="16" width="760" height="30" rx="4" ry="4" fill="#161b22" stroke="#30363d" stroke-width="1"/><text x="400.0" y="35.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">{&quot;follower&quot;,&quot;candidate&quot;,&quot;leader&quot;}</text>
+</svg></div>
+<div class="operator"><h2>Nodes <span class="line">line 7</span></h2><svg xmlns="http://www.w3.org/2000/svg" width="800" height="66" viewBox="0 0 800 66">
+<rect width="100%" height="100%" fill="#0d1117" rx="8"/>
+<rect x="20" y="16" width="760" height="30" rx="4" ry="4" fill="#161b22" stroke="#30363d" stroke-width="1"/><text x="400.0" y="35.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">{&quot;n1&quot;,&quot;n2&quot;,&quot;n3&quot;}</text>
+</svg></div>
+<div class="operator"><h2>Init <span class="line">line 9</span></h2><svg xmlns="http://www.w3.org/2000/svg" width="800" height="168" viewBox="0 0 800 168">
+<rect width="100%" height="100%" fill="#0d1117" rx="8"/>
+<rect x="20" y="16" width="760" height="30" rx="4" ry="4" fill="#161b22" stroke="#30363d" stroke-width="1"/><text x="400.0" y="35.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">state\in[Nodes-&gt;NodeState]</text>
+<rect x="20" y="50" width="760" height="30" rx="4" ry="4" fill="#161b22" stroke="#30363d" stroke-width="1"/><text x="400.0" y="69.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">leader=&quot;&quot;</text>
+<rect x="20" y="84" width="760" height="30" rx="4" ry="4" fill="#161b22" stroke="#30363d" stroke-width="1"/><text x="400.0" y="103.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">log_index=0</text>
+<rect x="20" y="118" width="760" height="30" rx="4" ry="4" fill="#161b22" stroke="#30363d" stroke-width="1"/><text x="400.0" y="137.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">term=1</text>
+</svg></div>
+<div class="operator"><h2>Tick <span class="line">line 15</span></h2><svg xmlns="http://www.w3.org/2000/svg" width="800" height="66" viewBox="0 0 800 66">
+<rect width="100%" height="100%" fill="#0d1117" rx="8"/>
+<rect x="20" y="16" width="760" height="30" rx="4" ry="4" fill="#161b22" stroke="#30363d" stroke-width="1"/><text x="400.0" y="35.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">UNCHANGED&lt;&lt;state,leader,log_index,term&gt;&gt;</text>
+</svg></div>
+<div class="operator"><h2>ElectionTimeout <span class="line">line 17</span></h2><svg xmlns="http://www.w3.org/2000/svg" width="800" height="168" viewBox="0 0 800 168">
+<rect width="100%" height="100%" fill="#0d1117" rx="8"/>
+<rect x="20" y="16" width="760" height="30" rx="4" ry="4" fill="#161b22" stroke="#30363d" stroke-width="1"/><text x="400.0" y="35.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">state[n]=&quot;follower&quot;</text>
+<rect x="20" y="50" width="760" height="30" rx="4" ry="4" fill="#0d1f0d" stroke="#3fb950" stroke-width="1"/><text x="400.0" y="69.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">state'=[stateEXCEPT![n]=&quot;candidate&quot;]</text>
+<rect x="20" y="84" width="760" height="30" rx="4" ry="4" fill="#0d1f0d" stroke="#3fb950" stroke-width="1"/><text x="400.0" y="103.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">term'=term+1</text>
+<rect x="20" y="118" width="760" height="30" rx="4" ry="4" fill="#161b22" stroke="#30363d" stroke-width="1"/><text x="400.0" y="137.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">UNCHANGED&lt;&lt;leader,log_index&gt;&gt;</text>
+</svg></div>
+<div class="operator"><h2>BecomeLeader <span class="line">line 23</span></h2><svg xmlns="http://www.w3.org/2000/svg" width="800" height="168" viewBox="0 0 800 168">
+<rect width="100%" height="100%" fill="#0d1117" rx="8"/>
+<rect x="20" y="16" width="760" height="30" rx="4" ry="4" fill="#161b22" stroke="#30363d" stroke-width="1"/><text x="400.0" y="35.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">state[n]=&quot;candidate&quot;</text>
+<rect x="20" y="50" width="760" height="30" rx="4" ry="4" fill="#0d1f0d" stroke="#3fb950" stroke-width="1"/><text x="400.0" y="69.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">state'=[stateEXCEPT![n]=&quot;leader&quot;]</text>
+<rect x="20" y="84" width="760" height="30" rx="4" ry="4" fill="#0d1f0d" stroke="#3fb950" stroke-width="1"/><text x="400.0" y="103.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">leader'=n</text>
+<rect x="20" y="118" width="760" height="30" rx="4" ry="4" fill="#161b22" stroke="#30363d" stroke-width="1"/><text x="400.0" y="137.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">UNCHANGED&lt;&lt;log_index,term&gt;&gt;</text>
+</svg></div>
+<div class="operator"><h2>Heartbeat <span class="line">line 29</span></h2><svg xmlns="http://www.w3.org/2000/svg" width="800" height="100" viewBox="0 0 800 100">
+<rect width="100%" height="100%" fill="#0d1117" rx="8"/>
+<rect x="20" y="16" width="760" height="30" rx="4" ry="4" fill="#161b22" stroke="#30363d" stroke-width="1"/><text x="400.0" y="35.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">leader#&quot;&quot;</text>
+<rect x="20" y="50" width="760" height="30" rx="4" ry="4" fill="#161b22" stroke="#30363d" stroke-width="1"/><text x="400.0" y="69.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">UNCHANGED&lt;&lt;state,leader,log_index,term&gt;&gt;</text>
+</svg></div>
+<div class="operator"><h2>AppendEntry <span class="line">line 33</span></h2><svg xmlns="http://www.w3.org/2000/svg" width="800" height="134" viewBox="0 0 800 134">
+<rect width="100%" height="100%" fill="#0d1117" rx="8"/>
+<rect x="20" y="16" width="760" height="30" rx="4" ry="4" fill="#161b22" stroke="#30363d" stroke-width="1"/><text x="400.0" y="35.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">leader#&quot;&quot;</text>
+<rect x="20" y="50" width="760" height="30" rx="4" ry="4" fill="#0d1f0d" stroke="#3fb950" stroke-width="1"/><text x="400.0" y="69.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">log_index'=log_index+1</text>
+<rect x="20" y="84" width="760" height="30" rx="4" ry="4" fill="#161b22" stroke="#30363d" stroke-width="1"/><text x="400.0" y="103.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">UNCHANGED&lt;&lt;state,leader,term&gt;&gt;</text>
+</svg></div>
+<div class="operator"><h2>Next <span class="line">line 38</span></h2><svg xmlns="http://www.w3.org/2000/svg" width="800" height="202" viewBox="0 0 800 202">
+<rect width="100%" height="100%" fill="#0d1117" rx="8"/>
+<rect x="20" y="16" width="760" height="30" rx="4" ry="4" fill="#161b22" stroke="#30363d" stroke-width="1"/><text x="400.0" y="35.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">Tick</text>
+<rect x="20" y="50" width="760" height="30" rx="4" ry="4" fill="#161b22" stroke="#30363d" stroke-width="1"/><text x="400.0" y="69.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">(\En\inNodes:ElectionTimeout(n))</text>
+<rect x="20" y="84" width="760" height="30" rx="4" ry="4" fill="#161b22" stroke="#30363d" stroke-width="1"/><text x="400.0" y="103.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">(\En\inNodes:BecomeLeader(n))</text>
+<rect x="20" y="118" width="760" height="30" rx="4" ry="4" fill="#161b22" stroke="#30363d" stroke-width="1"/><text x="400.0" y="137.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">Heartbeat</text>
+<rect x="20" y="152" width="760" height="30" rx="4" ry="4" fill="#161b22" stroke="#30363d" stroke-width="1"/><text x="400.0" y="171.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">(\Ee:AppendEntry(e))</text>
+</svg></div>
+</body>
+</html>
