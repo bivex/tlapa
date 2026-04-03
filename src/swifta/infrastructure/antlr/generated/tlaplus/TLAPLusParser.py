@@ -7893,8 +7893,8 @@ class TLAPLusParser ( Parser ):
             super().__init__(parser)
             self.copyFrom(ctx)
 
-        def junctionExpr(self):
-            return self.getTypedRuleContext(TLAPLusParser.JunctionExprContext,0)
+        def andExpr(self):
+            return self.getTypedRuleContext(TLAPLusParser.AndExprContext,0)
 
 
         def accept(self, visitor:ParseTreeVisitor):
@@ -7920,7 +7920,7 @@ class TLAPLusParser ( Parser ):
             _prevctx = localctx
 
             self.state = 1080
-            self.junctionExpr()
+            self.andExpr(0)
             self._ctx.stop = self._input.LT(-1)
             self.state = 1087
             self._errHandler.sync(self)

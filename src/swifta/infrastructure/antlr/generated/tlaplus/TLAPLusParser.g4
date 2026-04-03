@@ -519,7 +519,7 @@ impliesExpr
 // Precedence level 3: Disjunction
 orExpr
     : orExpr (OR | LOR) andExpr                                                #OrBinaryExpr
-    | junctionExpr                                                                  #OrPassThrough
+    | andExpr                                                                       #OrPassThrough
     ;
 
 // Precedence level 4: Conjunction

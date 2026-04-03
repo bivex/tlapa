@@ -213,7 +213,7 @@ class NassiBuilder:
         ("LetPassThroughContext", "equivExpr"),
         ("EquivPassThroughContext", "impliesExpr"),
         ("ImpliesPassThroughContext", "orExpr"),
-        ("OrPassThroughContext", "junctionExpr"),
+        ("OrPassThroughContext", "andExpr"),
         ("AndPassThroughContext", "junctionExpr"),
         ("JunctionPassThroughContext", "equalityExpr"),
         ("EqualityPassThroughContext", "compareExpr"),
@@ -288,10 +288,15 @@ class NassiBuilder:
     def _build_add_binary(self, ctx) -> Block:
         r"""Inline ``/\`` and ``\/`` at the addExpr level.
 
-        In TLA+ the inline forms (``a /\ b``, ``a \/ b``) are parsed at the
-        additive precedence level.  Because the parser groups them inside
-        comparison/equality wrappers, splitting at this level would produce
-        wrong sub-expressions.  Treat as a leaf — the bulleted forms
-        (``/\ expr /\ expr``) are handled by ConjunctionListContext.
+        The grammar places AND/LAND/OR/LOR at the additive precedence level
+        (alongside ``+``, ``-``, etc.) — BELOW the equality/compare levels.
+        This means inline ``/\`` has WRONG precedence relative to ``=``:
+        ``x = 0 /\ y = 0`` parses as ``x = (0 /\ (y = 0))``, not
+        ``(x = 0) /\ (y = 0)``.  Splitting at this level would give
+        wrong sub-expressions (``0`` instead of ``x = 0``).
+
+        Treat as a flat leaf.  The bulleted form
+        (``/\ expr /\ expr``) is correctly handled by
+        ConjunctionListContext / DisjunctionListContext.
         """
         return ActionBlock(text=_truncate(ctx.getText()))
