@@ -86,7 +86,12 @@ def _render_element_block(element, depth: int) -> str:
     kind = element.kind
     palette = _KIND_COLORS.get(kind, ("gray", "#7f8c8d", "#616a6b"))
     color_name, bg, border = palette
-    icon = _KIND_ICONS.get(kind, "•")
+    # For proof steps, use name-based icon and color overrides if available
+    if kind == "proof" and element.name in _KIND_ICONS:
+        icon = _KIND_ICONS[element.name]
+    else:
+        icon = _KIND_ICONS.get(kind, "•")
+    # Optional: adjust color based on name? Could extend later.
     badge = _depth_badge(depth)
     sig = escape(element.signature) if element.signature else ""
     name = escape(element.name)
