@@ -30,7 +30,6 @@ BH = 30  # block height
 BP = 4  # padding between blocks
 INDENT = 16  # indent per nesting level
 COND_H = 32  # IF condition triangle height
-MIN_HALF = 120  # minimum half-width for IF branches
 
 # ---------------------------------------------------------------------------
 # Colour palette (dark theme)
@@ -140,7 +139,7 @@ def _measure(block: Block | None, w: float) -> float:
         return total
 
     if isinstance(block, SelectionBlock):
-        half = max(w / 2, MIN_HALF)
+        half = w / 2
         h = COND_H + BP
         then_h = _measure(block.then_branch, half)
         else_h = _measure(block.else_branch, half)
@@ -234,7 +233,7 @@ def _draw_selection(block: SelectionBlock, x: float, y: float, w: float,
     then_br = block.then_branch
     else_br = block.else_branch
 
-    half_w = max(w / 2, MIN_HALF)
+    half_w = w / 2
 
     # Measure branch heights
     then_h = _measure(then_br, half_w) if then_br and not isinstance(then_br, EmptyBlock) else 0
@@ -253,7 +252,7 @@ def _draw_selection(block: SelectionBlock, x: float, y: float, w: float,
 
     # 3. Padding for THEN if shorter
     if then_h < max_h:
-        parts.append(_svg_padding(x, y + then_h, half_w, max_h - then_h - BP))
+        parts.append(_svg_padding(x, y + then_h, half_w, max_h - then_h))
 
     # 4. Draw ELSE branch (right half)
     else_used = 0.0
@@ -262,7 +261,7 @@ def _draw_selection(block: SelectionBlock, x: float, y: float, w: float,
 
     # 5. Padding for ELSE if shorter
     if else_h < max_h:
-        parts.append(_svg_padding(x + half_w, y + else_h, half_w, max_h - else_h - BP))
+        parts.append(_svg_padding(x + half_w, y + else_h, half_w, max_h - else_h))
 
     # 6. Vertical divider between branches
     parts.append(_svg_divider_v(x + half_w, branch_top, branch_top + max_h))
