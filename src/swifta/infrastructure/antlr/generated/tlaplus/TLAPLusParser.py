@@ -613,8 +613,8 @@ def serializedATN():
         5,59,0,0,1395,1397,3,102,51,0,1396,1394,1,0,0,0,1397,1400,1,0,0,
         0,1398,1396,1,0,0,0,1398,1399,1,0,0,0,1399,1402,1,0,0,0,1400,1398,
         1,0,0,0,1401,1393,1,0,0,0,1401,1402,1,0,0,0,1402,1414,1,0,0,0,1403,
-        1404,3,102,51,0,1404,1405,5,60,0,0,1405,1410,3,172,86,0,1406,1407,
-        5,59,0,0,1407,1409,3,172,86,0,1408,1406,1,0,0,0,1409,1412,1,0,0,
+        1404,3,102,51,0,1404,1405,5,60,0,0,1405,1410,3,102,51,0,1406,1407,
+        5,59,0,0,1407,1409,3,102,51,0,1408,1406,1,0,0,0,1409,1412,1,0,0,
         0,1410,1408,1,0,0,0,1410,1411,1,0,0,0,1411,1414,1,0,0,0,1412,1410,
         1,0,0,0,1413,1386,1,0,0,0,1413,1401,1,0,0,0,1413,1403,1,0,0,0,1414,
         161,1,0,0,0,1415,1420,3,172,86,0,1416,1417,5,59,0,0,1417,1419,3,
@@ -10641,17 +10641,14 @@ class TLAPLusParser ( Parser ):
             super().__init__(parser)
             self.copyFrom(ctx)
 
-        def expression(self):
-            return self.getTypedRuleContext(TLAPLusParser.ExpressionContext,0)
+        def expression(self, i:int=None):
+            if i is None:
+                return self.getTypedRuleContexts(TLAPLusParser.ExpressionContext)
+            else:
+                return self.getTypedRuleContext(TLAPLusParser.ExpressionContext,i)
 
         def COLON(self):
             return self.getToken(TLAPLusParser.COLON, 0)
-        def quantBound(self, i:int=None):
-            if i is None:
-                return self.getTypedRuleContexts(TLAPLusParser.QuantBoundContext)
-            else:
-                return self.getTypedRuleContext(TLAPLusParser.QuantBoundContext,i)
-
         def COMMA(self, i:int=None):
             if i is None:
                 return self.getTokens(TLAPLusParser.COMMA)
@@ -10735,7 +10732,7 @@ class TLAPLusParser ( Parser ):
                 self.state = 1404
                 self.match(TLAPLusParser.COLON)
                 self.state = 1405
-                self.quantBound()
+                self.expression()
                 self.state = 1410
                 self._errHandler.sync(self)
                 _la = self._input.LA(1)
@@ -10743,7 +10740,7 @@ class TLAPLusParser ( Parser ):
                     self.state = 1406
                     self.match(TLAPLusParser.COMMA)
                     self.state = 1407
-                    self.quantBound()
+                    self.expression()
                     self.state = 1412
                     self._errHandler.sync(self)
                     _la = self._input.LA(1)

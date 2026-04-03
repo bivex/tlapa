@@ -669,9 +669,9 @@ reducedExpression
 // ============================================================================
 
 setBody
-    : (identifierTuple | boundIdentifier) IN expression COLON expression                    #SetSubsetOf
+    : (identifierTuple | boundIdentifier) IN expression COLON expression               #SetSubsetOf
     | (expression (COMMA expression)*)?                                                #SetEnumerate
-    | expression COLON expression (COMMA expression)*                                 #SetOfAll
+    | expression COLON expression (COMMA expression)*                                   #SetOfAll
     ;
 
 // ============================================================================
