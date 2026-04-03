@@ -8963,7 +8963,7 @@ class TLAPLusParser ( Parser ):
                         raise FailedPredicateException(self, "self.precpred(self._ctx, 2)")
                     self.state = 1167
                     _la = self._input.LA(1)
-                    if not(((((_la - 100)) & ~0x3f) == 0 and ((1 << (_la - 100)) & 5190117198867206409) != 0) or ((((_la - 165)) & ~0x3f) == 0 and ((1 << (_la - 165)) & 37383797997571) != 0) or ((((_la - 229)) & ~0x3f) == 0 and ((1 << (_la - 229)) & 671113219) != 0)):
+                    if not(((((_la - 100)) & ~0x3f) == 0 and ((1 << (_la - 100)) & 5190117198848332032) != 0) or ((((_la - 165)) & ~0x3f) == 0 and ((1 << (_la - 165)) & 37383797997571) != 0) or ((((_la - 229)) & ~0x3f) == 0 and ((1 << (_la - 229)) & 671113219) != 0)):
                         self._errHandler.recoverInline(self)
                     else:
                         self._errHandler.reportMatch(self)
