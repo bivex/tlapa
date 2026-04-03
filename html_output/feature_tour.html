@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Structure — FeatureTour</title>
+<style>
+:root{
+  --bg: #0d1117;
+  --sf: #161b22;
+  --bd: #30363d;
+  --tx: #e6edf3;
+  --tm: #8b949e;
+  --blue: #569cd6;
+  --green: #4ec990;
+  --purple: #c586c0;
+  --yellow: #dcdcaa;
+  --orange: #ce9178;
+  --red: #f44747;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  font-family: "JetBrains Mono", "Fira Code", monospace;
+  background: var(--bg);
+  color: var(--tx);
+  padding: 24px;
+  max-width: 960px;
+  margin: 0 auto;
+}
+.hdr{
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--bd);
+}
+.hdr h1{
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--blue);
+  margin-bottom: 6px;
+}
+.hdr .meta{
+  font-size: 13px;
+  color: var(--tm);
+  font-family: "JetBrains Mono", monospace;
+}
+.summary{
+  font-size: 14px;
+  color: var(--tm);
+  margin-bottom: 20px;
+  line-height: 1.6;
+}
+.diags{
+  margin-bottom: 20px;
+  background: var(--sf);
+  border: 1px solid var(--bd);
+  border-radius: 8px;
+  padding: 12px;
+}
+.diags summary{
+  cursor: pointer;
+  color: var(--orange);
+  font-weight: 600;
+  font-size: 14px;
+}
+.diags table{
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  margin-top: 8px;
+}
+.diags th,.diags td{
+  text-align: left;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--bd);
+}
+.diags th{
+  background: rgba(86, 156, 214, 0.15);
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 11px;
+  letter-spacing: 0.05em;
+}
+.sev{
+  color: var(--red);
+  font-weight: 700;
+  font-size: 11px;
+  text-transform: uppercase;
+}
+.more-info{
+  color: var(--tm);
+  font-style: italic;
+  text-align: center;
+}
+svg{
+  display: block;
+  border: 1px solid var(--bd);
+  border-radius: 8px;
+  width: 100%;
+  max-width: 640px;
+  background: var(--bg);
+}
+</style>
+</head>
+<body>
+<div class="hdr">
+  <h1>FeatureTour</h1>
+  <div class="meta">/Volumes/External/Code/tlapa/example/feature_tour.tla &middot; 265 tokens &middot; 16.0ms</div>
+</div>
+<div class="summary">2 constant &middot; 1 module &middot; 20 operator definition &middot; 2 theorem &middot; 5 variable</div>
+
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="1356" viewBox="0 0 640 1356">
+<rect width="100%" height="100%" fill="#0d1117" rx="6"/>
+<rect x="20" y="0" width="600" height="34" rx="6" ry="6" fill="#0f2847" stroke="#569cd6" stroke-width="1"/>
+  <text x="30" y="21" fill="#569cd6" font-family="JetBrains Mono", "Fira Code", monospace font-size="12" font-weight="bold">MODULE FeatureTour</text>
+  <text x="610" y="21" text-anchor="end" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="10">L1</text>
+<line x1="20" y1="46" x2="620" y2="46" stroke="#484f58" stroke-width="1"/>
+<text x="30" y="57" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="11" font-weight="600">CONSTANTS</text>
+<rect x="20" y="58" width="600" height="34" rx="0" ry="0" fill="#2a2a1a" stroke="#dcdcaa" stroke-width="1"/>
+  <text x="30" y="79" fill="#dcdcaa" font-family="JetBrains Mono", "Fira Code", monospace font-size="12" font-weight="normal">CONSTANT MAX_VAL</text>
+  <text x="610" y="79" text-anchor="end" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="10">L4</text>
+<rect x="20" y="94" width="600" height="34" rx="0" ry="0" fill="#2a2a1a" stroke="#dcdcaa" stroke-width="1"/>
+  <text x="30" y="115" fill="#dcdcaa" font-family="JetBrains Mono", "Fira Code", monospace font-size="12" font-weight="normal">CONSTANT MIN_VAL</text>
+  <text x="610" y="115" text-anchor="end" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="10">L4</text>
+<line x1="20" y1="140" x2="620" y2="140" stroke="#484f58" stroke-width="1"/>
+<text x="30" y="151" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="11" font-weight="600">VARIABLES</text>
+<rect x="20" y="152" width="600" height="34" rx="0" ry="0" fill="#2a2a1a" stroke="#dcdcaa" stroke-width="1"/>
+  <text x="30" y="173" fill="#dcdcaa" font-family="JetBrains Mono", "Fira Code", monospace font-size="12" font-weight="normal">VARIABLE x</text>
+  <text x="610" y="173" text-anchor="end" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="10">L5</text>
+<rect x="20" y="188" width="600" height="34" rx="0" ry="0" fill="#2a2a1a" stroke="#dcdcaa" stroke-width="1"/>
+  <text x="30" y="209" fill="#dcdcaa" font-family="JetBrains Mono", "Fira Code", monospace font-size="12" font-weight="normal">VARIABLE y</text>
+  <text x="610" y="209" text-anchor="end" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="10">L5</text>
+<rect x="20" y="224" width="600" height="34" rx="0" ry="0" fill="#2a2a1a" stroke="#dcdcaa" stroke-width="1"/>
+  <text x="30" y="245" fill="#dcdcaa" font-family="JetBrains Mono", "Fira Code", monospace font-size="12" font-weight="normal">VARIABLE z</text>
+  <text x="610" y="245" text-anchor="end" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="10">L5</text>
+<rect x="20" y="260" width="600" height="34" rx="0" ry="0" fill="#2a2a1a" stroke="#dcdcaa" stroke-width="1"/>
+  <text x="30" y="281" fill="#dcdcaa" font-family="JetBrains Mono", "Fira Code", monospace font-size="12" font-weight="normal">VARIABLE active</text>
+  <text x="610" y="281" text-anchor="end" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="10">L5</text>
+<rect x="20" y="296" width="600" height="34" rx="0" ry="0" fill="#2a2a1a" stroke="#dcdcaa" stroke-width="1"/>
+  <text x="30" y="317" fill="#dcdcaa" font-family="JetBrains Mono", "Fira Code", monospace font-size="12" font-weight="normal">VARIABLE count</text>
+  <text x="610" y="317" text-anchor="end" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="10">L5</text>
+<line x1="20" y1="342" x2="620" y2="342" stroke="#484f58" stroke-width="1"/>
+<text x="30" y="353" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="11" font-weight="600">INITIALIZATION</text>
+<rect x="20" y="354" width="600" height="34" rx="0" ry="0" fill="#1e2533" stroke="#4ec990" stroke-width="1"/>
+  <text x="30" y="375" fill="#d4d4d4" font-family="JetBrains Mono", "Fira Code", monospace font-size="12" font-weight="normal">Init == ...</text>
+  <text x="610" y="375" text-anchor="end" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="10">L7</text>
+<line x1="20" y1="400" x2="620" y2="400" stroke="#484f58" stroke-width="1"/>
+<text x="30" y="411" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="11" font-weight="600">PREDICATES</text>
+<rect x="20" y="412" width="600" height="34" rx="0" ry="0" fill="#1e2533" stroke="#3b4660" stroke-width="1"/>
+  <text x="30" y="433" fill="#d4d4d4" font-family="JetBrains Mono", "Fira Code", monospace font-size="12" font-weight="normal">IsInRange == ...</text>
+  <text x="610" y="433" text-anchor="end" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="10">L11</text>
+<rect x="20" y="448" width="600" height="34" rx="0" ry="0" fill="#1e2533" stroke="#3b4660" stroke-width="1"/>
+  <text x="30" y="469" fill="#d4d4d4" font-family="JetBrains Mono", "Fira Code", monospace font-size="12" font-weight="normal">IsPositive == ...</text>
+  <text x="610" y="469" text-anchor="end" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="10">L9</text>
+<rect x="20" y="484" width="600" height="34" rx="0" ry="0" fill="#1e2533" stroke="#3b4660" stroke-width="1"/>
+  <text x="30" y="505" fill="#d4d4d4" font-family="JetBrains Mono", "Fira Code", monospace font-size="12" font-weight="normal">IsReady == ...</text>
+  <text x="610" y="505" text-anchor="end" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="10">L17</text>
+<rect x="20" y="520" width="600" height="34" rx="0" ry="0" fill="#1e2533" stroke="#3b4660" stroke-width="1"/>
+  <text x="30" y="541" fill="#d4d4d4" font-family="JetBrains Mono", "Fira Code", monospace font-size="12" font-weight="normal">IsZero == ...</text>
+  <text x="610" y="541" text-anchor="end" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="10">L13</text>
+<rect x="20" y="556" width="600" height="34" rx="0" ry="0" fill="#1e2533" stroke="#3b4660" stroke-width="1"/>
+  <text x="30" y="577" fill="#d4d4d4" font-family="JetBrains Mono", "Fira Code", monospace font-size="12" font-weight="normal">NotActive == ...</text>
+  <text x="610" y="577" text-anchor="end" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="10">L15</text>
+<line x1="20" y1="602" x2="620" y2="602" stroke="#484f58" stroke-width="1"/>
+<text x="30" y="613" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="11" font-weight="600">ACTIONS</text>
+<rect x="20" y="614" width="600" height="34" rx="0" ry="0" fill="#1e2533" stroke="#dcdcaa" stroke-width="1"/>
+  <text x="30" y="635" fill="#d4d4d4" font-family="JetBrains Mono", "Fira Code", monospace font-size="12" font-weight="normal">IsDone == ...</text>
+  <text x="610" y="635" text-anchor="end" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="10">L19</text>
+<line x1="20" y1="660" x2="620" y2="660" stroke="#484f58" stroke-width="1"/>
+<text x="30" y="671" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="11" font-weight="600">PREDICATES</text>
+<rect x="20" y="672" width="600" height="34" rx="0" ry="0" fill="#1e2533" stroke="#3b4660" stroke-width="1"/>
+  <text x="30" y="693" fill="#d4d4d4" font-family="JetBrains Mono", "Fira Code", monospace font-size="12" font-weight="normal">Decrement == ...</text>
+  <text x="610" y="693" text-anchor="end" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="10">L23</text>
+<rect x="20" y="708" width="600" height="34" rx="0" ry="0" fill="#1e2533" stroke="#3b4660" stroke-width="1"/>
+  <text x="30" y="729" fill="#d4d4d4" font-family="JetBrains Mono", "Fira Code", monospace font-size="12" font-weight="normal">Increment == ...</text>
+  <text x="610" y="729" text-anchor="end" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="10">L21</text>
+<line x1="20" y1="754" x2="620" y2="754" stroke="#484f58" stroke-width="1"/>
+<text x="30" y="765" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="11" font-weight="600">ACTIONS</text>
+<rect x="20" y="766" width="600" height="34" rx="0" ry="0" fill="#1e2533" stroke="#dcdcaa" stroke-width="1"/>
+  <text x="30" y="787" fill="#d4d4d4" font-family="JetBrains Mono", "Fira Code", monospace font-size="12" font-weight="normal">Double == ...</text>
+  <text x="610" y="787" text-anchor="end" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="10">L25</text>
+<line x1="20" y1="812" x2="620" y2="812" stroke="#484f58" stroke-width="1"/>
+<text x="30" y="823" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="11" font-weight="600">PREDICATES</text>
+<rect x="20" y="824" width="600" height="34" rx="0" ry="0" fill="#1e2533" stroke="#3b4660" stroke-width="1"/>
+  <text x="30" y="845" fill="#d4d4d4" font-family="JetBrains Mono", "Fira Code", monospace font-size="12" font-weight="normal">Clamp == ...</text>
+  <text x="610" y="845" text-anchor="end" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="10">L31</text>
+<rect x="20" y="860" width="600" height="34" rx="0" ry="0" fill="#1e2533" stroke="#3b4660" stroke-width="1"/>
+  <text x="30" y="881" fill="#d4d4d4" font-family="JetBrains Mono", "Fira Code", monospace font-size="12" font-weight="normal">Classify == ...</text>
+  <text x="610" y="881" text-anchor="end" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="10">L33</text>
+<rect x="20" y="896" width="600" height="34" rx="0" ry="0" fill="#1e2533" stroke="#3b4660" stroke-width="1"/>
+  <text x="30" y="917" fill="#d4d4d4" font-family="JetBrains Mono", "Fira Code", monospace font-size="12" font-weight="normal">Combined == ...</text>
+  <text x="610" y="917" text-anchor="end" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="10">L37</text>
+<rect x="20" y="932" width="600" height="34" rx="0" ry="0" fill="#1e2533" stroke="#3b4660" stroke-width="1"/>
+  <text x="30" y="953" fill="#d4d4d4" font-family="JetBrains Mono", "Fira Code", monospace font-size="12" font-weight="normal">IncIfPositive == ...</text>
+  <text x="610" y="953" text-anchor="end" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="10">L29</text>
+<rect x="20" y="968" width="600" height="34" rx="0" ry="0" fill="#1e2533" stroke="#3b4660" stroke-width="1"/>
+  <text x="30" y="989" fill="#d4d4d4" font-family="JetBrains Mono", "Fira Code", monospace font-size="12" font-weight="normal">NestedIf == ...</text>
+  <text x="610" y="989" text-anchor="end" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="10">L35</text>
+<rect x="20" y="1004" width="600" height="34" rx="0" ry="0" fill="#1e2533" stroke="#3b4660" stroke-width="1"/>
+  <text x="30" y="1025" fill="#d4d4d4" font-family="JetBrains Mono", "Fira Code", monospace font-size="12" font-weight="normal">Reset == ...</text>
+  <text x="610" y="1025" text-anchor="end" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="10">L27</text>
+<line x1="20" y1="1050" x2="620" y2="1050" stroke="#484f58" stroke-width="1"/>
+<text x="30" y="1061" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="11" font-weight="600">SPECIFICATION</text>
+<rect x="20" y="1062" width="600" height="34" rx="0" ry="0" fill="#1e2533" stroke="#ce9178" stroke-width="1"/>
+  <text x="30" y="1083" fill="#d4d4d4" font-family="JetBrains Mono", "Fira Code", monospace font-size="12" font-weight="normal">Spec == ...</text>
+  <text x="610" y="1083" text-anchor="end" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="10">L39</text>
+<line x1="20" y1="1108" x2="620" y2="1108" stroke="#484f58" stroke-width="1"/>
+<text x="30" y="1119" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="11" font-weight="600">PREDICATES</text>
+<rect x="20" y="1120" width="600" height="34" rx="0" ry="0" fill="#1e2533" stroke="#3b4660" stroke-width="1"/>
+  <text x="30" y="1141" fill="#d4d4d4" font-family="JetBrains Mono", "Fira Code", monospace font-size="12" font-weight="normal">TypeOK == ...</text>
+  <text x="610" y="1141" text-anchor="end" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="10">L41</text>
+<line x1="20" y1="1166" x2="620" y2="1166" stroke="#484f58" stroke-width="1"/>
+<text x="30" y="1177" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="11" font-weight="600">INVARIANTS</text>
+<rect x="20" y="1178" width="600" height="34" rx="0" ry="0" fill="#1e2533" stroke="#4ec990" stroke-width="1"/>
+  <text x="30" y="1199" fill="#d4d4d4" font-family="JetBrains Mono", "Fira Code", monospace font-size="12" font-weight="normal">AllInv == ...</text>
+  <text x="610" y="1199" text-anchor="end" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="10">L45</text>
+<rect x="20" y="1214" width="600" height="34" rx="0" ry="0" fill="#1e2533" stroke="#4ec990" stroke-width="1"/>
+  <text x="30" y="1235" fill="#d4d4d4" font-family="JetBrains Mono", "Fira Code", monospace font-size="12" font-weight="normal">Inv == ...</text>
+  <text x="610" y="1235" text-anchor="end" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="10">L43</text>
+<line x1="20" y1="1260" x2="620" y2="1260" stroke="#484f58" stroke-width="1"/>
+<text x="30" y="1271" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="11" font-weight="600">THEOREMS</text>
+<rect x="20" y="1272" width="600" height="34" rx="0" ry="0" fill="#3a1a1a" stroke="#f44747" stroke-width="1"/>
+  <text x="30" y="1293" fill="#f44747" font-family="JetBrains Mono", "Fira Code", monospace font-size="12" font-weight="bold">THEOREM</text>
+  <text x="610" y="1293" text-anchor="end" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="10">L47</text>
+<rect x="20" y="1308" width="600" height="34" rx="0" ry="0" fill="#3a1a1a" stroke="#f44747" stroke-width="1"/>
+  <text x="30" y="1329" fill="#f44747" font-family="JetBrains Mono", "Fira Code", monospace font-size="12" font-weight="bold">THEOREM</text>
+  <text x="610" y="1329" text-anchor="end" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="10">L48</text>
+</svg>
+</body>
+</html>

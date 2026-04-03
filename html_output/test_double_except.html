@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Structure — TestDoubleExcept</title>
+<style>
+:root{
+  --bg: #0d1117;
+  --sf: #161b22;
+  --bd: #30363d;
+  --tx: #e6edf3;
+  --tm: #8b949e;
+  --blue: #569cd6;
+  --green: #4ec990;
+  --purple: #c586c0;
+  --yellow: #dcdcaa;
+  --orange: #ce9178;
+  --red: #f44747;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  font-family: "JetBrains Mono", "Fira Code", monospace;
+  background: var(--bg);
+  color: var(--tx);
+  padding: 24px;
+  max-width: 960px;
+  margin: 0 auto;
+}
+.hdr{
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--bd);
+}
+.hdr h1{
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--blue);
+  margin-bottom: 6px;
+}
+.hdr .meta{
+  font-size: 13px;
+  color: var(--tm);
+  font-family: "JetBrains Mono", monospace;
+}
+.summary{
+  font-size: 14px;
+  color: var(--tm);
+  margin-bottom: 20px;
+  line-height: 1.6;
+}
+.diags{
+  margin-bottom: 20px;
+  background: var(--sf);
+  border: 1px solid var(--bd);
+  border-radius: 8px;
+  padding: 12px;
+}
+.diags summary{
+  cursor: pointer;
+  color: var(--orange);
+  font-weight: 600;
+  font-size: 14px;
+}
+.diags table{
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  margin-top: 8px;
+}
+.diags th,.diags td{
+  text-align: left;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--bd);
+}
+.diags th{
+  background: rgba(86, 156, 214, 0.15);
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 11px;
+  letter-spacing: 0.05em;
+}
+.sev{
+  color: var(--red);
+  font-weight: 700;
+  font-size: 11px;
+  text-transform: uppercase;
+}
+.more-info{
+  color: var(--tm);
+  font-style: italic;
+  text-align: center;
+}
+svg{
+  display: block;
+  border: 1px solid var(--bd);
+  border-radius: 8px;
+  width: 100%;
+  max-width: 640px;
+  background: var(--bg);
+}
+</style>
+</head>
+<body>
+<div class="hdr">
+  <h1>TestDoubleExcept</h1>
+  <div class="meta">/Volumes/External/Code/tlapa/example/test_double_except.tla &middot; 26 tokens &middot; 0.5ms</div>
+</div>
+<div class="summary">1 module &middot; 1 operator definition &middot; 1 variable</div>
+
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="164" viewBox="0 0 640 164">
+<rect width="100%" height="100%" fill="#0d1117" rx="6"/>
+<rect x="20" y="0" width="600" height="34" rx="6" ry="6" fill="#0f2847" stroke="#569cd6" stroke-width="1"/>
+  <text x="30" y="21" fill="#569cd6" font-family="JetBrains Mono", "Fira Code", monospace font-size="12" font-weight="bold">MODULE TestDoubleExcept</text>
+  <text x="610" y="21" text-anchor="end" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="10">L1</text>
+<line x1="20" y1="46" x2="620" y2="46" stroke="#484f58" stroke-width="1"/>
+<text x="30" y="57" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="11" font-weight="600">VARIABLES</text>
+<rect x="20" y="58" width="600" height="34" rx="0" ry="0" fill="#2a2a1a" stroke="#dcdcaa" stroke-width="1"/>
+  <text x="30" y="79" fill="#dcdcaa" font-family="JetBrains Mono", "Fira Code", monospace font-size="12" font-weight="normal">VARIABLE voted_for</text>
+  <text x="610" y="79" text-anchor="end" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="10">L2</text>
+<line x1="20" y1="104" x2="620" y2="104" stroke="#484f58" stroke-width="1"/>
+<text x="30" y="115" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="11" font-weight="600">PREDICATES</text>
+<rect x="20" y="116" width="600" height="34" rx="0" ry="0" fill="#1e2533" stroke="#3b4660" stroke-width="1"/>
+  <text x="30" y="137" fill="#d4d4d4" font-family="JetBrains Mono", "Fira Code", monospace font-size="12" font-weight="normal">Update == ...</text>
+  <text x="610" y="137" text-anchor="end" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="10">L3</text>
+</svg>
+</body>
+</html>

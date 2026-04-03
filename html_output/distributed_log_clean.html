@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Structure — DistributedLog</title>
+<style>
+:root{
+  --bg: #0d1117;
+  --sf: #161b22;
+  --bd: #30363d;
+  --tx: #e6edf3;
+  --tm: #8b949e;
+  --blue: #569cd6;
+  --green: #4ec990;
+  --purple: #c586c0;
+  --yellow: #dcdcaa;
+  --orange: #ce9178;
+  --red: #f44747;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  font-family: "JetBrains Mono", "Fira Code", monospace;
+  background: var(--bg);
+  color: var(--tx);
+  padding: 24px;
+  max-width: 960px;
+  margin: 0 auto;
+}
+.hdr{
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--bd);
+}
+.hdr h1{
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--blue);
+  margin-bottom: 6px;
+}
+.hdr .meta{
+  font-size: 13px;
+  color: var(--tm);
+  font-family: "JetBrains Mono", monospace;
+}
+.summary{
+  font-size: 14px;
+  color: var(--tm);
+  margin-bottom: 20px;
+  line-height: 1.6;
+}
+.diags{
+  margin-bottom: 20px;
+  background: var(--sf);
+  border: 1px solid var(--bd);
+  border-radius: 8px;
+  padding: 12px;
+}
+.diags summary{
+  cursor: pointer;
+  color: var(--orange);
+  font-weight: 600;
+  font-size: 14px;
+}
+.diags table{
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  margin-top: 8px;
+}
+.diags th,.diags td{
+  text-align: left;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--bd);
+}
+.diags th{
+  background: rgba(86, 156, 214, 0.15);
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 11px;
+  letter-spacing: 0.05em;
+}
+.sev{
+  color: var(--red);
+  font-weight: 700;
+  font-size: 11px;
+  text-transform: uppercase;
+}
+.more-info{
+  color: var(--tm);
+  font-style: italic;
+  text-align: center;
+}
+svg{
+  display: block;
+  border: 1px solid var(--bd);
+  border-radius: 8px;
+  width: 100%;
+  max-width: 640px;
+  background: var(--bg);
+}
+</style>
+</head>
+<body>
+<div class="hdr">
+  <h1>DistributedLog</h1>
+  <div class="meta">/Volumes/External/Code/tlapa/example/distributed_log_clean.tla &middot; 1988 tokens &middot; 62.4ms</div>
+</div>
+<div class="summary">1 assumption &middot; 4 constant &middot; 1 module &middot; 26 operator definition &middot; 1 theorem &middot; 9 variable</div>
+
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="1810" viewBox="0 0 640 1810">
+<rect width="100%" height="100%" fill="#0d1117" rx="6"/>
+<rect x="20" y="0" width="600" height="34" rx="6" ry="6" fill="#0f2847" stroke="#569cd6" stroke-width="1"/>
+  <text x="30" y="21" fill="#569cd6" font-family="JetBrains Mono", "Fira Code", monospace font-size="12" font-weight="bold">MODULE DistributedLog</text>
+  <text x="610" y="21" text-anchor="end" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="10">L1</text>
+<line x1="20" y1="46" x2="620" y2="46" stroke="#484f58" stroke-width="1"/>
+<text x="30" y="57" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="11" font-weight="600">CONSTANTS</text>
+<rect x="20" y="58" width="600" height="34" rx="0" ry="0" fill="#2a2a1a" stroke="#dcdcaa" stroke-width="1"/>
+  <text x="30" y="79" fill="#dcdcaa" font-family="JetBrains Mono", "Fira Code", monospace font-size="12" font-weight="normal">CONSTANT Nodes</text>
+  <text x="610" y="79" text-anchor="end" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="10">L5</text>
+<rect x="20" y="94" width="600" height="34" rx="0" ry="0" fill="#2a2a1a" stroke="#dcdcaa" stroke-width="1"/>
+  <text x="30" y="115" fill="#dcdcaa" font-family="JetBrains Mono", "Fira Code", monospace font-size="12" font-weight="normal">CONSTANT ElectionTimeoutMin</text>
+  <text x="610" y="115" text-anchor="end" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="10">L5</text>
+<rect x="20" y="130" width="600" height="34" rx="0" ry="0" fill="#2a2a1a" stroke="#dcdcaa" stroke-width="1"/>
+  <text x="30" y="151" fill="#dcdcaa" font-family="JetBrains Mono", "Fira Code", monospace font-size="12" font-weight="normal">CONSTANT ElectionTimeoutMax</text>
+  <text x="610" y="151" text-anchor="end" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="10">L5</text>
+<rect x="20" y="166" width="600" height="34" rx="0" ry="0" fill="#2a2a1a" stroke="#dcdcaa" stroke-width="1"/>
+  <text x="30" y="187" fill="#dcdcaa" font-family="JetBrains Mono", "Fira Code", monospace font-size="12" font-weight="normal">CONSTANT MaxLogSize</text>
+  <text x="610" y="187" text-anchor="end" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="10">L5</text>
+<line x1="20" y1="212" x2="620" y2="212" stroke="#484f58" stroke-width="1"/>
+<text x="30" y="223" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="11" font-weight="600">ASSUMPTIONS</text>
+<rect x="20" y="224" width="600" height="34" rx="0" ry="0" fill="#1e2533" stroke="#c586c0" stroke-width="1"/>
+  <text x="30" y="245" fill="#d4d4d4" font-family="JetBrains Mono", "Fira Code", monospace font-size="12" font-weight="normal">ASSUME</text>
+  <text x="610" y="245" text-anchor="end" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="10">L7</text>
+<line x1="20" y1="270" x2="620" y2="270" stroke="#484f58" stroke-width="1"/>
+<text x="30" y="281" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="11" font-weight="600">VARIABLES</text>
+<rect x="20" y="282" width="600" height="34" rx="0" ry="0" fill="#2a2a1a" stroke="#dcdcaa" stroke-width="1"/>
+  <text x="30" y="303" fill="#dcdcaa" font-family="JetBrains Mono", "Fira Code", monospace font-size="12" font-weight="normal">VARIABLE node_state</text>
+  <text x="610" y="303" text-anchor="end" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="10">L14</text>
+<rect x="20" y="318" width="600" height="34" rx="0" ry="0" fill="#2a2a1a" stroke="#dcdcaa" stroke-width="1"/>
+  <text x="30" y="339" fill="#dcdcaa" font-family="JetBrains Mono", "Fira Code", monospace font-size="12" font-weight="normal">VARIABLE current_leader</text>
+  <text x="610" y="339" text-anchor="end" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="10">L14</text>
+<rect x="20" y="354" width="600" height="34" rx="0" ry="0" fill="#2a2a1a" stroke="#dcdcaa" stroke-width="1"/>
+  <text x="30" y="375" fill="#dcdcaa" font-family="JetBrains Mono", "Fira Code", monospace font-size="12" font-weight="normal">VARIABLE logs</text>
+  <text x="610" y="375" text-anchor="end" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="10">L14</text>
+<rect x="20" y="390" width="600" height="34" rx="0" ry="0" fill="#2a2a1a" stroke="#dcdcaa" stroke-width="1"/>
+  <text x="30" y="411" fill="#dcdcaa" font-family="JetBrains Mono", "Fira Code", monospace font-size="12" font-weight="normal">VARIABLE commit_index</text>
+  <text x="610" y="411" text-anchor="end" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="10">L14</text>
+<rect x="20" y="426" width="600" height="34" rx="0" ry="0" fill="#2a2a1a" stroke="#dcdcaa" stroke-width="1"/>
+  <text x="30" y="447" fill="#dcdcaa" font-family="JetBrains Mono", "Fira Code", monospace font-size="12" font-weight="normal">VARIABLE current_term</text>
+  <text x="610" y="447" text-anchor="end" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="10">L14</text>
+<rect x="20" y="462" width="600" height="34" rx="0" ry="0" fill="#2a2a1a" stroke="#dcdcaa" stroke-width="1"/>
+  <text x="30" y="483" fill="#dcdcaa" font-family="JetBrains Mono", "Fira Code", monospace font-size="12" font-weight="normal">VARIABLE voted_for</text>
+  <text x="610" y="483" text-anchor="end" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="10">L14</text>
+<rect x="20" y="498" width="600" height="34" rx="0" ry="0" fill="#2a2a1a" stroke="#dcdcaa" stroke-width="1"/>
+  <text x="30" y="519" fill="#dcdcaa" font-family="JetBrains Mono", "Fira Code", monospace font-size="12" font-weight="normal">VARIABLE timers</text>
+  <text x="610" y="519" text-anchor="end" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="10">L14</text>
+<rect x="20" y="534" width="600" height="34" rx="0" ry="0" fill="#2a2a1a" stroke="#dcdcaa" stroke-width="1"/>
+  <text x="30" y="555" fill="#dcdcaa" font-family="JetBrains Mono", "Fira Code", monospace font-size="12" font-weight="normal">VARIABLE messages</text>
+  <text x="610" y="555" text-anchor="end" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="10">L14</text>
+<rect x="20" y="570" width="600" height="34" rx="0" ry="0" fill="#2a2a1a" stroke="#dcdcaa" stroke-width="1"/>
+  <text x="30" y="591" fill="#dcdcaa" font-family="JetBrains Mono", "Fira Code", monospace font-size="12" font-weight="normal">VARIABLE msg_id</text>
+  <text x="610" y="591" text-anchor="end" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="10">L14</text>
+<line x1="20" y1="616" x2="620" y2="616" stroke="#484f58" stroke-width="1"/>
+<text x="30" y="627" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="11" font-weight="600">PREDICATES</text>
+<rect x="20" y="628" width="600" height="34" rx="0" ry="0" fill="#1e2533" stroke="#3b4660" stroke-width="1"/>
+  <text x="30" y="649" fill="#d4d4d4" font-family="JetBrains Mono", "Fira Code", monospace font-size="12" font-weight="normal">LastLogIndex(log) == ...</text>
+  <text x="610" y="649" text-anchor="end" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="10">L49</text>
+<rect x="20" y="664" width="600" height="34" rx="0" ry="0" fill="#1e2533" stroke="#3b4660" stroke-width="1"/>
+  <text x="30" y="685" fill="#d4d4d4" font-family="JetBrains Mono", "Fira Code", monospace font-size="12" font-weight="normal">LastLogTerm(log) == ...</text>
+  <text x="610" y="685" text-anchor="end" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="10">L51</text>
+<rect x="20" y="700" width="600" height="34" rx="0" ry="0" fill="#1e2533" stroke="#3b4660" stroke-width="1"/>
+  <text x="30" y="721" fill="#d4d4d4" font-family="JetBrains Mono", "Fira Code", monospace font-size="12" font-weight="normal">LogEntry == ...</text>
+  <text x="610" y="721" text-anchor="end" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="10">L25</text>
+<rect x="20" y="736" width="600" height="34" rx="0" ry="0" fill="#1e2533" stroke="#3b4660" stroke-width="1"/>
+  <text x="30" y="757" fill="#d4d4d4" font-family="JetBrains Mono", "Fira Code", monospace font-size="12" font-weight="normal">LogMoreUpToDate(log_a,log_b) == ...</text>
+  <text x="610" y="757" text-anchor="end" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="10">L54</text>
+<rect x="20" y="772" width="600" height="34" rx="0" ry="0" fill="#1e2533" stroke="#3b4660" stroke-width="1"/>
+  <text x="30" y="793" fill="#d4d4d4" font-family="JetBrains Mono", "Fira Code", monospace font-size="12" font-weight="normal">MatchEntry(log,index,term) == ...</text>
+  <text x="610" y="793" text-anchor="end" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="10">L59</text>
+<rect x="20" y="808" width="600" height="34" rx="0" ry="0" fill="#1e2533" stroke="#3b4660" stroke-width="1"/>
+  <text x="30" y="829" fill="#d4d4d4" font-family="JetBrains Mono", "Fira Code", monospace font-size="12" font-weight="normal">Message == ...</text>
+  <text x="610" y="829" text-anchor="end" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="10">L31</text>
+<rect x="20" y="844" width="600" height="34" rx="0" ry="0" fill="#1e2533" stroke="#3b4660" stroke-width="1"/>
+  <text x="30" y="865" fill="#d4d4d4" font-family="JetBrains Mono", "Fira Code", monospace font-size="12" font-weight="normal">MessageType == ...</text>
+  <text x="610" y="865" text-anchor="end" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="10">L29</text>
+<rect x="20" y="880" width="600" height="34" rx="0" ry="0" fill="#1e2533" stroke="#3b4660" stroke-width="1"/>
+  <text x="30" y="901" fill="#d4d4d4" font-family="JetBrains Mono", "Fira Code", monospace font-size="12" font-weight="normal">NodeState == ...</text>
+  <text x="610" y="901" text-anchor="end" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="10">L27</text>
+<rect x="20" y="916" width="600" height="34" rx="0" ry="0" fill="#1e2533" stroke="#3b4660" stroke-width="1"/>
+  <text x="30" y="937" fill="#d4d4d4" font-family="JetBrains Mono", "Fira Code", monospace font-size="12" font-weight="normal">SafeLogAt(log,idx) == ...</text>
+  <text x="610" y="937" text-anchor="end" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="10">L46</text>
+<line x1="20" y1="962" x2="620" y2="962" stroke="#484f58" stroke-width="1"/>
+<text x="30" y="973" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="11" font-weight="600">INITIALIZATION</text>
+<rect x="20" y="974" width="600" height="34" rx="0" ry="0" fill="#1e2533" stroke="#4ec990" stroke-width="1"/>
+  <text x="30" y="995" fill="#d4d4d4" font-family="JetBrains Mono", "Fira Code", monospace font-size="12" font-weight="normal">Init == ...</text>
+  <text x="610" y="995" text-anchor="end" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="10">L62</text>
+<line x1="20" y1="1020" x2="620" y2="1020" stroke="#484f58" stroke-width="1"/>
+<text x="30" y="1031" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="11" font-weight="600">PREDICATES</text>
+<rect x="20" y="1032" width="600" height="34" rx="0" ry="0" fill="#1e2533" stroke="#3b4660" stroke-width="1"/>
+  <text x="30" y="1053" fill="#d4d4d4" font-family="JetBrains Mono", "Fira Code", monospace font-size="12" font-weight="normal">BecomeLeader(node) == ...</text>
+  <text x="610" y="1053" text-anchor="end" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="10">L106</text>
+<rect x="20" y="1068" width="600" height="34" rx="0" ry="0" fill="#1e2533" stroke="#3b4660" stroke-width="1"/>
+  <text x="30" y="1089" fill="#d4d4d4" font-family="JetBrains Mono", "Fira Code", monospace font-size="12" font-weight="normal">ElectionTimeout(node) == ...</text>
+  <text x="610" y="1089" text-anchor="end" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="10">L85</text>
+<rect x="20" y="1104" width="600" height="34" rx="0" ry="0" fill="#1e2533" stroke="#3b4660" stroke-width="1"/>
+  <text x="30" y="1125" fill="#d4d4d4" font-family="JetBrains Mono", "Fira Code", monospace font-size="12" font-weight="normal">Tick == ...</text>
+  <text x="610" y="1125" text-anchor="end" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="10">L73</text>
+<line x1="20" y1="1150" x2="620" y2="1150" stroke="#484f58" stroke-width="1"/>
+<text x="30" y="1161" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="11" font-weight="600">ACTIONS</text>
+<rect x="20" y="1162" width="600" height="34" rx="0" ry="0" fill="#1e2533" stroke="#dcdcaa" stroke-width="1"/>
+  <text x="30" y="1183" fill="#d4d4d4" font-family="JetBrains Mono", "Fira Code", monospace font-size="12" font-weight="normal">StepDown(node,new_term) == ...</text>
+  <text x="610" y="1183" text-anchor="end" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="10">L126</text>
+<line x1="20" y1="1208" x2="620" y2="1208" stroke="#484f58" stroke-width="1"/>
+<text x="30" y="1219" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="11" font-weight="600">PREDICATES</text>
+<rect x="20" y="1220" width="600" height="34" rx="0" ry="0" fill="#1e2533" stroke="#3b4660" stroke-width="1"/>
+  <text x="30" y="1241" fill="#d4d4d4" font-family="JetBrains Mono", "Fira Code", monospace font-size="12" font-weight="normal">ClientSubmit(node,cmd) == ...</text>
+  <text x="610" y="1241" text-anchor="end" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="10">L204</text>
+<rect x="20" y="1256" width="600" height="34" rx="0" ry="0" fill="#1e2533" stroke="#3b4660" stroke-width="1"/>
+  <text x="30" y="1277" fill="#d4d4d4" font-family="JetBrains Mono", "Fira Code", monospace font-size="12" font-weight="normal">HandleAppendEntries(node,msg) == ...</text>
+  <text x="610" y="1277" text-anchor="end" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="10">L159</text>
+<rect x="20" y="1292" width="600" height="34" rx="0" ry="0" fill="#1e2533" stroke="#3b4660" stroke-width="1"/>
+  <text x="30" y="1313" fill="#d4d4d4" font-family="JetBrains Mono", "Fira Code", monospace font-size="12" font-weight="normal">HandleAppendEntriesReply(leader,msg) == ...</text>
+  <text x="610" y="1313" text-anchor="end" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="10">L195</text>
+<rect x="20" y="1328" width="600" height="34" rx="0" ry="0" fill="#1e2533" stroke="#3b4660" stroke-width="1"/>
+  <text x="30" y="1349" fill="#d4d4d4" font-family="JetBrains Mono", "Fira Code", monospace font-size="12" font-weight="normal">HandleRequestVote(node,msg) == ...</text>
+  <text x="610" y="1349" text-anchor="end" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="10">L135</text>
+<line x1="20" y1="1374" x2="620" y2="1374" stroke="#484f58" stroke-width="1"/>
+<text x="30" y="1385" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="11" font-weight="600">ACTIONS</text>
+<rect x="20" y="1386" width="600" height="34" rx="0" ry="0" fill="#1e2533" stroke="#dcdcaa" stroke-width="1"/>
+  <text x="30" y="1407" fill="#d4d4d4" font-family="JetBrains Mono", "Fira Code", monospace font-size="12" font-weight="normal">LeaderAppendOnly == ...</text>
+  <text x="610" y="1407" text-anchor="end" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="10">L235</text>
+<rect x="20" y="1422" width="600" height="34" rx="0" ry="0" fill="#1e2533" stroke="#dcdcaa" stroke-width="1"/>
+  <text x="30" y="1443" fill="#d4d4d4" font-family="JetBrains Mono", "Fira Code", monospace font-size="12" font-weight="normal">Next == ...</text>
+  <text x="610" y="1443" text-anchor="end" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="10">L224</text>
+<line x1="20" y1="1468" x2="620" y2="1468" stroke="#484f58" stroke-width="1"/>
+<text x="30" y="1479" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="11" font-weight="600">PREDICATES</text>
+<rect x="20" y="1480" width="600" height="34" rx="0" ry="0" fill="#1e2533" stroke="#3b4660" stroke-width="1"/>
+  <text x="30" y="1501" fill="#d4d4d4" font-family="JetBrains Mono", "Fira Code", monospace font-size="12" font-weight="normal">CommitOnlyIfQuorum == ...</text>
+  <text x="610" y="1501" text-anchor="end" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="10">L244</text>
+<rect x="20" y="1516" width="600" height="34" rx="0" ry="0" fill="#1e2533" stroke="#3b4660" stroke-width="1"/>
+  <text x="30" y="1537" fill="#d4d4d4" font-family="JetBrains Mono", "Fira Code", monospace font-size="12" font-weight="normal">EventualLeader == ...</text>
+  <text x="610" y="1537" text-anchor="end" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="10">L255</text>
+<rect x="20" y="1552" width="600" height="34" rx="0" ry="0" fill="#1e2533" stroke="#3b4660" stroke-width="1"/>
+  <text x="30" y="1573" fill="#d4d4d4" font-family="JetBrains Mono", "Fira Code", monospace font-size="12" font-weight="normal">LeaderCompleteness == ...</text>
+  <text x="610" y="1573" text-anchor="end" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="10">L250</text>
+<rect x="20" y="1588" width="600" height="34" rx="0" ry="0" fill="#1e2533" stroke="#3b4660" stroke-width="1"/>
+  <text x="30" y="1609" fill="#d4d4d4" font-family="JetBrains Mono", "Fira Code", monospace font-size="12" font-weight="normal">LogsMatchCommonPrefix == ...</text>
+  <text x="610" y="1609" text-anchor="end" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="10">L240</text>
+<line x1="20" y1="1634" x2="620" y2="1634" stroke="#484f58" stroke-width="1"/>
+<text x="30" y="1645" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="11" font-weight="600">INVARIANTS</text>
+<rect x="20" y="1646" width="600" height="34" rx="0" ry="0" fill="#1e2533" stroke="#4ec990" stroke-width="1"/>
+  <text x="30" y="1667" fill="#d4d4d4" font-family="JetBrains Mono", "Fira Code", monospace font-size="12" font-weight="normal">TypeInvariant == ...</text>
+  <text x="610" y="1667" text-anchor="end" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="10">L258</text>
+<line x1="20" y1="1692" x2="620" y2="1692" stroke="#484f58" stroke-width="1"/>
+<text x="30" y="1703" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="11" font-weight="600">SPECIFICATION</text>
+<rect x="20" y="1704" width="600" height="34" rx="0" ry="0" fill="#1e2533" stroke="#ce9178" stroke-width="1"/>
+  <text x="30" y="1725" fill="#d4d4d4" font-family="JetBrains Mono", "Fira Code", monospace font-size="12" font-weight="normal">Spec == ...</text>
+  <text x="610" y="1725" text-anchor="end" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="10">L268</text>
+<line x1="20" y1="1750" x2="620" y2="1750" stroke="#484f58" stroke-width="1"/>
+<text x="30" y="1761" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="11" font-weight="600">THEOREMS</text>
+<rect x="20" y="1762" width="600" height="34" rx="0" ry="0" fill="#3a1a1a" stroke="#f44747" stroke-width="1"/>
+  <text x="30" y="1783" fill="#f44747" font-family="JetBrains Mono", "Fira Code", monospace font-size="12" font-weight="bold">THEOREM</text>
+  <text x="610" y="1783" text-anchor="end" fill="#808080" font-family="JetBrains Mono", "Fira Code", monospace font-size="10">L270</text>
+</svg>
+</body>
+</html>
