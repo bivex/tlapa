@@ -245,16 +245,22 @@ def _draw_selection(block: SelectionBlock, x: float, y: float, w: float,
     y += COND_H + BP
     branch_top = y
 
-    # 2. Draw THEN branch (left half)
+    # 2. Draw false branch background (slight red tint)
+    parts.append(
+        f'<rect x="{x+half_w}" y="{branch_top}" width="{half_w}" height="{max_h}" '
+        f'fill="{C_ELSE}" fill-opacity="0.12" stroke="none"/>'
+    )
+
+    # 3. Draw THEN branch (left half)
     then_used = 0.0
     if then_br and not isinstance(then_br, EmptyBlock):
         then_used = draw_block(then_br, x, y, half_w, depth + 1, parts)
 
-    # 3. Padding for THEN if shorter
+    # 4. Padding for THEN if shorter
     if then_h < max_h:
         parts.append(_svg_padding(x, y + then_h, half_w, max_h - then_h))
 
-    # 4. Draw ELSE branch (right half)
+    # 5. Draw ELSE branch (right half)
     else_used = 0.0
     if else_br and not isinstance(else_br, EmptyBlock):
         else_used = draw_block(else_br, x + half_w, y, half_w, depth + 1, parts)
