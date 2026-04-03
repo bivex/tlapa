@@ -1,8 +1,14 @@
-"""Render Nassi-Shneiderman blocks to SVG."""
+"""Render Nassi-Shneiderman blocks to SVG.
+
+Implements a proper NSD visual style:
+  - IF: triangle header with condition text, THEN/ELSE branches side by side
+  - CASE: header row + stacked arm rows
+  - Sequence: blocks stacked vertically with minimal indent
+  - Scope (LET): labeled header
+  - Action: colored by kind (state, predicate, expression)
+"""
 
 from __future__ import annotations
-
-from typing import List
 
 from swifta.presentation.nassi_blocks import (
     Block,
@@ -11,179 +17,283 @@ from swifta.presentation.nassi_blocks import (
     SelectionBlock,
     CaseBlock,
     ScopeBlock,
+    EmptyBlock,
 )
 
-# Constants (reuse from tlaplus_structure_renderer or define locally)
+# ---------------------------------------------------------------------------
+# Layout constants
+# ---------------------------------------------------------------------------
 DIAGRAM_W = 800
-MARGIN_X = 30
-MARGIN_Y = 20
-BLOCK_H = 28
-BLOCK_PAD = 6
-INDENT_STEP = 20
+MX = 20  # horizontal margin
+MY = 16  # top margin after title
+BH = 30  # block height
+BP = 4  # padding between blocks
+INDENT = 16  # indent per nesting level
+COND_H = 32  # IF condition triangle height
 
-C_BG = "#0d1117"
-C_BLOCK = "#1e2533"
-C_BLOCK_STROKE = "#3b4660"
-C_TEXT = "#d4d4d4"
-C_TEXT_DIM = "#808080"
+# ---------------------------------------------------------------------------
+# Colour palette (dark theme)
+# ---------------------------------------------------------------------------
+BG = "#0d1117"
+C_ACTION = "#161b22"
+C_ACTION_ST = "#30363d"
+C_COND_BG = "#1a2233"
+C_COND_ST = "#58a6ff"
+C_CASE_BG = "#1c1e2e"
+C_CASE_ST = "#bc8cff"
+C_SCOPE_BG = "#1a2744"
+C_SCOPE_ST = "#d2a8ff"
+C_TEXT = "#e6edf3"
+C_TEXT_DIM = "#8b949e"
+C_THEN = "#3fb950"
+C_ELSE = "#f85149"
+C_ARM = "#bc8cff"
+C_COND_TEXT = "#58a6ff"
+
+# ---------------------------------------------------------------------------
+# SVG helpers
+# ---------------------------------------------------------------------------
+
+def _esc(text: str) -> str:
+    """Escape HTML entities in text for SVG."""
+    return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace('"', "&quot;")
 
 
-def _svg_rect(
-    x: int,
-    y: int,
-    w: int,
-    h: int,
-    fill: str,
-    stroke: str,
-    text: str,
-    text_color: str = C_TEXT,
-    radius: int = 0,
-    font_weight: str = "normal",
-    sub: str = "",
-) -> str:
-    """Return SVG rect with centered text."""
-    label = f"{text} {sub}".strip()
+def _fit_text(text: str, max_chars: int = 80) -> str:
+    t = text.strip()
+    if len(t) <= max_chars:
+        return t
+    return t[: max_chars - 1] + "…"
+
+
+def _svg_block(x: float, y: float, w: float, h: float, fill: str, stroke: str,
+               text: str, text_color: str = C_TEXT, font_size: int = 12,
+               font_weight: str = "normal", text_anchor: str = "middle",
+               text_x: float | None = None, rx: int = 4) -> str:
+    """Rounded rect with text."""
+    tx = text_x if text_x is not None else x + w / 2
+    ty = y + h / 2 + font_size * 0.35
     return (
-        f'<rect x="{x}" y="{y}" width="{w}" height="{h}" rx="{radius}" ry="{radius}" fill="{fill}" stroke="{stroke}" stroke-width="1"/>'
-        f'<text x="{x + w / 2}" y="{y + h / 2 + 4}" text-anchor="middle" fill="{text_color}" font-family="JetBrains Mono, Fira Code, monospace" font-size="12" font-weight="{font_weight}">{label}</text>'
+        f'<rect x="{x}" y="{y}" width="{w}" height="{h}" rx="{rx}" ry="{rx}" '
+        f'fill="{fill}" stroke="{stroke}" stroke-width="1"/>'
+        f'<text x="{tx}" y="{ty}" text-anchor="{text_anchor}" fill="{text_color}" '
+        f'font-family="JetBrains Mono,Fira Code,monospace" font-size="{font_size}" '
+        f'font-weight="{font_weight}">{_esc(_fit_text(text))}</text>'
     )
 
 
-def _draw_condition_line(y: int, text: str, x: int, w: int) -> str:
-    """Draw a thin dashed line with condition label."""
-    line_y = y + BLOCK_PAD // 2
+def _svg_triangle(x: float, y: float, w: float, h: float, fill: str, stroke: str,
+                  cond_text: str) -> str:
+    """Draw NSD IF triangle with condition text."""
+    mid_x = x + w / 2
+    # Triangle points: top-left, top-right, bottom-center
+    pts = f"{x},{y} {x + w},{y} {mid_x},{y + h}"
     return (
-        f'<line x1="{x}" y1="{line_y}" x2="{x + w}" y2="{line_y}" stroke="{C_TEXT_DIM}" stroke-dasharray="2,2" stroke-width="1"/>'
-        f'<text x="{x + 5}" y="{line_y - 2}" fill="{C_TEXT_DIM}" font-family="JetBrains Mono, monospace" font-size="10">{text}</text>'
+        f'<polygon points="{pts}" fill="{fill}" stroke="{stroke}" stroke-width="1.5"/>'
+        # Condition text centered in upper portion of triangle
+        f'<text x="{mid_x}" y="{y + h * 0.45}" text-anchor="middle" fill="{C_COND_TEXT}" '
+        f'font-family="JetBrains Mono,Fira Code,monospace" font-size="11" '
+        f'font-weight="bold">{_esc(_fit_text(cond_text, 50))}</text>'
+        # THEN label (left)
+        f'<text x="{x + 20}" y="{y + h * 0.8}" text-anchor="start" fill="{C_THEN}" '
+        f'font-family="JetBrains Mono,monospace" font-size="9" font-weight="bold">T</text>'
+        # ELSE label (right)
+        f'<text x="{x + w - 20}" y="{y + h * 0.8}" text-anchor="end" fill="{C_ELSE}" '
+        f'font-family="JetBrains Mono,monospace" font-size="9" font-weight="bold">F</text>'
     )
 
 
-def render_nassi_diagram(root: Block, module_name: str, variant: str = "seq") -> str:
-    """
-    Render NSD tree to SVG string.
+def _svg_divider(y: float, x1: float, x2: float, label: str = "", color: str = C_TEXT_DIM) -> str:
+    """Thin divider line with optional label."""
+    parts = [f'<line x1="{x1}" y1="{y}" x2="{x2}" y2="{y}" stroke="{color}" stroke-width="0.5" opacity="0.5"/>']
+    if label:
+        parts.append(
+            f'<text x="{x1 + 4}" y="{y - 2}" fill="{color}" '
+            f'font-family="JetBrains Mono,monospace" font-size="9" opacity="0.7">{label}</text>'
+        )
+    return "".join(parts)
 
-    Args:
-        root: Root Block of the NSD tree
-        module_name: Name of the TLA+ module
-        variant: "seq" (sequence) or "if" (if-style) – controls layout
 
-    Returns:
-        SVG string
-    """
-    # width used implicitly in _svg_rect, no need to track separately
-    drawn_parts: List[str] = []
-    y_cursor = 0
+# ---------------------------------------------------------------------------
+# Main renderer
+# ---------------------------------------------------------------------------
 
-    # Title
-    drawn_parts.append(
-        f'<text x="{MARGIN_X}" y="24" fill="{C_TEXT}" font-family="JetBrains Mono, monospace" font-size="14" font-weight="bold">NSD: {module_name}</text>'
-    )
-    y_cursor = 35
+def render_nassi_diagram(root: Block, op_name: str, variant: str = "seq") -> str:
+    """Render NSD block tree to SVG string."""
+    parts: list[str] = []
+    y = MY
 
-    def draw_block(block: Block, x: int, y: int, width: int, indent: int = 0) -> int:
-        """Recursively draw block and children. Returns new y."""
+    # --- Measure pass (compute total height) ---
+    # We do a two-pass approach: first measure, then draw.
+    # For simplicity we draw in one pass and compute height at the end.
+
+    def draw(block: Block, x: float, y: float, w: float, depth: int = 0) -> float:
+        """Draw a block. Returns new y position."""
+
+        if isinstance(block, EmptyBlock):
+            return y
+
+        # --- Sequence ---
+        if isinstance(block, SequenceBlock):
+            cy = y
+            for child in block.children:
+                cy = draw(child, x, cy, w, depth)
+            return cy
+
+        # --- IF / Selection ---
+        if isinstance(block, SelectionBlock):
+            return _draw_selection(block, x, y, w, depth, parts)
+
+        # --- CASE ---
+        if isinstance(block, CaseBlock):
+            return _draw_case(block, x, y, w, depth, parts)
+
+        # --- Scope (LET...IN) ---
+        if isinstance(block, ScopeBlock):
+            return _draw_scope(block, x, y, w, depth, parts)
+
+        # --- Action (leaf) ---
         if isinstance(block, ActionBlock):
-            text = block.text if block.text else block.label
-            drawn_parts.append(
-                _svg_rect(x, y, width, BLOCK_H, C_BLOCK, C_BLOCK_STROKE, text, C_TEXT, 0, "normal")
-            )
-            return y + BLOCK_H + BLOCK_PAD
-        elif isinstance(block, SequenceBlock):
-            # Draw children stacked, with reduced width for indentation
-            current_y = y
-            for child in block.children:
-                child_x = x + INDENT_STEP
-                child_w = width - 2 * INDENT_STEP
-                if child_w < 100:
-                    child_w = width - INDENT_STEP
-                    child_x = x + INDENT_STEP // 2
-                current_y = draw_block(child, child_x, current_y, child_w, indent + 1)
-            return current_y
-        elif isinstance(block, SelectionBlock):
-            # THEN branch
-            y1 = y + BLOCK_H + BLOCK_PAD
-            # THEN
-            drawn_parts.append(_draw_condition_line(y1, "THEN", x, width))
-            y2 = y1 + BLOCK_PAD
-            y2 = draw_block(
-                block.then_branch, x + INDENT_STEP, y2, width - 2 * INDENT_STEP, indent + 1
-            )
-            # ELSE if exists
-            if block.else_branch:
-                y3 = y2 + BLOCK_PAD
-                drawn_parts.append(_draw_condition_line(y3, "ELSE", x, width))
-                y4 = y3 + BLOCK_PAD
-                y4 = draw_block(
-                    block.else_branch, x + INDENT_STEP, y4, width - 2 * INDENT_STEP, indent + 1
-                )
-                return y4
-            return y2
-        elif isinstance(block, CaseBlock):
-            # CASE label
-            drawn_parts.append(
-                _svg_rect(x, y, width, BLOCK_H, C_BLOCK, C_BLOCK_STROKE, "CASE", C_TEXT, 0, "bold")
-            )
-            y_cur = y + BLOCK_H + BLOCK_PAD
-            for idx, (pat, body) in enumerate(block.arms):
-                pat_label = f"• {pat}"
-                drawn_parts.append(
-                    _svg_rect(
-                        x,
-                        y_cur,
-                        width,
-                        BLOCK_H,
-                        C_BLOCK,
-                        C_BLOCK_STROKE,
-                        pat_label,
-                        C_TEXT,
-                        0,
-                        "normal",
-                    )
-                )
-                y_body = y_cur + BLOCK_H + BLOCK_PAD
-                y_cur = draw_block(
-                    body, x + INDENT_STEP, y_body, width - 2 * INDENT_STEP, indent + 1
-                )
-            return y_cur
-        elif isinstance(block, ScopeBlock):
-            drawn_parts.append(
-                _svg_rect(
-                    x, y, width, BLOCK_H, "#1a2744", C_BLOCK_STROKE,
-                    block.label or "SCOPE", C_TEXT, 0, "bold",
-                )
-            )
-            y_cur = y + BLOCK_H + BLOCK_PAD
-            for child in block.children:
-                y_cur = draw_block(child, x + INDENT_STEP, y_cur, width - 2 * INDENT_STEP, indent + 1)
-            return y_cur
-        else:
-            # Unknown block type – render as text
-            drawn_parts.append(
-                _svg_rect(
-                    x,
-                    y,
-                    width,
-                    BLOCK_H,
-                    C_BLOCK,
-                    C_BLOCK_STROKE,
-                    block.label or str(block.kind),
-                    C_TEXT,
-                    0,
-                    "normal",
-                )
-            )
-            return y + BLOCK_H + BLOCK_PAD
+            text = block.text or block.label or "—"
+            fill, stroke = _action_colors(text)
+            parts.append(_svg_block(x, y, w, BH, fill, stroke, text))
+            return y + BH + BP
 
-    total_y = draw_block(root, MARGIN_X, y_cursor, DIAGRAM_W - 2 * MARGIN_X)
-    total_h = total_y + MARGIN_Y
+        # --- Fallback ---
+        text = getattr(block, "text", None) or block.label or block.kind
+        parts.append(_svg_block(x, y, w, BH, C_ACTION, C_ACTION_ST, text))
+        return y + BH + BP
 
-    # Build SVG
+    total_y = draw(root, MX, y, DIAGRAM_W - 2 * MX)
+    total_h = total_y + MY
+
+    # Assemble SVG
     svg = (
         f'<svg xmlns="http://www.w3.org/2000/svg" '
         f'width="{DIAGRAM_W}" height="{total_h}" '
         f'viewBox="0 0 {DIAGRAM_W} {total_h}">\n'
-        f'<rect width="100%" height="100%" fill="{C_BG}" rx="6"/>\n'
+        f'<rect width="100%" height="100%" fill="{BG}" rx="8"/>\n'
     )
-    svg += "\n".join(drawn_parts)
+    svg += "\n".join(parts)
     svg += "\n</svg>"
     return svg
+
+
+# ---------------------------------------------------------------------------
+# Selection (IF/THEN/ELSE)
+# ---------------------------------------------------------------------------
+
+def _draw_selection(block: SelectionBlock, x: float, y: float, w: float,
+                    depth: int, parts: list[str]) -> float:
+    cond = block.condition or "?"
+    then_br = block.then_branch
+    else_br = block.else_branch
+
+    # 1. Draw triangle header
+    parts.append(_svg_triangle(x, y, w, COND_H, C_COND_BG, C_COND_ST, cond))
+    y += COND_H + BP
+
+    # 2. THEN branch — full width
+    if then_br and not isinstance(then_br, EmptyBlock):
+        y = draw_block(then_br, x, y, w, depth + 1, parts)
+
+    # 3. ELSE branch — full width, with divider
+    if else_br and not isinstance(else_br, EmptyBlock):
+        parts.append(_svg_divider(y, x, x + w, "ELSE", C_ELSE))
+        y += BP * 2
+        y = draw_block(else_br, x, y, w, depth + 1, parts)
+
+    return y
+
+
+def draw_block(block: Block, x: float, y: float, w: float,
+               depth: int, parts: list[str]) -> float:
+    """Dispatch block drawing (module-level helper for recursion)."""
+    if isinstance(block, EmptyBlock):
+        return y
+    if isinstance(block, SequenceBlock):
+        cy = y
+        for child in block.children:
+            cy = draw_block(child, x, cy, w, depth)
+        return cy
+    if isinstance(block, SelectionBlock):
+        return _draw_selection(block, x, y, w, depth, parts)
+    if isinstance(block, CaseBlock):
+        return _draw_case(block, x, y, w, depth, parts)
+    if isinstance(block, ScopeBlock):
+        return _draw_scope(block, x, y, w, depth, parts)
+    if isinstance(block, ActionBlock):
+        text = block.text or block.label or "—"
+        fill, stroke = _action_colors(text)
+        parts.append(_svg_block(x, y, w, BH, fill, stroke, text))
+        return y + BH + BP
+    # fallback
+    text = getattr(block, "text", None) or block.label or block.kind
+    parts.append(_svg_block(x, y, w, BH, C_ACTION, C_ACTION_ST, text))
+    return y + BH + BP
+
+
+# ---------------------------------------------------------------------------
+# CASE
+# ---------------------------------------------------------------------------
+
+def _draw_case(block: CaseBlock, x: float, y: float, w: float,
+               depth: int, parts: list[str]) -> float:
+    # Header
+    parts.append(_svg_block(x, y, w, BH, C_CASE_BG, C_CASE_ST, "CASE",
+                            C_CASE_ST, font_weight="bold"))
+    y += BH + BP
+
+    for idx, (pattern, body) in enumerate(block.arms):
+        # Arm label row
+        arm_label = f"▸ {pattern}"
+        parts.append(_svg_block(x, y, w, BH, C_CASE_BG, C_CASE_ST, arm_label,
+                                C_ARM, font_size=11))
+        y += BH + BP
+
+        # Body (indented)
+        if body and not isinstance(body, EmptyBlock):
+            ix = x + INDENT
+            iw = w - INDENT
+            y = draw_block(body, ix, y, iw, depth + 1, parts)
+
+    return y
+
+
+# ---------------------------------------------------------------------------
+# Scope (LET...IN)
+# ---------------------------------------------------------------------------
+
+def _draw_scope(block: ScopeBlock, x: float, y: float, w: float,
+                depth: int, parts: list[str]) -> float:
+    label = block.label or "SCOPE"
+    parts.append(_svg_block(x, y, w, BH, C_SCOPE_BG, C_SCOPE_ST, label,
+                            C_SCOPE_ST, font_weight="bold", rx=6))
+    y += BH + BP
+
+    for child in block.children:
+        y = draw_block(child, x + INDENT, y, w - INDENT, depth + 1, parts)
+    return y
+
+
+# ---------------------------------------------------------------------------
+# Action colour coding
+# ---------------------------------------------------------------------------
+
+def _action_colors(text: str) -> tuple[str, str]:
+    """Pick fill/stroke based on action semantics."""
+    t = text.strip()
+    # Primed variable (state transition)
+    if "'" in t:
+        return "#0d1f0d", "#3fb950"  # green tint
+    # Temporal ([] <>, ~>)
+    if t.startswith("[]") or t.startswith("<>") or t.startswith("~[]"):
+        return "#1f1a0d", "#d29922"  # amber tint
+    # String literal
+    if t.startswith('"'):
+        return "#1a1533", "#bc8cff"  # purple tint
+    # Negation
+    if t.startswith("~") or t.startswith("\\") and "lnot" in t[:8]:
+        return "#1f130d", "#f0883e"  # orange tint
+    # Default
+    return C_ACTION, C_ACTION_ST
