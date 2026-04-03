@@ -2,12 +2,7 @@
 
 VARIABLES a, b, c, d, e
 
-Init ==
-  /\ a = 0
-  /\ b = 0
-  /\ c = 0
-  /\ d = 0
-  /\ e = 0
+Init == a = 0 /\ b = 0 /\ c = 0 /\ d = 0 /\ e = 0
 
 Add1 == a' = a + 1
 Add2 == b' = b + 2
@@ -32,14 +27,17 @@ State2 == c' = c + 1
 
 Combined == State1 \/ State2
 
-Next ==
-  \/ Add1
-  \/ Add2
-  \/ Add3
-  \/ Mul2
-  \/ Dec1
-  \/ State1
-  \/ State2
+Next == Add1 \/ Add2 \/ Add3 \/ Mul2 \/ Dec1 \/ State1 \/ State2
+
+IncIfPositive ==
+  IF a > 0 THEN a' = a + 1 ELSE a' = a
+
+CaseLabel ==
+  CASE a = 0 -> "zero" [] a = 1 -> "one" [] OTHER -> "many"
+
+Classify ==
+  IF a > 100 THEN "huge"
+  ELSE IF a > 10 THEN "medium" ELSE "small"
 
 InvA == a >= 0
 InvB == b >= 0
@@ -53,4 +51,4 @@ Spec == Init /\ [][Next]_<<a, b, c, d, e>>
 THEOREM Spec => []AllInv
 THEOREM Init => AllInv
 
-===#
+====
