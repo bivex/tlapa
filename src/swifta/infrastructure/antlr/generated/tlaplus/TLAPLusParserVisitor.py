@@ -1,4 +1,4 @@
-# Generated from TLAPLusParser.g4 by ANTLR 4.13.1
+# Generated from tlaparser/parser/TLAPLusParser.g4 by ANTLR 4.13.1
 from antlr4 import *
 if "." in __name__:
     from .TLAPLusParser import TLAPLusParser
@@ -121,11 +121,6 @@ class TLAPLusParserVisitor(ParseTreeVisitor):
 
     # Visit a parse tree produced by TLAPLusParser#identifierTuple.
     def visitIdentifierTuple(self, ctx:TLAPLusParser.IdentifierTupleContext):
-        return self.visitChildren(ctx)
-
-
-    # Visit a parse tree produced by TLAPLusParser#boundIdentifier.
-    def visitBoundIdentifier(self, ctx:TLAPLusParser.BoundIdentifierContext):
         return self.visitChildren(ctx)
 
 
@@ -464,6 +459,16 @@ class TLAPLusParserVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
+    # Visit a parse tree produced by TLAPLusParser#PostfixExpression.
+    def visitPostfixExpression(self, ctx:TLAPLusParser.PostfixExpressionContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by TLAPLusParser#PostfixPassThrough.
+    def visitPostfixPassThrough(self, ctx:TLAPLusParser.PostfixPassThroughContext):
+        return self.visitChildren(ctx)
+
+
     # Visit a parse tree produced by TLAPLusParser#ApplicationPassThrough.
     def visitApplicationPassThrough(self, ctx:TLAPLusParser.ApplicationPassThroughContext):
         return self.visitChildren(ctx)
@@ -481,11 +486,6 @@ class TLAPLusParserVisitor(ParseTreeVisitor):
 
     # Visit a parse tree produced by TLAPLusParser#RecordFieldExpr.
     def visitRecordFieldExpr(self, ctx:TLAPLusParser.RecordFieldExprContext):
-        return self.visitChildren(ctx)
-
-
-    # Visit a parse tree produced by TLAPLusParser#PostfixExpression.
-    def visitPostfixExpression(self, ctx:TLAPLusParser.PostfixExpressionContext):
         return self.visitChildren(ctx)
 
 
@@ -534,11 +534,6 @@ class TLAPLusParserVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by TLAPLusParser#ActionExpressionStandalone.
-    def visitActionExpressionStandalone(self, ctx:TLAPLusParser.ActionExpressionStandaloneContext):
-        return self.visitChildren(ctx)
-
-
     # Visit a parse tree produced by TLAPLusParser#TupleOrActionExpression.
     def visitTupleOrActionExpression(self, ctx:TLAPLusParser.TupleOrActionExpressionContext):
         return self.visitChildren(ctx)
@@ -581,11 +576,6 @@ class TLAPLusParserVisitor(ParseTreeVisitor):
 
     # Visit a parse tree produced by TLAPLusParser#FunctionConstructor.
     def visitFunctionConstructor(self, ctx:TLAPLusParser.FunctionConstructorContext):
-        return self.visitChildren(ctx)
-
-
-    # Visit a parse tree produced by TLAPLusParser#FunctionConstructorBar.
-    def visitFunctionConstructorBar(self, ctx:TLAPLusParser.FunctionConstructorBarContext):
         return self.visitChildren(ctx)
 
 

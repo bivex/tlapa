@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import hashlib
 import importlib
+from collections import OrderedDict
 from dataclasses import dataclass
 
 from antlr4 import CommonTokenStream, InputStream
@@ -18,8 +20,9 @@ ANTLR_GRAMMAR_VERSION = GrammarVersion(
     "antlr4@4.13.1+python:tlaplus/tla+ (converted from official JavaCC grammar)"
 )
 
-# TLA+ lexer mode constants (must match TLAPLusLexer.g4)
 _SPEC_MODE = 1
+
+_DEFAULT_CACHE_MAX = 64
 
 
 @dataclass(frozen=True, slots=True)
@@ -35,6 +38,53 @@ class ParseTreeResult:
     parser: object
     tree: object
     diagnostics: tuple[SyntaxDiagnostic, ...]
+
+
+class ParseCache:
+    """LRU cache for parse results keyed by content hash."""
+
+    def __init__(self, maxsize: int = _DEFAULT_CACHE_MAX) -> None:
+        self._maxsize = maxsize
+        self._cache: OrderedDict[str, ParseTreeResult] = OrderedDict()
+
+    def get(self, content: str, entry_rule: str) -> ParseTreeResult | None:
+        key = self._make_key(content, entry_rule)
+        if key in self._cache:
+            self._cache.move_to_end(key)
+            return self._cache[key]
+        return None
+
+    def put(self, content: str, entry_rule: str, result: ParseTreeResult) -> None:
+        key = self._make_key(content, entry_rule)
+        if key in self._cache:
+            self._cache.move_to_end(key)
+        else:
+            if len(self._cache) >= self._maxsize:
+                self._cache.popitem(last=False)
+        self._cache[key] = result
+
+    def invalidate(self, content: str, entry_rule: str) -> None:
+        key = self._make_key(content, entry_rule)
+        self._cache.pop(key, None)
+
+    def clear(self) -> None:
+        self._cache.clear()
+
+    @property
+    def size(self) -> int:
+        return len(self._cache)
+
+    @staticmethod
+    def _make_key(content: str, entry_rule: str) -> str:
+        digest = hashlib.sha256(content.encode("utf-8")).hexdigest()
+        return f"{entry_rule}:{digest}"
+
+
+_global_cache = ParseCache()
+
+
+def get_global_cache() -> ParseCache:
+    return _global_cache
 
 
 def load_generated_types() -> GeneratedParserTypes:
@@ -64,6 +114,8 @@ def load_generated_types() -> GeneratedParserTypes:
 def parse_source_text(
     source_text: str,
     generated_types: GeneratedParserTypes | None = None,
+    *,
+    use_cache: bool = True,
 ) -> ParseTreeResult:
     """Parse a complete TLA+ module (with ---- MODULE header)."""
     return _parse_entry_text(
@@ -71,12 +123,15 @@ def parse_source_text(
         entry_rule_name="unit",
         generated_types=generated_types,
         force_spec_mode=False,
+        use_cache=use_cache,
     )
 
 
 def parse_expression_text(
     source_text: str,
     generated_types: GeneratedParserTypes | None = None,
+    *,
+    use_cache: bool = True,
 ) -> ParseTreeResult:
     """Parse a standalone TLA+ expression (no module header needed)."""
     return _parse_entry_text(
@@ -84,12 +139,15 @@ def parse_expression_text(
         entry_rule_name="expression",
         generated_types=generated_types,
         force_spec_mode=True,
+        use_cache=use_cache,
     )
 
 
 def parse_definition_text(
     source_text: str,
     generated_types: GeneratedParserTypes | None = None,
+    *,
+    use_cache: bool = True,
 ) -> ParseTreeResult:
     """Parse a TLA+ definition (no module header needed)."""
     return _parse_entry_text(
@@ -97,6 +155,7 @@ def parse_definition_text(
         entry_rule_name="operatorOrFunctionDefinition",
         generated_types=generated_types,
         force_spec_mode=True,
+        use_cache=use_cache,
     )
 
 
@@ -106,13 +165,24 @@ def _parse_entry_text(
     entry_rule_name: str,
     generated_types: GeneratedParserTypes | None = None,
     force_spec_mode: bool = False,
+    use_cache: bool = True,
 ) -> ParseTreeResult:
     generated = generated_types or load_generated_types()
 
+    cache = _global_cache if use_cache else None
+    if cache is not None:
+        cached = cache.get(source_text, entry_rule_name)
+        if cached is not None:
+            return cached
+
     try:
-        return _parse_entry_text_fast(source_text, generated, entry_rule_name, force_spec_mode)
+        result = _parse_entry_text_fast(source_text, generated, entry_rule_name, force_spec_mode)
     except ParseCancellationException:
-        return _parse_entry_text_full(source_text, generated, entry_rule_name, force_spec_mode)
+        result = _parse_entry_text_full(source_text, generated, entry_rule_name, force_spec_mode)
+
+    if cache is not None:
+        cache.put(source_text, entry_rule_name, result)
+    return result
 
 
 def _parse_entry_text_fast(

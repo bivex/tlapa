@@ -11,42 +11,182 @@ from swifta.domain.model import (
     SourceUnit,
     StructuralElement,
     StructuralElementKind,
+    SyntaxDiagnostic,
 )
 from swifta.domain.ports import TlaplusSyntaxParser
+from swifta.infrastructure.antlr.error_listener import format_diagnostic
 from swifta.infrastructure.antlr.runtime import (
     ANTLR_GRAMMAR_VERSION,
+    get_global_cache,
     load_generated_types,
     parse_source_text,
 )
 
 
+_NOT_IDENTIFIER_RE = frozenset(
+    {
+        "ASSUME",
+        "ASSUMPTION",
+        "AXIOM",
+        "PROOF",
+        "PROVE",
+        "QED",
+        "OBVIOUS",
+        "OMITTED",
+        "DEFINE",
+        "BY",
+        "HAVE",
+        "TAKE",
+        "WITNESS",
+        "PICK",
+        "CASE",
+        "SUFFICES",
+        "USE",
+        "HIDE",
+        "INSTANCE",
+        "WITH",
+        "IF",
+        "THEN",
+        "ELSE",
+        "LET",
+        "IN",
+        "LOCAL",
+        "EXTENDS",
+        "CHOOSE",
+        "NEW",
+        "RECURSIVE",
+        "CONSTANT",
+        "CONSTANTS",
+        "VARIABLE",
+        "VARIABLES",
+        "WF_",
+        "SF_",
+        "LAMBDA",
+        "ENABLED",
+        "UNCHANGED",
+        "DOMAIN",
+        "SUBSET",
+        "UNION",
+        "OTHER",
+    }
+)
+
+
+_FALSE_POSITIVE_PATTERNS = (
+    "no viable alternative",
+    "mismatched input",
+    "extraneous input",
+    "missing def",
+    "expecting {and, or}",
+)
+
+
+_TRUE_PATTERNS = (
+    "missing '====' to close the module",
+    "add '====' to close the module",
+    "module end marker",
+    "start the module with '---- MODULE",
+    "unclosed set expression, add '}' to close",
+    "unclosed bracket expression, add ']' to close",
+    "unclosed parenthesized expression, add ')' to close",
+    "backslash operators must be followed by a keyword (e.g., \\in, \\E, \\A)",
+    "unexpected token; check operator spelling and TLA+ syntax",
+    "use '<<' for tuple start, not '<'",
+    "use '>>' for tuple end, not '>'",
+)
+
+
+_TLA_FIX_TABLE = tuple(
+    (pattern, suggestion, category)
+    for pattern, suggestion, category in [
+        (
+            r"mismatched input '(\w+)' expecting",
+            r"did you mean to use '\\%s' as an operator?",
+            "operator",
+        ),
+        (
+            r"extraneous input '===='",
+            "remove extra '=' characters after the module end marker",
+            "end_module",
+        ),
+        (
+            r"no viable alternative at input",
+            "check for missing operators, unmatched parentheses, or invalid syntax",
+            "syntax",
+        ),
+        (r"missing '===='", "add '====' to close the module", "end_module"),
+        (r"missing '----'", "start the module with '---- MODULE <name> ----'", "begin_module"),
+        (r"mismatched input '<'", "use '<<' for tuple start, not '<'", "tuple"),
+        (r"mismatched input '>'", "use '>>' for tuple end, not '>'", "tuple"),
+        (r"missing '}'", "unclosed set expression, add '}' to close", "set"),
+        (r"missing ']'", "unclosed bracket expression, add ']' to close", "bracket"),
+        (r"missing '\)'", "unclosed parenthesized expression, add ')' to close", "paren"),
+        (
+            r"mismatched input '\\\\'",
+            r"backslash operators must be followed by a keyword (e.g., \\in, \E, \A)",
+            "backslash",
+        ),
+        (r"expecting", "unexpected token; check operator spelling and TLA+ syntax", "syntax"),
+    ]
+)
+
+
+_MAX_TEXT_LEN = 120
+_MAX_SIG_LEN = 80
+
+
+def _truncate(text: str, limit: int = _MAX_TEXT_LEN) -> str:
+    return text[: limit - 3] + "..." if len(text) > limit else text
+
+
 class AntlrTlaplusSyntaxParser(TlaplusSyntaxParser):
-    def __init__(self) -> None:
+    def __init__(self, *, diags_enabled: bool = True, cache_enabled: bool = True) -> None:
         self._generated = load_generated_types()
+        self._cache = get_global_cache() if cache_enabled else None
+        self._diags_enabled = diags_enabled
+        self._source_lines: list[str] | None = None
+        self._source: str = ""
 
     @property
     def grammar_version(self) -> GrammarVersion:
         return ANTLR_GRAMMAR_VERSION
 
+    @grammar_version.setter
+    def grammar_version(self, value: str | None) -> None:
+        self._source = value or ""
+        if value:
+            self._line_map = {i: i + 1 for i, line in enumerate(value.splitlines())}
+
     def parse(self, source_unit: SourceUnit) -> ParseOutcome:
         started_at = perf_counter()
         try:
-            parse_result = parse_source_text(source_unit.content, self._generated)
+            parse_result = parse_source_text(
+                source_unit.content,
+                self._generated,
+                use_cache=self._cache is not None,
+            )
             visitor = _build_structure_visitor(self._generated.visitor_type)()
             visitor.visit(parse_result.tree)
+            self._source_lines = source_unit.content.splitlines()
 
             elements = tuple(visitor.elements)
             elapsed_ms = round((perf_counter() - started_at) * 1000, 3)
 
+            diagnostics = (
+                _classify_diagnostics(parse_result.diagnostics, source_unit.content)
+                if self._diags_enabled
+                else ()
+            )
+
             return ParseOutcome.success(
                 source_unit=source_unit,
                 grammar_version=self.grammar_version,
-                diagnostics=parse_result.diagnostics,
+                diagnostics=diagnostics,
                 structural_elements=elements,
                 statistics=ParseStatistics(
                     token_count=len(parse_result.token_stream.tokens),
                     structural_element_count=len(elements),
-                    diagnostic_count=len(parse_result.diagnostics),
+                    diagnostic_count=len(diagnostics),
                     elapsed_ms=elapsed_ms,
                 ),
             )
@@ -59,6 +199,66 @@ class AntlrTlaplusSyntaxParser(TlaplusSyntaxParser):
                 elapsed_ms=elapsed_ms,
             )
 
+    def clear_cache(self) -> None:
+        if self._cache:
+            self._cache.clear()
+
+    def format_diagnostics_report(self, diagnostics: tuple[SyntaxDiagnostic, ...]) -> str:
+        if not self._source_lines:
+            return ""
+        lines = self._source_lines
+        parts = []
+        for diag in diagnostics:
+            parts.append(format_diagnostic(diag, lines))
+        return "\n".join(parts)
+
+
+def _classify_diagnostics(
+    diagnostics: tuple[SyntaxDiagnostic, ...], source_content: str | None
+) -> tuple[SyntaxDiagnostic, ...]:
+    if not source_content:
+        return diagnostics
+
+    warnings: list[SyntaxDiagnostic] = []
+    errors: list[SyntaxDiagnostic] = []
+
+    for diag in diagnostics:
+        msg = diag.message.lower()
+        is_false_positive = any(p in msg for p in _FALSE_POSITIVE_PATTERNS)
+        is_true_error = any(p in msg for p in _TRUE_PATTERNS)
+
+        if is_false_positive:
+            warnings.append(_downgrade_diagnostic(diag))
+        elif is_true_error:
+            errors.append(diag)
+        else:
+            warnings.append(_downgrade_diagnostic(diag))
+
+    return tuple(errors + warnings)
+
+
+def _downgrade_diagnostic(diag: SyntaxDiagnostic) -> SyntaxDiagnostic:
+    from swifta.domain.model import DiagnosticSeverity
+
+    return SyntaxDiagnostic(
+        severity=DiagnosticSeverity.WARNING,
+        message=diag.message,
+        line=diag.line,
+        column=diag.column,
+    )
+
+
+def _format_warning_msg(
+    diagnostics: tuple[SyntaxDiagnostic, ...], warnings: list[SyntaxDiagnostic]
+) -> str:
+    parts = []
+    parts.append(f"{len(warnings)} expression-level diagnostic(s) filtered as warnings")
+    for w in warnings:
+        parts.append(f"  L{w.line}:{w.column} {w.message}")
+    if len(parts) > 7:
+        parts.append(f"  ... and {len(parts) - 6} more")
+    return "\n".join(parts)
+
 
 def _build_structure_visitor(visitor_base: type) -> type:
     """Build a visitor that walks the TLA+ parse tree and extracts structural elements."""
@@ -69,6 +269,8 @@ def _build_structure_visitor(visitor_base: type) -> type:
             self.elements: list[StructuralElement] = []
             self._contexts: list[tuple[StructuralElement, object]] = []
             self._module_name: str | None = None
+            self._in_proof: bool = False
+            self._proof_step_counter: int = 0
 
         def get_context(self, element: StructuralElement) -> object | None:
             for e, ctx in self._contexts:
@@ -76,24 +278,35 @@ def _build_structure_visitor(visitor_base: type) -> type:
                     return ctx
             return None
 
+        def _append(self, kind, name: str, ctx, signature: str | None = None) -> StructuralElement:
+            container = self._module_name
+            line = ctx.start.line if hasattr(ctx, "start") and ctx.start else 0
+            column = ctx.start.column if hasattr(ctx, "start") and ctx.start else 0
+            element = StructuralElement(
+                kind=kind,
+                name=name,
+                line=line,
+                column=column,
+                container=container,
+                signature=signature,
+            )
+            self.elements.append(element)
+            self._contexts.append((element, ctx))
+            return element
+
         # -- Module-level constructs --
 
         def visitFirstModule(self, ctx):
-            # firstModule: IDENTIFIER SEPARATOR extends? moduleBody endModule
-            # Check SEPARATOR token (should start with "----" for proper TLA+ module)
             sep_tok = ctx.SEPARATOR()
             if not sep_tok:
                 return None
-            sep_text = sep_tok.getText()
-            if not sep_text.startswith("----"):
+            if not sep_tok.getText().startswith("----"):
                 return None
-            # Module name is the leading IDENTIFIER
             ident = ctx.IDENTIFIER()
             if ident:
                 name = ident.getText()
                 self._module_name = name
                 self._append(StructuralElementKind.MODULE, name, ctx)
-            # Visit module body children to extract operators, etc.
             body = ctx.moduleBody()
             if body:
                 for child in body.getChildren():
@@ -101,12 +314,10 @@ def _build_structure_visitor(visitor_base: type) -> type:
             return None
 
         def visitModule(self, ctx):
-            # Subsequent modules; same header check
             sep_tok = ctx.SEPARATOR()
             if not sep_tok:
                 return None
-            sep_text = sep_tok.getText()
-            if not sep_text.startswith("----"):
+            if not sep_tok.getText().startswith("----"):
                 return None
             ident = ctx.IDENTIFIER()
             if ident:
@@ -120,9 +331,8 @@ def _build_structure_visitor(visitor_base: type) -> type:
             return None
 
         def visitExtends(self, ctx):
-            names = [ident.getText() for ident in ctx.IDENTIFIER()]
-            for name in names:
-                self._append(StructuralElementKind.EXTENDS, name, ctx)
+            for ident in ctx.IDENTIFIER():
+                self._append(StructuralElementKind.EXTENDS, ident.getText(), ctx)
             return None
 
         # -- Declarations --
@@ -165,9 +375,8 @@ def _build_structure_visitor(visitor_base: type) -> type:
             name = self._extract_def_name(ctx)
             if name is None or not self._is_definition_name_valid(name):
                 return None
-            # Preserve raw LHS text for better classification (e.g., primed variables indicate actions)
             raw_lhs = self._raw_def_lhs(ctx)
-            signature = f"{raw_lhs} == ..." if raw_lhs else f"{name} == ..."
+            signature = self._build_signature(raw_lhs, name)
             self._append(
                 StructuralElementKind.OPERATOR_DEFINITION,
                 name,
@@ -189,19 +398,14 @@ def _build_structure_visitor(visitor_base: type) -> type:
             return None
 
         def visitModuleDefinition(self, ctx):
-            # ModuleDefinition is rarely used in typical TLA+; parser often confuses expressions
-            # with module definitions. Skip to reduce noise in structure diagrams.
             return None
 
         def _is_definition_name_valid(self, name: str) -> bool:
-            """Validate definition names to filter out parse artifacts."""
             if not name or " " in name:
                 return False
-            # Backslash operators (e.g., \in, \cup, \subseteq) — only pure backslash+letters allowed
             if name.startswith("\\"):
                 after = name[1:]
                 return after.isalpha() and len(name) <= 12
-            # Standard identifiers: alphanumeric, underscore, dot (for container-qualified)
             return all(c.isalnum() or c in "_." for c in name)
 
         # -- Instance --
@@ -243,35 +447,115 @@ def _build_structure_visitor(visitor_base: type) -> type:
             )
             return self.visitChildren(ctx)
 
+        # -- Proof construct visitors --
+
         def visitProof(self, ctx):
+            self._in_proof = True
+            self._proof_step_counter = 0
+            self._append(StructuralElementKind.PROOF, "PROOF", ctx)
+            result = self.visitChildren(ctx)
+            self._in_proof = False
+            return result
+
+        def visitUseOrHide(self, ctx):
+            is_use = ctx.USE_KW() is not None
+            is_hide = ctx.HIDE_KW() is not None
+            if is_use:
+                kind = StructuralElementKind.USE
+            elif is_hide:
+                kind = StructuralElementKind.HIDE
+            else:
+                kind = StructuralElementKind.USE
+            text = _truncate(ctx.getText(), 60)
+            self._append(kind, text, ctx)
+            return None
+
+        def visitStep(self, ctx):
+            self._proof_step_counter += 1
+            children = list(ctx.getChildren()) if hasattr(ctx, "children") and ctx.children else []
+            for child in children:
+                child_name = type(child).__name__
+                if child_name == "DefStepContext":
+                    self._visit_def_step(child)
+                elif child_name == "HaveStepContext":
+                    self._visit_have_step(child)
+                elif child_name == "TakeStepContext":
+                    self._visit_take_step(child)
+                elif child_name == "WitnessStepContext":
+                    self._visit_witness_step(child)
+                elif child_name == "PickStepContext":
+                    self._visit_pick_step(child)
+                elif child_name == "CaseStepContext":
+                    self._visit_case_step(child)
+                elif child_name == "AssertStepContext":
+                    self._visit_assert_step(child)
+                else:
+                    self.visit(child)
+            return None
+
+        def visitQedStep(self, ctx):
             self._append(
                 StructuralElementKind.PROOF,
-                "PROOF",
+                "QED",
                 ctx,
+                signature="QED",
             )
             return self.visitChildren(ctx)
 
-        def visitUseOrHide(self, ctx):
-            kind = StructuralElementKind.USE if ctx.USE_KW() else StructuralElementKind.HIDE
-            self._append(kind, ctx.getText()[:40], ctx)
+        def _visit_def_step(self, ctx):
+            for defn in ctx.operatorOrFunctionDefinition():
+                self.visit(defn)
+            return None
+
+        def _visit_have_step(self, ctx):
+            expr_ctx = ctx.expression()
+            if expr_ctx:
+                self._append(
+                    StructuralElementKind.PROOF,
+                    "HAVE",
+                    expr_ctx,
+                    signature=f"HAVE {expr_ctx.getText()[:60]}",
+                )
+            return None
+
+        def _visit_take_step(self, ctx):
+            text = _truncate(ctx.getText(), 80) if ctx.getText() else "TAKE"
+            self._append(StructuralElementKind.PROOF, "TAKE", ctx, signature=text)
+            return None
+
+        def _visit_witness_step(self, ctx):
+            exprs = ctx.expression()
+            witness_text = ", ".join(e.getText() for e in exprs) if exprs else ""
+            self._append(
+                StructuralElementKind.PROOF,
+                "WITNESS",
+                ctx,
+                signature=f"WITNESS {witness_text}",
+            )
+            return None
+
+        def _visit_pick_step(self, ctx):
+            text = _truncate(ctx.getText(), 80) if ctx.getText() else "PICK"
+            self._append(StructuralElementKind.PROOF, "PICK", ctx, signature=text)
+            return None
+
+        def _visit_case_step(self, ctx):
+            expr_ctx = ctx.expression()
+            if expr_ctx:
+                self._append(
+                    StructuralElementKind.PROOF,
+                    "CASE",
+                    expr_ctx,
+                    signature=f"CASE {expr_ctx.getText()[:60]}",
+                )
+            return None
+
+        def _visit_assert_step(self, ctx):
+            text = _truncate(ctx.getText(), 80) if ctx.getText() else "ASSERT"
+            self._append(StructuralElementKind.PROOF, "ASSERT", ctx, signature=text)
             return None
 
         # -- Helpers --
-
-        def _append(self, kind, name: str, ctx, signature: str | None = None) -> None:
-            container = self._module_name
-            line = ctx.start.line if hasattr(ctx, "start") and ctx.start else 0
-            column = ctx.start.column if hasattr(ctx, "start") and ctx.start else 0
-            element = StructuralElement(
-                kind=kind,
-                name=name,
-                line=line,
-                column=column,
-                container=container,
-                signature=signature,
-            )
-            self.elements.append(element)
-            self._contexts.append((element, ctx))
 
         def _extract_decl_name(self, item_ctx) -> str:
             if item_ctx.IDENTIFIER():
@@ -285,12 +569,9 @@ def _build_structure_visitor(visitor_base: type) -> type:
             return "?"
 
         def _extract_def_name(self, def_ctx) -> str | None:
-            """Extract operator/function name from definition context, handling TLA+ operator symbols."""
-            # Primary extraction from parse tree children
             name = self._extract_name_from_children(def_ctx)
             if name and self._is_definition_name_valid(name):
                 return name
-            # Fallback: parse raw text before '=='
             raw = def_ctx.getText().strip()
             if "==" in raw:
                 lhs = raw.split("==", 1)[0].strip()
@@ -302,20 +583,27 @@ def _build_structure_visitor(visitor_base: type) -> type:
                     return token
             return None
 
+        def _build_signature(self, raw_lhs: str, name: str) -> str:
+            if raw_lhs == name:
+                return f"{name} == ..."
+            if ":" in raw_lhs:
+                parts = raw_lhs.split(":", 1)
+                params = parts[0].strip()
+                if params:
+                    return f"{name}({params}) == ..."
+                return f"{name} == ..."
+            return f"{raw_lhs} == ..." if raw_lhs else f"{name} == ..."
+
         def _raw_def_lhs(self, def_ctx) -> str:
-            """Return raw left-hand side text of definition (including any primes, operators)."""
-            # Try identLhs first
             ident_lhs = def_ctx.identLhs()
             if ident_lhs:
                 return ident_lhs.getText().strip()
-            # Check prefix/infix/postfix
             for attr in ("prefixLhs", "infixLhs", "postfixLhs"):
                 lhs = getattr(def_ctx, attr)()
                 if lhs:
                     text = lhs.getText().strip()
                     if text:
                         return text
-            # Fallback: parse raw text before '=='
             raw = def_ctx.getText().strip()
             if "==" in raw:
                 lhs = raw.split("==", 1)[0].strip()
@@ -325,7 +613,6 @@ def _build_structure_visitor(visitor_base: type) -> type:
             return ""
 
         def _extract_name_from_children(self, def_ctx) -> str | None:
-            """Try to extract name from identLhs, prefixLhs, infixLhs, postfixLhs."""
             ident_lhs = def_ctx.identLhs()
             if ident_lhs:
                 name = self._scan_ident_lhs(ident_lhs)
@@ -344,13 +631,9 @@ def _build_structure_visitor(visitor_base: type) -> type:
             return None
 
         def _scan_ident_lhs(self, ident_lhs) -> str | None:
-            """Scan identLhs children to find the operator token."""
-            # identLhs can be: IDENTIFIER | prefixOp | infixOp | postfixOp
-            # Look for any child that returns meaningful text
             for child in ident_lhs.getChildren():
                 txt = child.getText().strip()
                 if txt and not txt.isspace():
-                    # Remove trailing parens if present
                     name = txt.rstrip("(").rstrip(")").strip()
                     if name:
                         return name
