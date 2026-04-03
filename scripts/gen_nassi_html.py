@@ -14,13 +14,15 @@ import sys
 from html import escape
 from pathlib import Path
 from time import perf_counter
+from typing import Sequence
 
 # Ensure src/ is on path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 
 from swifta.infrastructure.antlr.parser_adapter import AntlrTlaplusSyntaxParser
-from swifta.infrastructure.antlr.runtime import load_generated_types, parse_source_text
-from swifta.domain.model import SourceUnit, SourceUnitId
+from swifta.domain.model import SourceUnit, SourceUnitId, StructuralElement, SyntaxDiagnostic
+from swifta.presentation.nassi_builder import NassiBuilder
+from swifta.presentation.nassi_renderer import render_nassi_diagram
 
 
 def _depth_badge(i: int) -> str:
@@ -103,10 +105,11 @@ def _render_element_block(element, depth: int) -> str:
 
 def render_html(
     source_path: str,
-    elements: list,
-    diagnostics: list,
+    elements: Sequence[StructuralElement],
+    diagnostics: Sequence[SyntaxDiagnostic],
     elapsed_ms: float,
-    token_count: int,
+    token_count: int = 0,
+    diagrams_by_name: dict | None = None,
 ) -> str:
     module_name = "TLA+ Module"
     for elem in elements:
@@ -152,7 +155,20 @@ def render_html(
             depth = 2
         else:
             depth = 1
-        blocks_html.append(_render_element_block(elem, depth))
+        block_html = _render_element_block(elem, depth)
+        # Embed Nassi diagram for operator definitions
+        if (
+            diagrams_by_name
+            and elem.kind == "operator_definition"
+            and elem.name in diagrams_by_name
+        ):
+            block_tree, line_no = diagrams_by_name[elem.name]
+            try:
+                svg = render_nassi_diagram(block_tree, elem.name)
+                block_html += f'\n<div class="embedded-diagram" style="margin: 12px 0; padding: 12px; background: #21262d; border-radius: 8px;">{svg}</div>\n'
+            except Exception:
+                pass
+        blocks_html.append(block_html)
 
     if not blocks_html:
         blocks_html.append(
@@ -372,128 +388,35 @@ def main() -> int:
         return 1
 
     content = source_path.read_text(encoding="utf-8")
-    generated = load_generated_types()
 
     t0 = perf_counter()
-    result = parse_source_text(content, generated)
+    # Parse with adapter to get structural elements
+    parser_adapter = AntlrTlaplusSyntaxParser()
+    source_unit = SourceUnit(
+        identifier=SourceUnitId(source_path.stem),
+        location=str(source_path),
+        content=content,
+    )
+    parse_outcome = parser_adapter.parse(source_unit)
+    elements = list(parse_outcome.structural_elements)
+    diagnostics = list(parse_outcome.diagnostics)
+    token_count = parse_outcome.statistics.token_count
     elapsed_ms = round((perf_counter() - t0) * 1000, 3)
 
-    # Extract structural elements
-    visitor_base = generated.visitor_type
-
-    class QuickVisitor(visitor_base):
-        def __init__(self):
-            super().__init__()
-            self.elements = []
-            self._module_name = None
-
-        def visitFirstModule(self, ctx):
-            if ctx.IDENTIFIER():
-                self._module_name = ctx.IDENTIFIER().getText()
-                self._add("module", self._module_name, ctx)
-            body = ctx.moduleBody()
-            if body:
-                for child in body.getChildren():
-                    self.visit(child)
-            return None
-
-        def visitModule(self, ctx):
-            if ctx.IDENTIFIER():
-                self._module_name = ctx.IDENTIFIER().getText()
-                self._add("module", self._module_name, ctx)
-            body = ctx.moduleBody()
-            if body:
-                for child in body.getChildren():
-                    self.visit(child)
-            return None
-
-        def visitExtends(self, ctx):
-            for ident in ctx.IDENTIFIER():
-                self._add("extends", ident.getText(), ctx)
-            return None
-
-        def visitVariableDeclaration(self, ctx):
-            for ident in ctx.IDENTIFIER():
-                self._add("variable", ident.getText(), ctx, f"VARIABLE {ident.getText()}")
-            return None
-
-        def visitParameterDeclaration(self, ctx):
-            for item in ctx.constantDeclItem():
-                name = item.IDENTIFIER().getText() if item.IDENTIFIER() else item.getText()
-                self._add("constant", name, ctx, f"CONSTANT {name}")
-            return None
-
-        def visitRecursiveDeclaration(self, ctx):
-            for item in ctx.constantDeclItem():
-                name = item.IDENTIFIER().getText() if item.IDENTIFIER() else item.getText()
-                self._add("recursive", name, ctx, f"RECURSIVE {name}")
-            return None
-
-        def visitOperatorDefinition(self, ctx):
-            lhs = ctx.identLhs()
-            name = lhs.IDENTIFIER().getText() if lhs and lhs.IDENTIFIER() else "?"
-            self._add("operator_definition", name, ctx, f"{name} == ...")
-            return None
-
-        def visitFunctionDefinition(self, ctx):
-            name = ctx.IDENTIFIER().getText() if ctx.IDENTIFIER() else "?"
-            self._add("function_definition", name, ctx, f"{name}[...] == ...")
-            return None
-
-        def visitModuleDefinition(self, ctx):
-            name = ctx.IDENTIFIER().getText() if ctx.IDENTIFIER() else "?"
-            self._add("module_definition", name, ctx, f"{name} == ...")
-            return None
-
-        def visitInstance(self, ctx):
-            inst = ctx.instantiation()
-            if inst and inst.IDENTIFIER():
-                self._add("instance", inst.IDENTIFIER().getText(), ctx)
-            return None
-
-        def visitAssumption(self, ctx):
-            name = ctx.IDENTIFIER().getText() if ctx.IDENTIFIER() else "ASSUME"
-            self._add("assumption", name, ctx)
-            return None
-
-        def visitTheorem(self, ctx):
-            name = ctx.IDENTIFIER().getText() if ctx.IDENTIFIER() else "THEOREM"
-            self._add("theorem", name, ctx, f"THEOREM {name}" if ctx.IDENTIFIER() else "THEOREM")
-            return self.visitChildren(ctx)
-
-        def visitProof(self, ctx):
-            self._add("proof", "PROOF", ctx)
-            return self.visitChildren(ctx)
-
-        def _add(self, kind, name, ctx, sig=None):
-            line = ctx.start.line if ctx.start else 0
-            col = ctx.start.column if ctx.start else 0
-            from swifta.domain.model import StructuralElement, StructuralElementKind
-
-            try:
-                k = StructuralElementKind(kind)
-            except ValueError:
-                k = kind
-            self.elements.append(
-                StructuralElement(
-                    kind=k,
-                    name=name,
-                    line=line,
-                    column=col,
-                    container=self._module_name,
-                    signature=sig,
-                )
-            )
-
-    visitor = QuickVisitor()
-    visitor.visit(result.tree)
+    # Build Nassi diagrams for operators (for embedding)
+    try:
+        operator_diagrams_list = NassiBuilder().build_all_operators(content)
+        diagrams_by_name = {name: (block, line) for name, block, line in operator_diagrams_list}
+    except Exception:
+        diagrams_by_name = {}
 
     html = render_html(
         source_path=str(source_path),
-        elements=visitor.elements,
-        diagnostics=list(result.diagnostics),
+        elements=elements,
+        diagnostics=diagnostics,
         elapsed_ms=elapsed_ms,
-        token_count=len(result.token_stream.tokens),
+        token_count=token_count,
+        diagrams_by_name=diagrams_by_name,
     )
 
     out_path = Path(args.out) if args.out else source_path.with_suffix(".structure.html")
@@ -501,8 +424,8 @@ def main() -> int:
     out_path.write_text(html, encoding="utf-8")
 
     print(f"Generated: {out_path}")
-    print(f"  {len(visitor.elements)} structural elements")
-    print(f"  {len(result.diagnostics)} diagnostics")
+    print(f"  {len(elements)} structural elements")
+    print(f"  {len(diagnostics)} diagnostics")
     print(f"  {elapsed_ms:.1f}ms")
     return 0
 
