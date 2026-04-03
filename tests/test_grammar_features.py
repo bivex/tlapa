@@ -117,13 +117,27 @@ class TestLambdaChoose:
 
 
 class TestUseHide:
-    def test_use_in_proof(self, service: ParsingJobService) -> None:
+    def test_use_hide_and_proof_steps(self, service: ParsingJobService) -> None:
         report = _parse_fixture(service, "use_hide.tla")
         source = report.sources[0]
         assert source.status in ("succeeded", "succeeded_with_diagnostics")
         kinds = {element.kind for element in source.structural_elements}
         assert "theorem" in kinds
         assert "operator_definition" in kinds
+        # USE and HIDE are extracted as top-level kinds
+        assert "use" in kinds
+        assert "hide" in kinds
+        # Proof steps (TAKE, WITNESS, HAVE) are extracted under 'proof' kind
+        proof_elems = [e for e in source.structural_elements if e.kind == "proof"]
+        proof_names = {e.name for e in proof_elems}
+        assert "TAKE" in proof_names
+        assert "WITNESS" in proof_names
+        assert "HAVE" in proof_names
+        # Verify signatures contain expected content
+        take_sigs = [e.signature for e in proof_elems if e.name == "TAKE"]
+        witness_sigs = [e.signature for e in proof_elems if e.name == "WITNESS"]
+        assert any("TAKEn\\inNat" in sig for sig in take_sigs if sig)
+        assert any("WITNESS n+1" in sig for sig in witness_sigs if sig)
 
 
 class TestParseCache:

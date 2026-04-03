@@ -51,13 +51,13 @@ This document outlines the completion tasks for the TLA+ parser implementation b
 ## ⏳ Future Milestones
 
 ### Grammar Completeness
-- [ ] Add support for temporal operators (`[]`, `<>`, `WF_`, `SF_`)
+- [x] Add support for temporal operators (`[]`, `<>`, `WF_`, `SF_`)
 - [x] Complete proof syntax (BY, HAVE, QED, etc.)
-- [ ] Handle user-defined operator symbols correctly
-- [ ] Support for `LAMBDA` expressions
-- [ ] Full `CHOOSE` expression variants
-- [ ] `TAKE` and `WITNESS` constructs
-- [ ] `USE` and `HIDE` clauses
+- [x] Handle user-defined operator symbols correctly
+- [x] Support for `LAMBDA` expressions
+- [x] Full `CHOOSE` expression variants (bound/unbound)
+- [x] `TAKE` and `WITNESS` constructs
+- [x] `USE` and `HIDE` clauses
 
 ### Error Reporting
 - [ ] More precise error messages with suggested fixes
@@ -95,7 +95,7 @@ _(All previously known issues have been resolved. See Grammar Bug Fixes above.)_
 ## 📈 Success Criteria
 
 - [x] All specs in `example/` directory parse without errors (54/54)
-- [ ] Nassi-Shneiderman diagrams generated for all operators
+- [x] Nassi-Shneiderman diagrams generated for all operators
 - [ ] 90%+ compatibility with TLA+ community specs (tlaplus/examples)
 - [ ] Parse performance < 100ms for typical specs (500 lines)
 - [ ] Zero crashes on malformed input (graceful error reporting)

@@ -595,7 +595,20 @@ def _build_structure_visitor(visitor_base: type) -> type:
                     return f"{name}({params}) == ..."
                 return f"{name} == ..."
 
-            # For infix operators, show the pattern
+            # For infix operators, format with spaces around the operator
+            if raw_lhs and raw_lhs != name and "\\" in name:
+                # Try to format: a\opb -> a \op b
+                # The name has double backslashes, raw_lhs has single backslashes
+                name_single = name.replace("\\\\", "\\")
+                if name_single in raw_lhs:
+                    parts = raw_lhs.split(name_single, 1)
+                    if len(parts) == 2:
+                        left = parts[0].strip()
+                        right = parts[1].strip()
+                        if left and right:
+                            return f"{left} {name_single} {right} == ..."
+
+            # For other operators, show the pattern
             if raw_lhs and raw_lhs != name:
                 return f"{raw_lhs} == ..."
 
