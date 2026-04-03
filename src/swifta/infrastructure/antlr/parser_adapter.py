@@ -302,27 +302,6 @@ def _build_structure_visitor(visitor_base: type) -> type:
                     return token
             return None
 
-            """Return raw left-hand side text of definition (including any primes, operators)."""
-            # Try identLhs first
-            ident_lhs = def_ctx.identLhs()
-            if ident_lhs:
-                return ident_lhs.getText().strip()
-            # Check prefix/infix/postfix
-            for attr in ("prefixLhs", "infixLhs", "postfixLhs"):
-                lhs = getattr(def_ctx, attr)()
-                if lhs:
-                    text = lhs.getText().strip()
-                    if text:
-                        return text
-            # Fallback: parse raw text before '=='
-            raw = def_ctx.getText().strip()
-            if "==" in raw:
-                lhs = raw.split("==", 1)[0].strip()
-                if lhs.upper().startswith("LOCAL "):
-                    lhs = lhs[6:].strip()
-                return lhs
-            return ""
-
         def _raw_def_lhs(self, def_ctx) -> str:
             """Return raw left-hand side text of definition (including any primes, operators)."""
             # Try identLhs first
@@ -364,25 +343,6 @@ def _build_structure_visitor(visitor_base: type) -> type:
                                 return token
             return None
 
-        def _extract_name_from_children(self, def_ctx) -> str | None:
-            """Try to extract name from identLhs, prefixLhs, infixLhs, postfixLhs."""
-            ident_lhs = def_ctx.identLhs()
-            if ident_lhs:
-                name = self._scan_ident_lhs(ident_lhs)
-                if name:
-                    return name
-            for attr in ("prefixLhs", "infixLhs", "postfixLhs"):
-                lhs = getattr(def_ctx, attr)()
-                if lhs:
-                    text = lhs.getText().strip()
-                    if text:
-                        token = text.split()[0] if text.split() else None
-                        if token:
-                            token = token.rstrip("(").rstrip(")").strip()
-                            if token:
-                                return token
-            return None
-
         def _scan_ident_lhs(self, ident_lhs) -> str | None:
             """Scan identLhs children to find the operator token."""
             # identLhs can be: IDENTIFIER | prefixOp | infixOp | postfixOp
@@ -395,21 +355,6 @@ def _build_structure_visitor(visitor_base: type) -> type:
                     if name:
                         return name
             return None
-
-        def _extract_name_from_text(self, text: str) -> str | None:
-            """Extract name from raw text, handling TLA+ operator syntax."""
-            if not text:
-                return None
-            # Split on whitespace and take first token
-            tokens = text.split()
-            if not tokens:
-                return None
-            first = tokens[0]
-            # Remove trailing '=' or '(' if present
-            first = first.rstrip("=").rstrip("(").strip()
-            if not first:
-                return None
-            return first
 
         def _extract_func_def_name(self, func_ctx) -> str:
             if func_ctx.IDENTIFIER():

@@ -151,7 +151,7 @@ HandleAppendEntries(node, msg) ==
                   IF i <= msg.prev_log_index THEN logs[node][i]
                   ELSE new_entries[i - msg.prev_log_index]]
                 trimmed_log == [i \in 1..Min(MaxLogSize, Len(new_log)) |-> new_log[i]]
-            THEN
+            IN
                /\ logs' = [logs EXCEPT ![node] = trimmed_log]
                /\ commit_index' = Max(commit_index, msg.leader_commit)
                /\ answer_success = TRUE
