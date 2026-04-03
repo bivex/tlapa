@@ -1,4 +1,4 @@
-# Generated from src/swifta/infrastructure/antlr/generated/tlaplus/TLAPLusParser.g4 by ANTLR 4.13.1
+# Generated from TLAPLusParser.g4 by ANTLR 4.13.1
 from antlr4 import *
 if "." in __name__:
     from .TLAPLusParser import TLAPLusParser
@@ -464,16 +464,6 @@ class TLAPLusParserVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by TLAPLusParser#PostfixExpression.
-    def visitPostfixExpression(self, ctx:TLAPLusParser.PostfixExpressionContext):
-        return self.visitChildren(ctx)
-
-
-    # Visit a parse tree produced by TLAPLusParser#PostfixPassThrough.
-    def visitPostfixPassThrough(self, ctx:TLAPLusParser.PostfixPassThroughContext):
-        return self.visitChildren(ctx)
-
-
     # Visit a parse tree produced by TLAPLusParser#ApplicationPassThrough.
     def visitApplicationPassThrough(self, ctx:TLAPLusParser.ApplicationPassThroughContext):
         return self.visitChildren(ctx)
@@ -491,6 +481,11 @@ class TLAPLusParserVisitor(ParseTreeVisitor):
 
     # Visit a parse tree produced by TLAPLusParser#RecordFieldExpr.
     def visitRecordFieldExpr(self, ctx:TLAPLusParser.RecordFieldExprContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by TLAPLusParser#PostfixExpression.
+    def visitPostfixExpression(self, ctx:TLAPLusParser.PostfixExpressionContext):
         return self.visitChildren(ctx)
 
 
@@ -536,6 +531,11 @@ class TLAPLusParserVisitor(ParseTreeVisitor):
 
     # Visit a parse tree produced by TLAPLusParser#StandaloneBracketExpr.
     def visitStandaloneBracketExpr(self, ctx:TLAPLusParser.StandaloneBracketExprContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by TLAPLusParser#ActionExpressionStandalone.
+    def visitActionExpressionStandalone(self, ctx:TLAPLusParser.ActionExpressionStandaloneContext):
         return self.visitChildren(ctx)
 
 

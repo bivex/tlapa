@@ -1,4 +1,4 @@
-# Generated from src/swifta/infrastructure/antlr/generated/tlaplus/TLAPLusLexer.g4 by ANTLR 4.13.1
+# Generated from TLAPLusLexer.g4 by ANTLR 4.13.1
 from antlr4 import *
 from io import StringIO
 import sys

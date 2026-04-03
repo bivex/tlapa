@@ -509,26 +509,35 @@ letDefinition
     ;
 
 // Precedence level 1: Equivalence
+// Right operand is quantifierExpr (not impliesExpr) so that
+// "P ⇔ \A x: Q" parses correctly: the right side of ⇔ can
+// start with a quantifier keyword.
 equivExpr
-    : <assoc=right> equivExpr (EQUIV | EQUIV_UC | IFF | IFF_UC) impliesExpr        #EquivBinaryExpr
+    : <assoc=right> equivExpr (EQUIV | EQUIV_UC | IFF | IFF_UC) quantifierExpr     #EquivBinaryExpr
     | impliesExpr                                                                   #EquivPassThrough
     ;
 
 // Precedence level 2: Implication
+// Right operand is quantifierExpr (not orExpr) so that
+// "P => \A x: Q" parses correctly.  TLA+ quantifiers extend
+// their scope as far right as possible, and => is right-associative,
+// so the right operand must be able to reach quantifierExpr.
 impliesExpr
-    : <assoc=right> impliesExpr (IMPLIES | IMPLIES_UC | PLUS_ARROW | LEADS_TO | LEADS_TO_UC) orExpr  #ImpliesBinaryExpr
+    : <assoc=right> impliesExpr (IMPLIES | IMPLIES_UC | PLUS_ARROW | LEADS_TO | LEADS_TO_UC) quantifierExpr  #ImpliesBinaryExpr
     | orExpr                                                                        #ImpliesPassThrough
     ;
 
 // Precedence level 3: Disjunction
+// Right operand is quantifierExpr so that "P \/ \A x: Q" parses correctly.
 orExpr
-    : orExpr (OR | LOR) andExpr                                                #OrBinaryExpr
+    : orExpr (OR | LOR) quantifierExpr                                             #OrBinaryExpr
     | andExpr                                                                       #OrPassThrough
     ;
 
 // Precedence level 4: Conjunction
+// Right operand is quantifierExpr so that "P /\ \A x: Q" parses correctly.
 andExpr
-    : andExpr (AND | LAND) junctionExpr                                         #AndBinaryExpr
+    : andExpr (AND | LAND) quantifierExpr                                            #AndBinaryExpr
     | junctionExpr                                                                  #AndPassThrough
     ;
 
@@ -599,17 +608,15 @@ prefixExpr
     | postfixExpr                                                                     #PrefixPassThrough
     ;
 
-// Postfix operators
+// Postfix operators and function application
+// In TLA+, postfix ops (', ^+, ^*, ^#), function application ([...]),
+// module prefix (!), and record field access (.) are all at the same
+// level and can be chained in any order: f'(x).y, f[x]', etc.
 postfixExpr
     : postfixExpr (PRIME | PLUS_SUP | STAR_SUP | HASH_SUP)                             #PostfixExpression
-    | applicationExpr                                                                  #PostfixPassThrough
-    ;
-
-// Function application and module prefix (!)
-applicationExpr
-    : applicationExpr (LSB expression (COMMA expression)* RSB)                         #FunctionApplication
-    | applicationExpr BANG bangExtension                                               #ModulePrefixExpr
-    | applicationExpr DOT (IDENTIFIER | keywordAsIdentifier)                           #RecordFieldExpr
+    | postfixExpr (LSB expression (COMMA expression)* RSB)                             #FunctionApplication
+    | postfixExpr BANG bangExtension                                                   #ModulePrefixExpr
+    | postfixExpr DOT (IDENTIFIER | keywordAsIdentifier)                               #RecordFieldExpr
     | primaryExpression                                                                #ApplicationPassThrough
     ;
 
@@ -645,6 +652,7 @@ primaryExpression
     | LBR expression RBR                                                               #ParenExpression
     | LBC setBody RBC                                                                  #SetExpression
     | LSB functionBody2 RSB                                                            #StandaloneBracketExpr
+    | LSB expression ARSB reducedExpression                                            #ActionExpressionStandalone
     | LAB tupleBody (RAB | ARAB reducedExpression)                                     #TupleOrActionExpression
     | proofStepRef (LBR opOrExpr (COMMA opOrExpr)* RBR)?                               #ProofStepExpression
     | fairnessExpression                                                               #FairnessExprPrimary

@@ -9,4 +9,6 @@ HandleRequestVote(node, msg) ==
      ELSE
        IF TRUE THEN
          /\ messages' = messages
+       ELSE
+         /\ UNCHANGED <<node_state, current_term, messages>>
 ====

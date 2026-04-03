@@ -5,11 +5,11 @@ EXTENDS Naturals, Sequences, FiniteSets
 CONSTANTS Nodes, ElectionTimeoutMin, ElectionTimeoutMax, MaxLogSize
 
 ASSUME
-  ElectionTimeoutMin \in Nat,
-  ElectionTimeoutMax \in Nat,
-  ElectionTimeoutMax > ElectionTimeoutMin,
-  MaxLogSize \in Nat,
-  Nodes \subseteq [id -> STRING]
+  ElectionTimeoutMin \in Nat
+  /\ ElectionTimeoutMax \in Nat
+  /\ ElectionTimeoutMax > ElectionTimeoutMin
+  /\ MaxLogSize \in Nat
+  /\ Nodes \subseteq [id -> STRING]
 
 VARIABLES
   node_state,
@@ -154,7 +154,7 @@ HandleRequestVote(node, msg) ==
               }
          ELSE
            /\ messages' = messages
-  /\ UNCHANGED node_state, current_leader, logs, commit_index, timers, msg_id
+  /\ UNCHANGED <<node_state, current_leader, logs, commit_index, timers, msg_id>>
 
 HandleAppendEntries(node, msg) ==
   /\ node_state[node] \in {"follower", "candidate"}
@@ -174,7 +174,7 @@ HandleAppendEntries(node, msg) ==
                   IF i <= msg.prev_log_index THEN logs[node][i]
                   ELSE new_entries[i - msg.prev_log_index]]
                 trimmed_log == [i \in 1..Min(MaxLogSize, Len(new_log)) |-> new_log[i]]
-            THEN
+            IN
                /\ logs' = [logs EXCEPT ![node] = trimmed_log]
                /\ commit_index' = Max(commit_index, msg.leader_commit)
                /\ answer_success = TRUE
@@ -199,7 +199,7 @@ HandleAppendEntriesReply(leader, msg) ==
         /\ commit_index' = Max(commit_index, Min(MaxLogSize, msg.match_index))
      ELSE
         /\ commit_index' = commit_index
-  /\ UNCHANGED node_state, current_leader, logs, voted_for, timers, msg_id, messages
+  /\ UNCHANGED <<node_state, current_leader, logs, voted_for, timers, msg_id, messages>>
 
 ClientSubmit(node, cmd) ==
   /\ node_state[node] = "leader"
@@ -242,8 +242,8 @@ LogsMatchCommonPrefix ==
     (logs[n1][i].term = logs[n2][i].term) => logs[n1][i] = logs[n2][i]
 
 CommitOnlyIfQuorum ==
-  \A idx > commit_index:
-    \E quorum \subseteq Nodes:
+  \A idx \in Nat: idx > commit_index =>
+    \E quorum \in SUBSET Nodes:
       Card(quorum) > (Card(Nodes) \div 2) /\
       \A n \in quorum: idx \in DOMAIN logs[n] /\ logs[n][idx].term = current_term
 

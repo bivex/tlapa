@@ -215,7 +215,7 @@ LogsMatchCommonPrefix ==
   \A n1, n2 \in Nodes, i \in DOMAIN logs[n1] \cap DOMAIN logs[n2]: (logs[n1][i].term = logs[n2][i].term) => logs[n1][i] = logs[n2][i]
 
 CommitOnlyIfQuorum ==
-  \A idx > commit_index: \E quorum \subseteq Nodes: Card(quorum) > (Card(Nodes) \div 2) /\ \A n \in quorum: idx \in DOMAIN logs[n] /\ logs[n][idx].term = current_term
+  \A idx \in Nat: idx > commit_index => \E quorum \in SUBSET Nodes: Card(quorum) > (Card(Nodes) \div 2) /\ \A n \in quorum: idx \in DOMAIN logs[n] /\ logs[n][idx].term = current_term
 
 LeaderCompleteness ==
   \A n \in Nodes, idx \in 1..commit_index: \E l \in Nodes: node_state[l] = "leader" /\ idx \in DOMAIN logs[l] /\ logs[l][idx].term = current_term
