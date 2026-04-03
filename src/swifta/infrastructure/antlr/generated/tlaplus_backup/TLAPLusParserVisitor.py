@@ -1,4 +1,4 @@
-# Generated from src/swifta/infrastructure/antlr/generated/tlaplus/TLAPLusParser.g4 by ANTLR 4.13.1
+# Generated from TLAPLusParser.g4 by ANTLR 4.13.1
 from antlr4 import *
 if "." in __name__:
     from .TLAPLusParser import TLAPLusParser
@@ -14,13 +14,13 @@ class TLAPLusParserVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by TLAPLusParser#firstModule.
-    def visitFirstModule(self, ctx:TLAPLusParser.FirstModuleContext):
+    # Visit a parse tree produced by TLAPLusParser#module.
+    def visitModule(self, ctx:TLAPLusParser.ModuleContext):
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by TLAPLusParser#module.
-    def visitModule(self, ctx:TLAPLusParser.ModuleContext):
+    # Visit a parse tree produced by TLAPLusParser#beginModule.
+    def visitBeginModule(self, ctx:TLAPLusParser.BeginModuleContext):
         return self.visitChildren(ctx)
 
 
@@ -121,11 +121,6 @@ class TLAPLusParserVisitor(ParseTreeVisitor):
 
     # Visit a parse tree produced by TLAPLusParser#identifierTuple.
     def visitIdentifierTuple(self, ctx:TLAPLusParser.IdentifierTupleContext):
-        return self.visitChildren(ctx)
-
-
-    # Visit a parse tree produced by TLAPLusParser#boundIdentifier.
-    def visitBoundIdentifier(self, ctx:TLAPLusParser.BoundIdentifierContext):
         return self.visitChildren(ctx)
 
 
@@ -394,6 +389,11 @@ class TLAPLusParserVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
+    # Visit a parse tree produced by TLAPLusParser#junctionItem.
+    def visitJunctionItem(self, ctx:TLAPLusParser.JunctionItemContext):
+        return self.visitChildren(ctx)
+
+
     # Visit a parse tree produced by TLAPLusParser#EqualityBinaryExpr.
     def visitEqualityBinaryExpr(self, ctx:TLAPLusParser.EqualityBinaryExprContext):
         return self.visitChildren(ctx)
@@ -534,6 +534,11 @@ class TLAPLusParserVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
+    # Visit a parse tree produced by TLAPLusParser#TemporalActionExpression.
+    def visitTemporalActionExpression(self, ctx:TLAPLusParser.TemporalActionExpressionContext):
+        return self.visitChildren(ctx)
+
+
     # Visit a parse tree produced by TLAPLusParser#StandaloneBracketExpr.
     def visitStandaloneBracketExpr(self, ctx:TLAPLusParser.StandaloneBracketExprContext):
         return self.visitChildren(ctx)
@@ -581,11 +586,6 @@ class TLAPLusParserVisitor(ParseTreeVisitor):
 
     # Visit a parse tree produced by TLAPLusParser#FunctionConstructor.
     def visitFunctionConstructor(self, ctx:TLAPLusParser.FunctionConstructorContext):
-        return self.visitChildren(ctx)
-
-
-    # Visit a parse tree produced by TLAPLusParser#FunctionConstructorBar.
-    def visitFunctionConstructorBar(self, ctx:TLAPLusParser.FunctionConstructorBarContext):
         return self.visitChildren(ctx)
 
 

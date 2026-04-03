@@ -138,10 +138,6 @@ identifierTuple
     : LAB IDENTIFIER (COMMA IDENTIFIER)* RAB
     ;
 
-boundIdentifier
-    : IDENTIFIER (PRIME)*
-    ;
-
 // ============================================================================
 // Instance
 // ============================================================================
@@ -669,9 +665,9 @@ reducedExpression
 // ============================================================================
 
 setBody
-    : (identifierTuple | boundIdentifier) IN expression COLON expression                    #SetSubsetOf
-    | (expression (COMMA expression)*)?                                                #SetEnumerate
-    | expression COLON expression (COMMA expression)*                                 #SetOfAll
+    : (identifierTuple | IDENTIFIER) IN expression COLON expression                    #SetSubsetOf
+    | expression (COMMA expression)*                                                   #SetEnumerate
+    | expression COLON quantBound (COMMA quantBound)*                                  #SetOfAll
     ;
 
 // ============================================================================
@@ -680,7 +676,6 @@ setBody
 
 functionBody2
     : quantBound (COMMA quantBound)* MAPTO expression                                   #FunctionConstructor
-    | quantBound (COMMA quantBound)* BAR expression                                     #FunctionConstructorBar
     | fieldVal (COMMA fieldVal)*                                                        #RecordConstructor
     | fieldSet (COMMA fieldSet)*                                                        #SetOfRecords
     | expression (COMMA expression)*                                                    #FunctionApplication2
@@ -707,7 +702,7 @@ exceptComponent
     ;
 
 quantBound
-    : (identifierTuple | boundIdentifier (COMMA boundIdentifier)*) IN expression
+    : (identifierTuple | IDENTIFIER (COMMA IDENTIFIER)*) IN expression
     ;
 
 // ============================================================================
