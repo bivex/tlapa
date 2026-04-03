@@ -640,7 +640,7 @@ def serializedATN():
         1478,3,158,79,0,1478,1480,1,0,0,0,1479,1415,1,0,0,0,1479,1426,1,
         0,0,0,1479,1437,1,0,0,0,1479,1445,1,0,0,0,1479,1453,1,0,0,0,1479,
         1461,1,0,0,0,1479,1465,1,0,0,0,1479,1475,1,0,0,0,1480,163,1,0,0,
-        0,1481,1482,5,264,0,0,1482,1483,5,78,0,0,1483,1484,3,102,51,0,1484,
+        0,1481,1482,3,102,51,0,1482,1483,5,78,0,0,1483,1484,3,102,51,0,1484,
         165,1,0,0,0,1485,1486,5,264,0,0,1486,1487,5,60,0,0,1487,1488,3,102,
         51,0,1488,167,1,0,0,0,1489,1491,5,75,0,0,1490,1492,3,170,85,0,1491,
         1490,1,0,0,0,1492,1493,1,0,0,0,1493,1491,1,0,0,0,1493,1494,1,0,0,
@@ -11158,15 +11158,15 @@ class TLAPLusParser ( Parser ):
             super().__init__(parent, invokingState)
             self.parser = parser
 
-        def IDENTIFIER(self):
-            return self.getToken(TLAPLusParser.IDENTIFIER, 0)
+        def expression(self, i:int=None):
+            if i is None:
+                return self.getTypedRuleContexts(TLAPLusParser.ExpressionContext)
+            else:
+                return self.getTypedRuleContext(TLAPLusParser.ExpressionContext,i)
+
 
         def MAPTO(self):
             return self.getToken(TLAPLusParser.MAPTO, 0)
-
-        def expression(self):
-            return self.getTypedRuleContext(TLAPLusParser.ExpressionContext,0)
-
 
         def getRuleIndex(self):
             return TLAPLusParser.RULE_fieldVal
@@ -11187,7 +11187,7 @@ class TLAPLusParser ( Parser ):
         try:
             self.enterOuterAlt(localctx, 1)
             self.state = 1481
-            self.match(TLAPLusParser.IDENTIFIER)
+            self.expression()
             self.state = 1482
             self.match(TLAPLusParser.MAPTO)
             self.state = 1483

@@ -690,7 +690,7 @@ functionBody2
     ;
 
 fieldVal
-    : IDENTIFIER MAPTO expression
+    : expression MAPTO expression
     ;
 
 fieldSet

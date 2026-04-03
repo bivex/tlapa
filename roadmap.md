@@ -34,10 +34,10 @@ This document outlines the completion tasks for the TLA+ parser implementation b
 - [ ] Improve diagnostics for ill-formed specs
 
 ### Full Spec Compatibility
-- [ ] Resolve remaining syntax errors in `distributed_log_full.tla` (8 diagnostics)
-  - Issues with nested EXCEPT indexing: `voted_for' = [voted_for EXCEPT ![node][msg.from] = TRUE]`
-  - IF/THEN/ELSE combinations inside EXCEPT contexts
-  - Potential need for grammar adjustments for complex EXCEPT patterns
+- [x] Fixed **double-index EXCEPT** pattern: `[voted_for EXCEPT ![node][msg.from] = TRUE]`
+- [x] Fixed **fieldVal** to accept any expression as left side of `|->` (e.g., `[msg.last_log_index |-> ...]`)
+- [x] HTML diagram generation works for `distributed_log_full.tla` (15 operators)
+- [ ] Remaining diagnostics are spec syntax issues (e.g., `|` vs `|->`, LET ... THEN binding order)
 
 ---
 
