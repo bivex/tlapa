@@ -52,7 +52,7 @@ This document outlines the completion tasks for the TLA+ parser implementation b
 
 ### Grammar Completeness
 - [ ] Add support for temporal operators (`[]`, `<>`, `WF_`, `SF_`)
-- [ ] Complete proof syntax (BY, HAVE, QED, etc.)
+- [x] Complete proof syntax (BY, HAVE, QED, etc.)
 - [ ] Handle user-defined operator symbols correctly
 - [ ] Support for `LAMBDA` expressions
 - [ ] Full `CHOOSE` expression variants
