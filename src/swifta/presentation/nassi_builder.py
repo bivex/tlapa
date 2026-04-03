@@ -40,6 +40,7 @@ class NassiBuilder:
             from swifta.infrastructure.antlr.generated.tlaplus.TLAPLusParser import (
                 TLAPLusParser,
             )
+
             self._parser_cls = TLAPLusParser
         return self._parser_cls
 
@@ -48,9 +49,9 @@ class NassiBuilder:
     # ------------------------------------------------------------------
 
     def build_all_operators(self, content: str) -> list[tuple[str, Block, int]]:
-        """Parse *content* and build an NSD block tree for every operator definition.
+        """Parse *content* and build an NSD block tree for every operator/theorem/proof.
 
-        Returns a list of ``(operator_name, block_tree, line_number)``.
+        Returns a list of ``(name, block_tree, line_number)``.
         """
         from swifta.infrastructure.antlr.parser_adapter import _build_structure_visitor
         from swifta.infrastructure.antlr.runtime import load_generated_types, parse_source_text
@@ -65,10 +66,31 @@ class NassiBuilder:
 
         diagrams: list[tuple[str, Block, int]] = []
         for elem in visitor.elements:
+            ctx = visitor.get_context(elem)
+            if ctx is None:
+                continue
+
             if elem.kind == StructuralElementKind.OPERATOR_DEFINITION:
-                ctx = visitor.get_context(elem)
-                if ctx is not None and hasattr(ctx, "expression"):
+                # operator: Op(args) == body
+                if hasattr(ctx, "expression"):
                     block = self.build_from_expression(ctx.expression())
+                    diagrams.append((elem.name, block, elem.line))
+
+            elif elem.kind == StructuralElementKind.THEOREM:
+                # theorem: THEOREM name == statement
+                if hasattr(ctx, "expression"):
+                    block = self.build_from_expression(ctx.expression())
+                    diagrams.append((elem.name, block, elem.line))
+
+            elif elem.kind == StructuralElementKind.PROOF:
+                # proof block: could be a full ProofContext or a step (HAVE, ASSERT, QED, etc.)
+                ctx_name = type(ctx).__name__
+                if ctx_name == "ProofContext":
+                    block = self._build_proof(ctx)
+                else:
+                    # It's a proof step or QED
+                    block = self._build_step(ctx)
+                if block:
                     diagrams.append((elem.name, block, elem.line))
 
         return diagrams
@@ -115,8 +137,11 @@ class NassiBuilder:
         # Note: AddBinaryExprContext (arithmetic ops) is handled generically below.
 
         # ---- Quantifier / CHOOSE → leaf ----
-        if tname in ("QuantifierExpressionContext", "TemporalQuantifierExpressionContext",
-                      "ChooseExpressionContext"):
+        if tname in (
+            "QuantifierExpressionContext",
+            "TemporalQuantifierExpressionContext",
+            "ChooseExpressionContext",
+        ):
             return ActionBlock(text=_truncate(ctx.getText()))
 
         # ---- Binary expression nodes that may hide structural children ----
@@ -298,4 +323,111 @@ class NassiBuilder:
             right = self._build(ctx.multExpr())
             return SequenceBlock(children=[left, right])
 
-        return ActionBlock(text=_truncate(ctx.getText()))
+    # ------------------------------------------------------------------
+    # Proof and theorem step builders
+    # ------------------------------------------------------------------
+
+    def _build_proof(self, ctx) -> Block:
+        """Build a NSD block for a PROOF construct."""
+        # Check for OBVIOUS or OMITTED
+        if ctx.OBVIOUS_KW():
+            return ActionBlock(text="OBVIOUS")
+        if ctx.OMITTED_KW():
+            return ActionBlock(text="OMITTED")
+
+        # Check for terminalProof: BY ...
+        if ctx.terminalProof():
+            tproof = ctx.terminalProof()
+            text = "BY ..." if tproof.BY_KW() else "PROOF"
+            return ActionBlock(text=text)
+
+        # Build from step* qedStep
+        steps = list(ctx.step()) if hasattr(ctx, "step") and ctx.step() else []
+        qed = ctx.qedStep() if hasattr(ctx, "qedStep") and ctx.qedStep() else None
+
+        blocks: list[Block] = []
+        for step_ctx in steps:
+            step_block = self._build_step(step_ctx)
+            if step_block:
+                blocks.append(step_block)
+
+        if qed:
+            blocks.append(ActionBlock(text="QED"))
+
+        return SequenceBlock(children=blocks) if blocks else ActionBlock(text="PROOF")
+
+    def _build_step(self, ctx) -> Block | None:
+        """Build a block for a proof step."""
+        # QED step
+        if type(ctx).__name__ == "QedStepContext":
+            return ActionBlock(text="QED")
+
+        # Map step type to builder
+        if hasattr(ctx, "useOrHide") and ctx.useOrHide():
+            return self._build_use_or_hide(ctx.useOrHide())
+        if hasattr(ctx, "defStep") and ctx.defStep():
+            return self._build_def_step(ctx.defStep())
+        if hasattr(ctx, "haveStep") and ctx.haveStep():
+            return self._build_have_step(ctx.haveStep())
+        if hasattr(ctx, "takeStep") and ctx.takeStep():
+            return self._build_take_step(ctx.takeStep())
+        if hasattr(ctx, "witnessStep") and ctx.witnessStep():
+            return self._build_witness_step(ctx.witnessStep())
+        if hasattr(ctx, "pickStep") and ctx.pickStep():
+            return self._build_pick_step(ctx.pickStep())
+        if hasattr(ctx, "caseStep") and ctx.caseStep():
+            return self._build_case_step(ctx.caseStep())
+        if hasattr(ctx, "assertStep") and ctx.assertStep():
+            return self._build_assert_step(ctx.assertStep())
+
+        # Recurse into children to find nested proofs
+        for child in ctx.getChildren() if hasattr(ctx, "getChildren") else []:
+            if hasattr(child, "getRuleIndex"):
+                child_name = type(child).__name__
+                if child_name == "ProofContext":
+                    block = self._build_proof(child)
+                    if block:
+                        return block
+        return None
+
+    def _build_use_or_hide(self, ctx) -> Block:
+        text = _truncate(ctx.getText(), 60)
+        return ActionBlock(text=text)
+
+    def _build_def_step(self, ctx) -> Block:
+        parts = []
+        for defn in ctx.operatorOrFunctionDefinition():
+            parts.append(_truncate(defn.getText(), 40))
+        text = "DEFINE " + ", ".join(parts) if parts else "DEFINE"
+        return ActionBlock(text=text)
+
+    def _build_have_step(self, ctx) -> Block:
+        expr = ctx.expression()
+        expr_text = _truncate(expr.getText(), 60) if expr else "HAVE"
+        return ActionBlock(text=f"HAVE {expr_text}")
+
+    def _build_take_step(self, ctx) -> Block:
+        text = _truncate(ctx.getText(), 60) if ctx.getText() else "TAKE"
+        return ActionBlock(text=f"TAKE {text}")
+
+    def _build_witness_step(self, ctx) -> Block:
+        exprs = ctx.expression()
+        parts = [e.getText() for e in exprs] if exprs else []
+        witness_text = ", ".join(parts)
+        return ActionBlock(text=f"WITNESS {witness_text}")
+
+    def _build_pick_step(self, ctx) -> Block:
+        text = _truncate(ctx.getText(), 60) if ctx.getText() else "PICK"
+        return ActionBlock(text=f"PICK {text}")
+
+    def _build_case_step(self, ctx) -> Block:
+        text = _truncate(ctx.getText(), 60) if ctx.getText() else "CASE"
+        return ActionBlock(text=f"CASE {text}")
+
+    def _build_assert_step(self, ctx) -> Block:
+        if hasattr(ctx, "expression") and ctx.expression():
+            expr_text = _truncate(ctx.expression().getText(), 60)
+            text = f"ASSERT {expr_text}"
+        else:
+            text = "ASSERT"
+        return ActionBlock(text=text)

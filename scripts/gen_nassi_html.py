@@ -21,7 +21,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 
 from swifta.infrastructure.antlr.parser_adapter import AntlrTlaplusSyntaxParser
 from swifta.domain.model import SourceUnit, SourceUnitId, StructuralElement, SyntaxDiagnostic
-from swifta.presentation.nassi_builder import NassiBuilder
+from swifta.presentation.nassi_builder import NassiBuilder, Block
 from swifta.presentation.nassi_renderer import render_nassi_diagram
 
 
@@ -109,7 +109,7 @@ def render_html(
     diagnostics: Sequence[SyntaxDiagnostic],
     elapsed_ms: float,
     token_count: int = 0,
-    diagrams_by_name: dict | None = None,
+    diagrams_by_line: dict[int, tuple[Block, str]] | None = None,
 ) -> str:
     module_name = "TLA+ Module"
     for elem in elements:
@@ -156,15 +156,11 @@ def render_html(
         else:
             depth = 1
         block_html = _render_element_block(elem, depth)
-        # Embed Nassi diagram for operator definitions
-        if (
-            diagrams_by_name
-            and elem.kind == "operator_definition"
-            and elem.name in diagrams_by_name
-        ):
-            block_tree, line_no = diagrams_by_name[elem.name]
+        # Embed Nassi diagram for operator/theorem/proof definitions
+        if diagrams_by_line and elem.line in diagrams_by_line:
+            block_tree, diag_name = diagrams_by_line[elem.line]
             try:
-                svg = render_nassi_diagram(block_tree, elem.name)
+                svg = render_nassi_diagram(block_tree, diag_name)
                 block_html += f'\n<div class="embedded-diagram" style="margin: 12px 0; padding: 12px; background: #21262d; border-radius: 8px;">{svg}</div>\n'
             except Exception:
                 pass
@@ -403,12 +399,13 @@ def main() -> int:
     token_count = parse_outcome.statistics.token_count
     elapsed_ms = round((perf_counter() - t0) * 1000, 3)
 
-    # Build Nassi diagrams for operators (for embedding)
+    # Build Nassi diagrams for structural elements (operators, theorems, proofs) for embedding
     try:
         operator_diagrams_list = NassiBuilder().build_all_operators(content)
-        diagrams_by_name = {name: (block, line) for name, block, line in operator_diagrams_list}
+        # Index by line number to handle duplicate names (e.g., multiple PROOF steps)
+        diagrams_by_line = {line: (block, name) for name, block, line in operator_diagrams_list}
     except Exception:
-        diagrams_by_name = {}
+        diagrams_by_line = {}
 
     html = render_html(
         source_path=str(source_path),
@@ -416,7 +413,7 @@ def main() -> int:
         diagnostics=diagnostics,
         elapsed_ms=elapsed_ms,
         token_count=token_count,
-        diagrams_by_name=diagrams_by_name,
+        diagrams_by_line=diagrams_by_line,
     )
 
     out_path = Path(args.out) if args.out else source_path.with_suffix(".structure.html")
