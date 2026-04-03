@@ -23,17 +23,23 @@ def _truncate(text: str, limit: int = _MAX_TEXT) -> str:
 
 
 class NassiBuilder:
-    """Converts TLA+ expression AST contexts into NSD block trees."""
+    """Converts TLA+ expression AST contexts into NSD block trees.
+
+    Strategy: recursively scan the ANTLR parse tree depth-first, looking
+    for "structural" constructs (IF, CASE, LET, conjunction, disjunction)
+    at any precedence level.  Pass-through layers are unwrapped transparently.
+    Binary expression nodes (comparisons, arithmetic) that don't carry NSD
+    semantics are treated as leaves.
+    """
 
     def __init__(self) -> None:
         self._parser_cls: type | None = None
 
-    def _ensure_parser_cls(self) -> type:
+    def _P(self) -> type:
         if self._parser_cls is None:
             from swifta.infrastructure.antlr.generated.tlaplus.TLAPLusParser import (
                 TLAPLusParser,
             )
-
             self._parser_cls = TLAPLusParser
         return self._parser_cls
 
@@ -69,136 +75,166 @@ class NassiBuilder:
 
     def build_from_expression(self, expr_ctx) -> Block:
         """Build NSD block from an ANTLR *expression* context."""
-        return self._build_expr(expr_ctx)
+        return self._build(expr_ctx)
 
     # ------------------------------------------------------------------
-    # Recursive dispatch
+    # Core recursive builder
     # ------------------------------------------------------------------
 
-    def _build_expr(self, ctx) -> Block:  # noqa: C901 – unavoidable complexity
-        P = self._ensure_parser_cls()
+    def _build(self, ctx) -> Block:  # noqa: C901
+        P = self._P()
 
         if ctx is None:
             return EmptyBlock()
 
-        # ---- Structural constructs (check subclasses BEFORE parent types) ----
+        tname = type(ctx).__name__
 
-        # IF cond THEN a ELSE b
-        if isinstance(ctx, P.IfThenElseExpressionContext):
+        # ---- Structural constructs ----
+
+        if tname == "IfThenElseExpressionContext":
             return self._build_if(ctx)
 
-        # CASE pat -> e [] pat -> e [] OTHER -> e
-        if isinstance(ctx, P.CaseExpressionContext):
+        if tname == "CaseExpressionContext":
             return self._build_case(ctx)
 
-        # LET def+ IN expr
-        if isinstance(ctx, P.LetInExpressionContext):
+        if tname == "LetInExpressionContext":
             return self._build_let(ctx)
 
-        # /\ expr /\ expr ...
-        if isinstance(ctx, P.ConjunctionListContext):
+        if tname == "ConjunctionListContext":
             return self._build_conjunction_list(ctx)
 
-        # \/ expr \/ expr ...
-        if isinstance(ctx, P.DisjunctionListContext):
+        if tname == "DisjunctionListContext":
             return self._build_disjunction_list(ctx)
 
-        # a /\ b  (binary conjunction)
-        if isinstance(ctx, P.AndBinaryExprContext):
+        if tname == "AndBinaryExprContext":
             return self._build_and_binary(ctx)
 
-        # a \/ b  (binary disjunction)
-        if isinstance(ctx, P.OrBinaryExprContext):
+        if tname == "OrBinaryExprContext":
             return self._build_or_binary(ctx)
 
-        # Inline /\ and \/ at the addExpr level (AND, LAND, OR, LOR tokens)
-        if isinstance(ctx, P.AddBinaryExprContext):
+        # Inline /\ and \/ at the addExpr level
+        if tname == "AddBinaryExprContext":
             return self._build_add_binary(ctx)
 
-        # ---- Quantifier expressions → leaf for now ----
-        if isinstance(ctx, (P.QuantifierExpressionContext, P.TemporalQuantifierExpressionContext)):
+        # ---- Quantifier / CHOOSE → leaf ----
+        if tname in ("QuantifierExpressionContext", "TemporalQuantifierExpressionContext",
+                      "ChooseExpressionContext"):
             return ActionBlock(text=_truncate(ctx.getText()))
-        if isinstance(ctx, P.ChooseExpressionContext):
+
+        # ---- Binary expression nodes that may hide structural children ----
+        # If a binary context (comparison, equality, equiv, implies) contains
+        # an AddBinary with AND/LAND/OR/LOR deep inside, we must find it.
+        if "BinaryExprContext" in tname or "BinaryExpressionContext" in tname:
+            structural = self._find_structural_in_binary(ctx)
+            if structural is not None:
+                return structural
+            # No structural child → whole thing is a leaf
             return ActionBlock(text=_truncate(ctx.getText()))
 
         # ---- Pass-through unwrapping ----
         unwrapped = self._unwrap(ctx)
         if unwrapped is not None:
-            return self._build_expr(unwrapped)
+            return self._build(unwrapped)
 
         # ---- Leaf ----
         return ActionBlock(text=_truncate(ctx.getText()))
 
     # ------------------------------------------------------------------
+    # Deep-scan binary expressions for hidden structural constructs
+    # ------------------------------------------------------------------
+
+    def _find_structural_in_binary(self, ctx) -> Block | None:
+        """Check if a binary expression node contains a structural construct
+        (like AddBinary with AND/LAND) hidden inside its children.
+
+        This handles cases like ``x >= 0 /\\ y >= 0`` where the ``/\\`` is
+        at the addExpr level but wrapped inside a CompareBinary node.
+        """
+        # Get the "left" child via the standard method pattern.
+        # Binary expr contexts have a method named after their rule (e.g. compareExpr)
+        # that returns the left operand, and another method for the right operand.
+        # We recursively scan ALL children looking for structural constructs.
+        structural = self._scan_children(ctx)
+        if structural is not None:
+            return structural
+        return None
+
+    def _scan_children(self, ctx) -> Block | None:
+        """Recursively scan all children of *ctx* for structural constructs."""
+        P = self._P()
+        if not hasattr(ctx, "children") or ctx.children is None:
+            return None
+
+        for child in ctx.children:
+            # Only interested in rule contexts (not tokens)
+            if not hasattr(child, "getText"):
+                continue
+
+            tname = type(child).__name__
+
+            # Direct structural matches
+            if tname == "IfThenElseExpressionContext":
+                return self._build_if(child)
+            if tname == "CaseExpressionContext":
+                return self._build_case(child)
+            if tname == "LetInExpressionContext":
+                return self._build_let(child)
+            if tname == "ConjunctionListContext":
+                return self._build_conjunction_list(child)
+            if tname == "DisjunctionListContext":
+                return self._build_disjunction_list(child)
+            if tname == "AndBinaryExprContext":
+                return self._build_and_binary(child)
+            if tname == "OrBinaryExprContext":
+                return self._build_or_binary(child)
+            if tname == "AddBinaryExprContext":
+                result = self._build_add_binary(child)
+                if not isinstance(result, ActionBlock):
+                    return result
+
+            # Recurse into non-structural children
+            result = self._scan_children(child)
+            if result is not None:
+                return result
+
+        return None
+
+    # ------------------------------------------------------------------
     # Pass-through unwrapping
     # ------------------------------------------------------------------
 
+    # Chain: (context_class_suffix, method_to_call)
+    _UNWRAP_CHAIN: list[tuple[str, str]] = [
+        ("ExpressionContext", "quantifierExpr"),
+        ("QuantifierPassThroughContext", "chooseExpr"),
+        ("ChoosePassThroughContext", "ifExpr"),
+        ("IfPassThroughContext", "caseExpr"),
+        ("CasePassThroughContext", "letExpr"),
+        ("LetPassThroughContext", "equivExpr"),
+        ("EquivPassThroughContext", "impliesExpr"),
+        ("ImpliesPassThroughContext", "orExpr"),
+        ("OrPassThroughContext", "junctionExpr"),
+        ("AndPassThroughContext", "junctionExpr"),
+        ("JunctionPassThroughContext", "equalityExpr"),
+        ("EqualityPassThroughContext", "compareExpr"),
+        ("ComparePassThroughContext", "setRelExpr"),
+        ("SetRelPassThroughContext", "dotsExpr"),
+        ("DotsPassThroughContext", "addExpr"),
+        ("AddPassThroughContext", "multExpr"),
+        ("MultPassThroughContext", "prefixExpr"),
+        ("PrefixPassThroughContext", "postfixExpr"),
+        ("PostfixPassThroughContext", "applicationExpr"),
+        ("ApplicationPassThroughContext", "primaryExpression"),
+    ]
+
     def _unwrap(self, ctx):
         """Unwrap one pass-through layer.  Returns inner context or ``None``."""
-        P = self._ensure_parser_cls()
-
-        # Level 0: Expression → quantifierExpr
-        if isinstance(ctx, P.ExpressionContext):
-            return ctx.quantifierExpr()
-
-        # Level 1
-        if isinstance(ctx, P.QuantifierPassThroughContext):
-            return ctx.chooseExpr()
-
-        # Level 2
-        if isinstance(ctx, P.ChoosePassThroughContext):
-            return ctx.ifExpr()
-
-        # Level 3
-        if isinstance(ctx, P.IfPassThroughContext):
-            return ctx.caseExpr()
-
-        # Level 4
-        if isinstance(ctx, P.CasePassThroughContext):
-            return ctx.letExpr()
-
-        # Level 5
-        if isinstance(ctx, P.LetPassThroughContext):
-            return ctx.equivExpr()
-
-        # Level 6
-        if isinstance(ctx, P.EquivPassThroughContext):
-            return ctx.impliesExpr()
-
-        # Level 7
-        if isinstance(ctx, P.ImpliesPassThroughContext):
-            return ctx.orExpr()
-
-        # Level 8
-        if isinstance(ctx, P.OrPassThroughContext):
-            return ctx.junctionExpr()
-
-        # Level 9
-        if isinstance(ctx, P.AndPassThroughContext):
-            return ctx.junctionExpr()
-
-        # Level 10
-        if isinstance(ctx, P.JunctionPassThroughContext):
-            return ctx.equalityExpr()
-
-        # Levels 11+ — generic try-each chain
-        _pass_through_methods = [
-            ("equalityExpr", P.EqualityPassThroughContext),
-            ("compareExpr", P.ComparePassThroughContext),
-            ("setRelExpr", P.SetRelPassThroughContext),
-            ("dotsExpr", P.DotsPassThroughContext),
-            ("addExpr", P.AddPassThroughContext),
-            ("multExpr", P.MultPassThroughContext),
-            ("prefixExpr", P.PrefixPassThroughContext),
-            ("postfixExpr", P.PostfixPassThroughContext),
-            ("applicationExpr", P.ApplicationPassThroughContext),
-        ]
-        for method_name, pt_cls in _pass_through_methods:
-            if isinstance(ctx, pt_cls):
-                child = getattr(ctx, method_name, None)
-                if callable(child):
-                    return child()
-
+        tname = type(ctx).__name__
+        for suffix, method in self._UNWRAP_CHAIN:
+            if tname == suffix:
+                getter = getattr(ctx, method, None)
+                if callable(getter):
+                    return getter()
         return None
 
     # ------------------------------------------------------------------
@@ -206,68 +242,56 @@ class NassiBuilder:
     # ------------------------------------------------------------------
 
     def _build_if(self, ctx) -> Block:
-        """IF cond THEN a ELSE b → SelectionBlock."""
-        P = self._ensure_parser_cls()
         cond_text = _truncate(ctx.ifExpr(0).getText()) if ctx.ifExpr(0) else "?"
-        then_block = self._build_expr(ctx.ifExpr(1)) if ctx.ifExpr(1) else EmptyBlock()
-        else_block = self._build_expr(ctx.ifExpr(2)) if ctx.ifExpr(2) else EmptyBlock()
+        then_block = self._build(ctx.ifExpr(1)) if ctx.ifExpr(1) else EmptyBlock()
+        else_block = self._build(ctx.ifExpr(2)) if ctx.ifExpr(2) else EmptyBlock()
         return SelectionBlock(condition=cond_text, then_branch=then_block, else_branch=else_block)
 
     def _build_case(self, ctx) -> Block:
-        """CASE pat -> e [] pat -> e [] OTHER -> e → CaseBlock."""
         arms: list[tuple[str, Block]] = []
         for arm in ctx.caseArm():
             guard = _truncate(arm.expression(0).getText()) if arm.expression(0) else "?"
-            body = self._build_expr(arm.expression(1)) if arm.expression(1) else EmptyBlock()
+            body = self._build(arm.expression(1)) if arm.expression(1) else EmptyBlock()
             arms.append((guard, body))
         other = ctx.otherArm()
         if other:
-            body = self._build_expr(other.expression()) if other.expression() else EmptyBlock()
+            body = self._build(other.expression()) if other.expression() else EmptyBlock()
             arms.append(("OTHER", body))
         return CaseBlock(arms=arms)
 
     def _build_let(self, ctx) -> Block:
-        """LET def+ IN expr → ScopeBlock."""
         children: list[Block] = []
         for let_def in ctx.letDefinition():
             text = _truncate(let_def.getText())
             children.append(ActionBlock(text=text))
-        children.append(self._build_expr(ctx.letExpr()))
+        children.append(self._build(ctx.letExpr()))
         return ScopeBlock(label="LET...IN", children=children)
 
     def _build_conjunction_list(self, ctx) -> Block:
-        r"""`/\` expr `/\` expr ... → SequenceBlock (sequential steps)."""
-        children = [self._build_expr(item.expression()) for item in ctx.junctionItem()]
+        children = [self._build(item.expression()) for item in ctx.junctionItem()]
         return SequenceBlock(children=children) if children else EmptyBlock()
 
     def _build_disjunction_list(self, ctx) -> Block:
-        r"""`\/` expr `\/` expr ... → SequenceBlock (alternatives)."""
-        children = [self._build_expr(item.expression()) for item in ctx.junctionItem()]
+        children = [self._build(item.expression()) for item in ctx.junctionItem()]
         return SequenceBlock(children=children) if children else EmptyBlock()
 
     def _build_and_binary(self, ctx) -> Block:
-        r"""a `/\` b → SequenceBlock."""
-        left = self._build_expr(ctx.andExpr())
-        right = self._build_expr(ctx.junctionExpr())
+        left = self._build(ctx.andExpr())
+        right = self._build(ctx.junctionExpr())
         return SequenceBlock(children=[left, right])
 
     def _build_or_binary(self, ctx) -> Block:
-        r"""a `\/` b → SequenceBlock (alternatives)."""
-        left = self._build_expr(ctx.orExpr())
-        right = self._build_expr(ctx.andExpr())
+        left = self._build(ctx.orExpr())
+        right = self._build(ctx.andExpr())
         return SequenceBlock(children=[left, right])
 
     def _build_add_binary(self, ctx) -> Block:
-        """Handle inline `/\` (AND/LAND) and `\/` (OR/LOR) at the addExpr level."""
-        # LAND/AND → conjunction (sequential steps)
-        if ctx.LAND() or ctx.AND():
-            left = self._build_expr(ctx.addExpr())
-            right = self._build_expr(ctx.multExpr())
-            return SequenceBlock(children=[left, right])
-        # LOR/OR → disjunction (alternatives)
-        if ctx.LOR() or ctx.OR():
-            left = self._build_expr(ctx.addExpr())
-            right = self._build_expr(ctx.multExpr())
-            return SequenceBlock(children=[left, right])
-        # Other additive operators → leaf
+        r"""Inline ``/\`` and ``\/`` at the addExpr level.
+
+        In TLA+ the inline forms (``a /\ b``, ``a \/ b``) are parsed at the
+        additive precedence level.  Because the parser groups them inside
+        comparison/equality wrappers, splitting at this level would produce
+        wrong sub-expressions.  Treat as a leaf — the bulleted forms
+        (``/\ expr /\ expr``) are handled by ConjunctionListContext.
+        """
         return ActionBlock(text=_truncate(ctx.getText()))
