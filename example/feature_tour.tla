@@ -1,50 +1,147 @@
 ---- MODULE FeatureTour ----
-EXTENDS Naturals
+EXTENDS Naturals, Sequences
 
-CONSTANTS MAX_VAL, MIN_VAL
-VARIABLES x, y, z, active, count
+CONSTANTS MaxVal, Node
 
-Init == x = 0 /\ y = 0 /\ z = 0 /\ active = FALSE /\ count = 0
+VARIABLES x, y, vals
 
-IsPositive == x > 0
+Inc(n) == n + 1
 
-IsInRange == x >= 0 /\ x <= 100
+Double(n) == n * 2
 
-IsZero == x = 0
+Range(S) == {x \in S : TRUE}
 
-NotActive == ~active
+Max(a, b) == IF a > b THEN a ELSE b
 
-IsReady == active /\ count > 0
+AbsVal(n) == IF n < 0 THEN (0 - n) ELSE n
 
-IsDone == ~active \/ count = 0
+Fib(n) ==
+    LET F(k) == IF k <= 1 THEN k ELSE F(k - 1) + F(k - 2)
+    IN F(n)
 
-Increment == x' = x + 1
+Swap(seq, i, j) ==
+    LET tmp == seq[i]
+        with_i == [seq EXCEPT ![i] = seq[j]]
+    IN [with_i EXCEPT ![j] = tmp]
 
-Decrement == x' = x - 1
+MinOf(S) == CHOOSE m \in S : m <= 3
 
-Double == x' = 2 * x
+Apply(f, n) == f(n)
 
-Reset == x' = 0 /\ y' = 0 /\ z' = 0
+UseLambda == Apply(LAMBDA x : x + 10, 5)
 
-IncIfPositive == IF x > 0 THEN x' = x + 1 ELSE x' = x
+Evens == {2 * n : n \in 0..10}
 
-Clamp == IF x > MAX_VAL THEN x' = MAX_VAL ELSE IF x < MIN_VAL THEN x' = MIN_VAL ELSE x' = x
+Squared == {n * n : n \in 1..5}
 
-Classify == IF x > 100 THEN "huge" ELSE IF x > 10 THEN "medium" ELSE "small"
+SubsetOf(S) == SUBSET S
 
-NestedIf == IF x > 0 THEN IF y > 0 THEN "both" ELSE "x-only" ELSE "neither"
+UnionOf(F) == UNION F
 
-Combined == IncIfPositive \/ Reset
+Init == x = 0 /\ y = 0 /\ vals = <<>>
 
-Spec == Init /\ [][FullNext]_<<x, y, z>>
+AddVal(v) == vals' = Append(vals, v)
 
-TypeOK == x \in Nat /\ y \in Nat /\ z \in Nat /\ active \in BOOLEAN
+GetRecord == [name |-> "test", value |-> 42, active |-> TRUE]
 
-Inv == x >= 0 /\ y >= 0 /\ z >= 0 /\ count >= 0
+NestedRecord ==
+    [server |-> [host |-> "localhost", port |-> 8080],
+     status |-> "running"]
 
-AllInv == Inv /\ TypeOK
+ConstArray == [i \in 1..10 |-> 0]
 
-THEOREM Spec => []Inv
-THEOREM Init => AllInv
+IdentMatrix == [r \in 1..3 |-> [c \in 1..3 |-> IF r = c THEN 1 ELSE 0]]
+
+AllPositive(S) == \A n \in S : n > 0
+
+ExistsZero(S) == \E n \in S : n = 0
+
+Safety == []TypeInv
+
+Liveness == <>Done
+
+Fairness == WF_vars(Next)
+
+StrongFair == SF_vars(Next)
+
+LeadsTo == Init ~> Done
+
+AlwaysSafe == []TypeInv
+
+EventuallyDone == <>Done
+
+Step == x' = x + 1 /\ UNCHANGED <<y, vals>>
+
+StutterStep == []Next
+
+CanStep == ENABLED Next
+
+TypeInv == /\ x \in Nat
+            /\ y \in Nat
+            /\ vals \in Seq(Nat)
+
+Next ==
+    /\ \/ IncX
+       \/ IncY
+       \/ AddSomething
+    /\ x <= MaxVal
+    /\ y <= MaxVal
+
+IncX == x' = x + 1 /\ UNCHANGED <<y, vals>>
+
+IncY == y' = y + 1 /\ UNCHANGED <<x, vals>>
+
+AddSomething == vals' = Append(vals, x + y) /\ UNCHANGED <<x, y>>
+
+RECURSIVE Fact(_), Sum(_)
+
+Fact(n) == IF n = 0 THEN 1 ELSE n * Fact(n - 1)
+
+Sum(n) == IF n = 0 THEN 0 ELSE n + Sum(n - 1)
+
+ASSUME MaxVal > 0
+
+ASSUME NodeOK == Node # ""
+
+THEOREM ThmIncPositive ==
+    \A n \in Nat : Inc(n) > n
+PROOF
+    <1> TAKE n \in Nat
+    <1> HAVE Inc(n) = n + 1
+        OBVIOUS
+    <1> HAVE n + 1 > n
+        OBVIOUS
+    <1> QED
+        OBVIOUS
+
+THEOREM ThmFactPositive ==
+    \A n \in Nat : Fact(n) > 0
+PROOF
+    <1> TAKE n \in Nat
+    <1> HAVE Fact(n) > 0
+        BY DEF Fact
+    <1> QED
+        OBVIOUS
+
+THEOREM ThmDouble ==
+    \A n \in Nat : Double(n) = 2 * n
+PROOF OBVIOUS
+
+THEOREM ThmMaxCommutative ==
+    \A a, b \in Nat : Max(a, b) = Max(b, a)
+PROOF
+    <1> HAVE Max(a, b) = Max(b, a)
+        OBVIOUS
+    <1> QED
+        OBVIOUS
+
+LEMMA LemmaSum == Sum(3) = 6
+PROOF BY DEF Sum
+
+INSTANCE Sequences
+
+a ++ b == a \cup b
+
+Done == x = MaxVal /\ y = MaxVal /\ Len(vals) = MaxVal
 
 ====

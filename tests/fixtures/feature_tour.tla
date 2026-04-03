@@ -117,12 +117,10 @@ PROOF
 THEOREM ThmFactPositive ==
     \A n \in Nat : Fact(n) > 0
 PROOF
-    <1> ASSERT Fact(n) > 0
-    <2> TAKE k \in Nat
-    <2> WITNESS Fact(k)
-    <2> HAVE Fact(k) > 0
+    <1> TAKE n \in Nat
+    <1> HAVE Fact(n) > 0
         BY DEF Fact
-    <2> QED
+    <1> QED
         OBVIOUS
 
 THEOREM ThmDouble ==
@@ -132,8 +130,8 @@ PROOF OBVIOUS
 THEOREM ThmMaxCommutative ==
     \A a, b \in Nat : Max(a, b) = Max(b, a)
 PROOF
-    <1> ASSERT Max(a, b) = Max(b, a)
-        BY DEF Max
+    <1> HAVE Max(a, b) = Max(b, a)
+        OBVIOUS
     <1> QED
         OBVIOUS
 
