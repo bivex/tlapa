@@ -55,9 +55,12 @@ C_DIVIDER = "#30363d"
 # SVG helpers
 # ---------------------------------------------------------------------------
 
+
 def _esc(text: str) -> str:
     """Escape HTML entities in text for SVG."""
-    return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace('"', "&quot;")
+    return (
+        text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace('"', "&quot;")
+    )
 
 
 def _fit_text(text: str, max_chars: int = 80) -> str:
@@ -67,10 +70,21 @@ def _fit_text(text: str, max_chars: int = 80) -> str:
     return t[: max_chars - 1] + "…"
 
 
-def _svg_block(x: float, y: float, w: float, h: float, fill: str, stroke: str,
-               text: str, text_color: str = C_TEXT, font_size: int = 12,
-               font_weight: str = "normal", text_anchor: str = "middle",
-               text_x: float | None = None, rx: int = 4) -> str:
+def _svg_block(
+    x: float,
+    y: float,
+    w: float,
+    h: float,
+    fill: str,
+    stroke: str,
+    text: str,
+    text_color: str = C_TEXT,
+    font_size: int = 12,
+    font_weight: str = "normal",
+    text_anchor: str = "middle",
+    text_x: float | None = None,
+    rx: int = 4,
+) -> str:
     """Rounded rect with text."""
     tx = text_x if text_x is not None else x + w / 2
     ty = y + h / 2 + font_size * 0.35
@@ -83,8 +97,9 @@ def _svg_block(x: float, y: float, w: float, h: float, fill: str, stroke: str,
     )
 
 
-def _svg_triangle(x: float, y: float, w: float, h: float, fill: str, stroke: str,
-                  cond_text: str) -> str:
+def _svg_triangle(
+    x: float, y: float, w: float, h: float, fill: str, stroke: str, cond_text: str
+) -> str:
     """Draw NSD IF triangle with condition text."""
     mid_x = x + w / 2
     # Triangle points: top-left, top-right, bottom-center
@@ -123,6 +138,7 @@ def _svg_padding(x: float, y: float, w: float, h: float) -> str:
 # ---------------------------------------------------------------------------
 # Height measurement (no rendering)
 # ---------------------------------------------------------------------------
+
 
 def _measure(block: Block | None, w: float) -> float:
     """Compute the pixel height needed to render *block* at width *w*."""
@@ -165,6 +181,7 @@ def _measure(block: Block | None, w: float) -> float:
 # ---------------------------------------------------------------------------
 # Main renderer
 # ---------------------------------------------------------------------------
+
 
 def render_nassi_diagram(root: Block, op_name: str, variant: str = "seq") -> str:
     """Render NSD block tree to SVG string."""
@@ -227,8 +244,10 @@ def render_nassi_diagram(root: Block, op_name: str, variant: str = "seq") -> str
 # Selection (IF/THEN/ELSE) — side-by-side NSD layout
 # ---------------------------------------------------------------------------
 
-def _draw_selection(block: SelectionBlock, x: float, y: float, w: float,
-                    depth: int, parts: list[str]) -> float:
+
+def _draw_selection(
+    block: SelectionBlock, x: float, y: float, w: float, depth: int, parts: list[str]
+) -> float:
     cond = block.condition or "?"
     then_br = block.then_branch
     else_br = block.else_branch
@@ -247,23 +266,21 @@ def _draw_selection(block: SelectionBlock, x: float, y: float, w: float,
 
     # 2. Draw false branch background (slight red tint)
     parts.append(
-        f'<rect x="{x+half_w}" y="{branch_top}" width="{half_w}" height="{max_h}" '
+        f'<rect x="{x + half_w}" y="{branch_top}" width="{half_w}" height="{max_h}" '
         f'fill="{C_ELSE}" fill-opacity="0.12" stroke="none"/>'
     )
 
     # 3. Draw THEN branch (left half)
-    then_used = 0.0
     if then_br and not isinstance(then_br, EmptyBlock):
-        then_used = draw_block(then_br, x, y, half_w, depth + 1, parts)
+        draw_block(then_br, x, y, half_w, depth + 1, parts)
 
     # 4. Padding for THEN if shorter
     if then_h < max_h:
         parts.append(_svg_padding(x, y + then_h, half_w, max_h - then_h))
 
     # 5. Draw ELSE branch (right half)
-    else_used = 0.0
     if else_br and not isinstance(else_br, EmptyBlock):
-        else_used = draw_block(else_br, x + half_w, y, half_w, depth + 1, parts)
+        draw_block(else_br, x + half_w, y, half_w, depth + 1, parts)
 
     # 5. Padding for ELSE if shorter
     if else_h < max_h:
@@ -275,8 +292,7 @@ def _draw_selection(block: SelectionBlock, x: float, y: float, w: float,
     return y + max_h
 
 
-def draw_block(block: Block, x: float, y: float, w: float,
-               depth: int, parts: list[str]) -> float:
+def draw_block(block: Block, x: float, y: float, w: float, depth: int, parts: list[str]) -> float:
     """Dispatch block drawing (module-level helper for recursion)."""
     if isinstance(block, EmptyBlock):
         return y
@@ -306,18 +322,20 @@ def draw_block(block: Block, x: float, y: float, w: float,
 # CASE
 # ---------------------------------------------------------------------------
 
-def _draw_case(block: CaseBlock, x: float, y: float, w: float,
-               depth: int, parts: list[str]) -> float:
+
+def _draw_case(
+    block: CaseBlock, x: float, y: float, w: float, depth: int, parts: list[str]
+) -> float:
     # Header
-    parts.append(_svg_block(x, y, w, BH, C_CASE_BG, C_CASE_ST, "CASE",
-                            C_CASE_ST, font_weight="bold"))
+    parts.append(
+        _svg_block(x, y, w, BH, C_CASE_BG, C_CASE_ST, "CASE", C_CASE_ST, font_weight="bold")
+    )
     y += BH + BP
 
     for idx, (pattern, body) in enumerate(block.arms):
         # Arm label row
         arm_label = f"▸ {pattern}"
-        parts.append(_svg_block(x, y, w, BH, C_CASE_BG, C_CASE_ST, arm_label,
-                                C_ARM, font_size=11))
+        parts.append(_svg_block(x, y, w, BH, C_CASE_BG, C_CASE_ST, arm_label, C_ARM, font_size=11))
         y += BH + BP
 
         # Body (indented)
@@ -333,11 +351,14 @@ def _draw_case(block: CaseBlock, x: float, y: float, w: float,
 # Scope (LET...IN)
 # ---------------------------------------------------------------------------
 
-def _draw_scope(block: ScopeBlock, x: float, y: float, w: float,
-                depth: int, parts: list[str]) -> float:
+
+def _draw_scope(
+    block: ScopeBlock, x: float, y: float, w: float, depth: int, parts: list[str]
+) -> float:
     label = block.label or "SCOPE"
-    parts.append(_svg_block(x, y, w, BH, C_SCOPE_BG, C_SCOPE_ST, label,
-                            C_SCOPE_ST, font_weight="bold", rx=6))
+    parts.append(
+        _svg_block(x, y, w, BH, C_SCOPE_BG, C_SCOPE_ST, label, C_SCOPE_ST, font_weight="bold", rx=6)
+    )
     y += BH + BP
 
     for child in block.children:
@@ -348,6 +369,7 @@ def _draw_scope(block: ScopeBlock, x: float, y: float, w: float,
 # ---------------------------------------------------------------------------
 # Action colour coding
 # ---------------------------------------------------------------------------
+
 
 def _action_colors(text: str) -> tuple[str, str]:
     """Pick fill/stroke based on action semantics."""

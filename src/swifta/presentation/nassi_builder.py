@@ -195,6 +195,8 @@ class NassiBuilder:
         return ActionBlock(text=_truncate(ctx.getText()))
 
     # ------------------------------------------------------------------
+    # Structural construct builders
+    # ------------------------------------------------------------------
     # Deep-scan binary expressions for hidden structural constructs
     # ------------------------------------------------------------------
 
@@ -216,7 +218,6 @@ class NassiBuilder:
 
     def _scan_children(self, ctx) -> Block | None:
         """Recursively scan all children of *ctx* for structural constructs."""
-        P = self._P()
         if not hasattr(ctx, "children") or ctx.children is None:
             return None
 
