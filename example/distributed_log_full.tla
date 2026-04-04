@@ -2,13 +2,10 @@
 EXTENDS Naturals, Sequences, FiniteSets
 
 CONSTANTS Nodes, ElectionTimeoutMin, ElectionTimeoutMax, MaxLogSize
- MaxLogSize > 0
 
 ASSUME ElectionTimeoutMin \in Nat /\ ElectionTimeoutMax \in Nat /\ ElectionTimeoutMax > ElectionTimeoutMin /\ MaxLogSize \in Nat /\ Nodes \subseteq [id |-> STRING]
 
-VARIABLES node_state, current_leader, logs, commit_index, current_term, voted_for, timers, message, msg_id
-
- MaxLogSize > 0
+VARIABLES node_state, current_leader, logs, commit_index, current_term, voted_for, timers, messages, msg_id
 
 LogEntry == [term: Nat, command: STRING]
 NodeState == {"follower" , "candidate" , "leader"}
