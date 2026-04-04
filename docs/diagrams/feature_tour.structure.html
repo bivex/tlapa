@@ -1,0 +1,1018 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TLA+ Structure — FeatureTour</title>
+  <style>
+    :root {
+      --bg: #0d1117;
+      --surface: #161b22;
+      --surface-2: #21262d;
+      --border: #30363d;
+      --text: #e6edf3;
+      --text-muted: #8b949e;
+      --blue: #1676dc;
+      --green: #2d9d4a;
+      --purple: #9b59b6;
+      --teal: #1abc9c;
+      --amber: #f39c12;
+      --red: #e74c3c;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: "IBM Plex Sans", -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      padding: 24px;
+      max-width: 960px;
+      margin: 0 auto;
+    }
+    .header {
+      margin-bottom: 24px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    .header h1 {
+      font-size: 22px;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+    .header .meta {
+      font-size: 13px;
+      color: var(--text-muted);
+      font-family: "JetBrains Mono", monospace;
+    }
+    .summary {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+    .summary-chip {
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 500;
+      border: 1px solid;
+    }
+    .diagnostics {
+      margin-bottom: 20px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px;
+    }
+    .diagnostics summary {
+      cursor: pointer;
+      color: var(--red);
+      font-weight: 500;
+      margin-bottom: 8px;
+    }
+    .diagnostics table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    .diagnostics th, .diagnostics td {
+      text-align: left;
+      padding: 6px 10px;
+      border-bottom: 1px solid var(--border);
+    }
+    .diag-sev {
+      color: var(--red);
+      font-weight: 600;
+      font-size: 11px;
+      text-transform: uppercase;
+    }
+    .structure {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .block {
+      background: var(--surface);
+      border-radius: 6px;
+      overflow: hidden;
+      transition: transform 0.1s;
+    }
+    .block:hover {
+      transform: translateX(2px);
+    }
+    .block-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 14px;
+      font-size: 14px;
+      font-weight: 500;
+    }
+    .block-header .icon {
+      font-size: 16px;
+      width: 22px;
+      text-align: center;
+    }
+    .block-header .name {
+      font-family: "JetBrains Mono", monospace;
+      font-weight: 600;
+      font-size: 14px;
+    }
+    .block-header .badge {
+      color: var(--text-muted);
+      font-size: 14px;
+    }
+    .block-header .kind-tag {
+      margin-left: auto;
+      padding: 2px 8px;
+      border-radius: 8px;
+      font-size: 10px;
+      font-weight: 600;
+      color: #fff;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .block-meta {
+      padding: 4px 14px 8px 44px;
+      font-size: 12px;
+      color: var(--text-muted);
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .block-meta code {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 12px;
+      color: var(--text);
+      background: var(--surface-2);
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+    .block-meta .container {
+      font-style: italic;
+    }
+    .block-meta .loc {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+    }
+    .source-preview {
+      margin-top: 24px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .source-preview summary {
+      padding: 10px 14px;
+      cursor: pointer;
+      font-weight: 500;
+      color: var(--text-muted);
+    }
+    .source-preview pre {
+      padding: 14px;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 13px;
+      line-height: 1.5;
+      overflow-x: auto;
+      border-top: 1px solid var(--border);
+      max-height: 600px;
+      overflow-y: auto;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>FeatureTour</h1>
+    <div class="meta">/Volumes/External/Code/tlapa/example/tutorials/feature_tour.tla &middot; 733 tokens &middot; 168.6ms</div>
+  </div>
+
+  <div class="summary"><span class="summary-chip" style="background: #e74c3c33; border-color: #e74c3c;">2 assumption</span><span class="summary-chip" style="background: #9b59b633; border-color: #9b59b6;">2 constant</span><span class="summary-chip" style="background: #f39c1233; border-color: #f39c12;">1 instance</span><span class="summary-chip" style="background: #1676dc33; border-color: #1676dc;">1 module</span><span class="summary-chip" style="background: #1abc9c33; border-color: #1abc9c;">40 operator definition</span><span class="summary-chip" style="background: #3498db33; border-color: #3498db;">17 proof</span><span class="summary-chip" style="background: #f39c1233; border-color: #f39c12;">2 recursive</span><span class="summary-chip" style="background: #e74c3c33; border-color: #e74c3c;">5 theorem</span><span class="summary-chip" style="background: #9b59b633; border-color: #9b59b6;">3 variable</span></div>
+
+  
+
+  <div class="structure">
+      <div class="block block-blue" style="border-left: 4px solid #0b57ae;">
+        <div class="block-header" style="background: #1676dc22;">
+          <span class="icon">📦</span><span class="name">FeatureTour</span>
+          <span class="kind-tag" style="background: #1676dc;">module</span>
+        </div>
+        <div class="block-meta"><span class="container">in FeatureTour</span><span class="loc">L1</span></div>
+      </div>
+      <div class="block block-purple" style="border-left: 4px solid #7d3c98;">
+        <div class="block-header" style="background: #9b59b622;">
+          <span class="icon">C</span><span class="name">MaxVal</span><span class="badge"> ①</span>
+          <span class="kind-tag" style="background: #9b59b6;">constant</span>
+        </div>
+        <div class="block-meta"><code>CONSTANT MaxVal</code><span class="container">in FeatureTour</span><span class="loc">L4</span></div>
+      </div>
+      <div class="block block-purple" style="border-left: 4px solid #7d3c98;">
+        <div class="block-header" style="background: #9b59b622;">
+          <span class="icon">C</span><span class="name">Node</span><span class="badge"> ①</span>
+          <span class="kind-tag" style="background: #9b59b6;">constant</span>
+        </div>
+        <div class="block-meta"><code>CONSTANT Node</code><span class="container">in FeatureTour</span><span class="loc">L4</span></div>
+      </div>
+      <div class="block block-purple" style="border-left: 4px solid #7d3c98;">
+        <div class="block-header" style="background: #9b59b622;">
+          <span class="icon">x</span><span class="name">x</span><span class="badge"> ①</span>
+          <span class="kind-tag" style="background: #9b59b6;">variable</span>
+        </div>
+        <div class="block-meta"><code>VARIABLE x</code><span class="container">in FeatureTour</span><span class="loc">L6</span></div>
+      </div>
+      <div class="block block-purple" style="border-left: 4px solid #7d3c98;">
+        <div class="block-header" style="background: #9b59b622;">
+          <span class="icon">x</span><span class="name">y</span><span class="badge"> ①</span>
+          <span class="kind-tag" style="background: #9b59b6;">variable</span>
+        </div>
+        <div class="block-meta"><code>VARIABLE y</code><span class="container">in FeatureTour</span><span class="loc">L6</span></div>
+      </div>
+      <div class="block block-purple" style="border-left: 4px solid #7d3c98;">
+        <div class="block-header" style="background: #9b59b622;">
+          <span class="icon">x</span><span class="name">vals</span><span class="badge"> ①</span>
+          <span class="kind-tag" style="background: #9b59b6;">variable</span>
+        </div>
+        <div class="block-meta"><code>VARIABLE vals</code><span class="container">in FeatureTour</span><span class="loc">L6</span></div>
+      </div>
+      <div class="block block-teal" style="border-left: 4px solid #148f77;">
+        <div class="block-header" style="background: #1abc9c22;">
+          <span class="icon">≜</span><span class="name">Inc</span><span class="badge"> ①</span>
+          <span class="kind-tag" style="background: #1abc9c;">operator_definition</span>
+        </div>
+        <div class="block-meta"><code>Inc(n) == ...</code><span class="container">in FeatureTour</span><span class="loc">L8</span></div>
+      </div>
+<div class="embedded-diagram" style="margin: 12px 0; padding: 12px; background: #21262d; border-radius: 8px;"><svg xmlns="http://www.w3.org/2000/svg" width="800" height="66" viewBox="0 0 800 66">
+<rect width="100%" height="100%" fill="#0d1117" rx="8"/>
+<rect x="20" y="16" width="760" height="30" rx="4" ry="4" fill="#161b22" stroke="#30363d" stroke-width="1"/><text x="400.0" y="35.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">n+1</text>
+</svg></div>
+
+      <div class="block block-teal" style="border-left: 4px solid #148f77;">
+        <div class="block-header" style="background: #1abc9c22;">
+          <span class="icon">≜</span><span class="name">Double</span><span class="badge"> ①</span>
+          <span class="kind-tag" style="background: #1abc9c;">operator_definition</span>
+        </div>
+        <div class="block-meta"><code>Double(n) == ...</code><span class="container">in FeatureTour</span><span class="loc">L10</span></div>
+      </div>
+<div class="embedded-diagram" style="margin: 12px 0; padding: 12px; background: #21262d; border-radius: 8px;"><svg xmlns="http://www.w3.org/2000/svg" width="800" height="66" viewBox="0 0 800 66">
+<rect width="100%" height="100%" fill="#0d1117" rx="8"/>
+<rect x="20" y="16" width="760" height="30" rx="4" ry="4" fill="#161b22" stroke="#30363d" stroke-width="1"/><text x="400.0" y="35.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">n*2</text>
+</svg></div>
+
+      <div class="block block-teal" style="border-left: 4px solid #148f77;">
+        <div class="block-header" style="background: #1abc9c22;">
+          <span class="icon">≜</span><span class="name">Range</span><span class="badge"> ①</span>
+          <span class="kind-tag" style="background: #1abc9c;">operator_definition</span>
+        </div>
+        <div class="block-meta"><code>Range(S) == ...</code><span class="container">in FeatureTour</span><span class="loc">L12</span></div>
+      </div>
+<div class="embedded-diagram" style="margin: 12px 0; padding: 12px; background: #21262d; border-radius: 8px;"><svg xmlns="http://www.w3.org/2000/svg" width="800" height="66" viewBox="0 0 800 66">
+<rect width="100%" height="100%" fill="#0d1117" rx="8"/>
+<rect x="20" y="16" width="760" height="30" rx="4" ry="4" fill="#161b22" stroke="#30363d" stroke-width="1"/><text x="400.0" y="35.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">{x\inS:TRUE}</text>
+</svg></div>
+
+      <div class="block block-teal" style="border-left: 4px solid #148f77;">
+        <div class="block-header" style="background: #1abc9c22;">
+          <span class="icon">≜</span><span class="name">Max</span><span class="badge"> ①</span>
+          <span class="kind-tag" style="background: #1abc9c;">operator_definition</span>
+        </div>
+        <div class="block-meta"><code>Max(a,b) == ...</code><span class="container">in FeatureTour</span><span class="loc">L14</span></div>
+      </div>
+<div class="embedded-diagram" style="margin: 12px 0; padding: 12px; background: #21262d; border-radius: 8px;"><svg xmlns="http://www.w3.org/2000/svg" width="800" height="102" viewBox="0 0 800 102">
+<rect width="100%" height="100%" fill="#0d1117" rx="8"/>
+<polygon points="20,16 780,16 400.0,48" fill="#1a2233" stroke="#58a6ff" stroke-width="1.5"/><text x="400.0" y="30.4" text-anchor="middle" fill="#58a6ff" font-family="JetBrains Mono,Fira Code,monospace" font-size="11" font-weight="bold">a&gt;b</text><text x="40" y="41.6" text-anchor="start" fill="#3fb950" font-family="JetBrains Mono,monospace" font-size="9" font-weight="bold">T</text><text x="760" y="41.6" text-anchor="end" fill="#f85149" font-family="JetBrains Mono,monospace" font-size="9" font-weight="bold">F</text>
+<rect x="400.0" y="52" width="380.0" height="34" fill="#f85149" fill-opacity="0.12" stroke="none"/>
+<rect x="20" y="52" width="380.0" height="30" rx="4" ry="4" fill="#161b22" stroke="#30363d" stroke-width="1"/><text x="210.0" y="71.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">a</text>
+<rect x="400.0" y="52" width="380.0" height="30" rx="4" ry="4" fill="#161b22" stroke="#30363d" stroke-width="1"/><text x="590.0" y="71.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">b</text>
+<line x1="400.0" y1="52" x2="400.0" y2="86" stroke="#58a6ff" stroke-width="1.5" opacity="0.6"/>
+</svg></div>
+
+      <div class="block block-teal" style="border-left: 4px solid #148f77;">
+        <div class="block-header" style="background: #1abc9c22;">
+          <span class="icon">≜</span><span class="name">AbsVal</span><span class="badge"> ①</span>
+          <span class="kind-tag" style="background: #1abc9c;">operator_definition</span>
+        </div>
+        <div class="block-meta"><code>AbsVal(n) == ...</code><span class="container">in FeatureTour</span><span class="loc">L16</span></div>
+      </div>
+<div class="embedded-diagram" style="margin: 12px 0; padding: 12px; background: #21262d; border-radius: 8px;"><svg xmlns="http://www.w3.org/2000/svg" width="800" height="102" viewBox="0 0 800 102">
+<rect width="100%" height="100%" fill="#0d1117" rx="8"/>
+<polygon points="20,16 780,16 400.0,48" fill="#1a2233" stroke="#58a6ff" stroke-width="1.5"/><text x="400.0" y="30.4" text-anchor="middle" fill="#58a6ff" font-family="JetBrains Mono,Fira Code,monospace" font-size="11" font-weight="bold">n&lt;0</text><text x="40" y="41.6" text-anchor="start" fill="#3fb950" font-family="JetBrains Mono,monospace" font-size="9" font-weight="bold">T</text><text x="760" y="41.6" text-anchor="end" fill="#f85149" font-family="JetBrains Mono,monospace" font-size="9" font-weight="bold">F</text>
+<rect x="400.0" y="52" width="380.0" height="34" fill="#f85149" fill-opacity="0.12" stroke="none"/>
+<rect x="20" y="52" width="380.0" height="30" rx="4" ry="4" fill="#161b22" stroke="#30363d" stroke-width="1"/><text x="210.0" y="71.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">(0-n)</text>
+<rect x="400.0" y="52" width="380.0" height="30" rx="4" ry="4" fill="#161b22" stroke="#30363d" stroke-width="1"/><text x="590.0" y="71.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">n</text>
+<line x1="400.0" y1="52" x2="400.0" y2="86" stroke="#58a6ff" stroke-width="1.5" opacity="0.6"/>
+</svg></div>
+
+      <div class="block block-teal" style="border-left: 4px solid #148f77;">
+        <div class="block-header" style="background: #1abc9c22;">
+          <span class="icon">≜</span><span class="name">Fib</span><span class="badge"> ①</span>
+          <span class="kind-tag" style="background: #1abc9c;">operator_definition</span>
+        </div>
+        <div class="block-meta"><code>Fib(n) == ...</code><span class="container">in FeatureTour</span><span class="loc">L18</span></div>
+      </div>
+<div class="embedded-diagram" style="margin: 12px 0; padding: 12px; background: #21262d; border-radius: 8px;"><svg xmlns="http://www.w3.org/2000/svg" width="800" height="134" viewBox="0 0 800 134">
+<rect width="100%" height="100%" fill="#0d1117" rx="8"/>
+<rect x="20" y="16" width="760" height="30" rx="6" ry="6" fill="#1a2744" stroke="#d2a8ff" stroke-width="1"/><text x="400.0" y="35.2" text-anchor="middle" fill="#d2a8ff" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="bold">LET...IN</text>
+<rect x="36" y="50" width="744" height="30" rx="4" ry="4" fill="#161b22" stroke="#30363d" stroke-width="1"/><text x="408.0" y="69.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">F(k)==IFk&lt;=1THENkELSEF(k-1)+F(k-2)</text>
+<rect x="36" y="84" width="744" height="30" rx="4" ry="4" fill="#161b22" stroke="#30363d" stroke-width="1"/><text x="408.0" y="103.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">F(n)</text>
+</svg></div>
+
+      <div class="block block-teal" style="border-left: 4px solid #148f77;">
+        <div class="block-header" style="background: #1abc9c22;">
+          <span class="icon">≜</span><span class="name">Swap</span><span class="badge"> ①</span>
+          <span class="kind-tag" style="background: #1abc9c;">operator_definition</span>
+        </div>
+        <div class="block-meta"><code>Swap(seq,i,j) == ...</code><span class="container">in FeatureTour</span><span class="loc">L22</span></div>
+      </div>
+<div class="embedded-diagram" style="margin: 12px 0; padding: 12px; background: #21262d; border-radius: 8px;"><svg xmlns="http://www.w3.org/2000/svg" width="800" height="168" viewBox="0 0 800 168">
+<rect width="100%" height="100%" fill="#0d1117" rx="8"/>
+<rect x="20" y="16" width="760" height="30" rx="6" ry="6" fill="#1a2744" stroke="#d2a8ff" stroke-width="1"/><text x="400.0" y="35.2" text-anchor="middle" fill="#d2a8ff" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="bold">LET...IN</text>
+<rect x="36" y="50" width="744" height="30" rx="4" ry="4" fill="#161b22" stroke="#30363d" stroke-width="1"/><text x="408.0" y="69.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">tmp==seq[i]</text>
+<rect x="36" y="84" width="744" height="30" rx="4" ry="4" fill="#161b22" stroke="#30363d" stroke-width="1"/><text x="408.0" y="103.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">with_i==[seqEXCEPT![i]=seq[j]]</text>
+<rect x="36" y="118" width="744" height="30" rx="4" ry="4" fill="#161b22" stroke="#30363d" stroke-width="1"/><text x="408.0" y="137.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">[with_iEXCEPT![j]=tmp]</text>
+</svg></div>
+
+      <div class="block block-teal" style="border-left: 4px solid #148f77;">
+        <div class="block-header" style="background: #1abc9c22;">
+          <span class="icon">≜</span><span class="name">MinOf</span><span class="badge"> ①</span>
+          <span class="kind-tag" style="background: #1abc9c;">operator_definition</span>
+        </div>
+        <div class="block-meta"><code>MinOf(S) == ...</code><span class="container">in FeatureTour</span><span class="loc">L27</span></div>
+      </div>
+<div class="embedded-diagram" style="margin: 12px 0; padding: 12px; background: #21262d; border-radius: 8px;"><svg xmlns="http://www.w3.org/2000/svg" width="800" height="66" viewBox="0 0 800 66">
+<rect width="100%" height="100%" fill="#0d1117" rx="8"/>
+<rect x="20" y="16" width="760" height="30" rx="4" ry="4" fill="#161b22" stroke="#30363d" stroke-width="1"/><text x="400.0" y="35.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">CHOOSEm\inS:m&lt;=3</text>
+</svg></div>
+
+      <div class="block block-teal" style="border-left: 4px solid #148f77;">
+        <div class="block-header" style="background: #1abc9c22;">
+          <span class="icon">≜</span><span class="name">Apply</span><span class="badge"> ①</span>
+          <span class="kind-tag" style="background: #1abc9c;">operator_definition</span>
+        </div>
+        <div class="block-meta"><code>Apply(f,n) == ...</code><span class="container">in FeatureTour</span><span class="loc">L29</span></div>
+      </div>
+<div class="embedded-diagram" style="margin: 12px 0; padding: 12px; background: #21262d; border-radius: 8px;"><svg xmlns="http://www.w3.org/2000/svg" width="800" height="66" viewBox="0 0 800 66">
+<rect width="100%" height="100%" fill="#0d1117" rx="8"/>
+<rect x="20" y="16" width="760" height="30" rx="4" ry="4" fill="#161b22" stroke="#30363d" stroke-width="1"/><text x="400.0" y="35.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">f(n)</text>
+</svg></div>
+
+      <div class="block block-teal" style="border-left: 4px solid #148f77;">
+        <div class="block-header" style="background: #1abc9c22;">
+          <span class="icon">≜</span><span class="name">UseLambda</span><span class="badge"> ①</span>
+          <span class="kind-tag" style="background: #1abc9c;">operator_definition</span>
+        </div>
+        <div class="block-meta"><code>UseLambda == ...</code><span class="container">in FeatureTour</span><span class="loc">L31</span></div>
+      </div>
+<div class="embedded-diagram" style="margin: 12px 0; padding: 12px; background: #21262d; border-radius: 8px;"><svg xmlns="http://www.w3.org/2000/svg" width="800" height="66" viewBox="0 0 800 66">
+<rect width="100%" height="100%" fill="#0d1117" rx="8"/>
+<rect x="20" y="16" width="760" height="30" rx="4" ry="4" fill="#161b22" stroke="#30363d" stroke-width="1"/><text x="400.0" y="35.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">Apply(LAMBDAx:x+10,5)</text>
+</svg></div>
+
+      <div class="block block-teal" style="border-left: 4px solid #148f77;">
+        <div class="block-header" style="background: #1abc9c22;">
+          <span class="icon">≜</span><span class="name">Evens</span><span class="badge"> ①</span>
+          <span class="kind-tag" style="background: #1abc9c;">operator_definition</span>
+        </div>
+        <div class="block-meta"><code>Evens == ...</code><span class="container">in FeatureTour</span><span class="loc">L33</span></div>
+      </div>
+<div class="embedded-diagram" style="margin: 12px 0; padding: 12px; background: #21262d; border-radius: 8px;"><svg xmlns="http://www.w3.org/2000/svg" width="800" height="66" viewBox="0 0 800 66">
+<rect width="100%" height="100%" fill="#0d1117" rx="8"/>
+<rect x="20" y="16" width="760" height="30" rx="4" ry="4" fill="#161b22" stroke="#30363d" stroke-width="1"/><text x="400.0" y="35.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">{2*n:n\in0..10}</text>
+</svg></div>
+
+      <div class="block block-teal" style="border-left: 4px solid #148f77;">
+        <div class="block-header" style="background: #1abc9c22;">
+          <span class="icon">≜</span><span class="name">Squared</span><span class="badge"> ①</span>
+          <span class="kind-tag" style="background: #1abc9c;">operator_definition</span>
+        </div>
+        <div class="block-meta"><code>Squared == ...</code><span class="container">in FeatureTour</span><span class="loc">L35</span></div>
+      </div>
+<div class="embedded-diagram" style="margin: 12px 0; padding: 12px; background: #21262d; border-radius: 8px;"><svg xmlns="http://www.w3.org/2000/svg" width="800" height="66" viewBox="0 0 800 66">
+<rect width="100%" height="100%" fill="#0d1117" rx="8"/>
+<rect x="20" y="16" width="760" height="30" rx="4" ry="4" fill="#161b22" stroke="#30363d" stroke-width="1"/><text x="400.0" y="35.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">{n*n:n\in1..5}</text>
+</svg></div>
+
+      <div class="block block-teal" style="border-left: 4px solid #148f77;">
+        <div class="block-header" style="background: #1abc9c22;">
+          <span class="icon">≜</span><span class="name">SubsetOf</span><span class="badge"> ①</span>
+          <span class="kind-tag" style="background: #1abc9c;">operator_definition</span>
+        </div>
+        <div class="block-meta"><code>SubsetOf(S) == ...</code><span class="container">in FeatureTour</span><span class="loc">L37</span></div>
+      </div>
+<div class="embedded-diagram" style="margin: 12px 0; padding: 12px; background: #21262d; border-radius: 8px;"><svg xmlns="http://www.w3.org/2000/svg" width="800" height="66" viewBox="0 0 800 66">
+<rect width="100%" height="100%" fill="#0d1117" rx="8"/>
+<rect x="20" y="16" width="760" height="30" rx="4" ry="4" fill="#161b22" stroke="#30363d" stroke-width="1"/><text x="400.0" y="35.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">SUBSETS</text>
+</svg></div>
+
+      <div class="block block-teal" style="border-left: 4px solid #148f77;">
+        <div class="block-header" style="background: #1abc9c22;">
+          <span class="icon">≜</span><span class="name">UnionOf</span><span class="badge"> ①</span>
+          <span class="kind-tag" style="background: #1abc9c;">operator_definition</span>
+        </div>
+        <div class="block-meta"><code>UnionOf(F) == ...</code><span class="container">in FeatureTour</span><span class="loc">L39</span></div>
+      </div>
+<div class="embedded-diagram" style="margin: 12px 0; padding: 12px; background: #21262d; border-radius: 8px;"><svg xmlns="http://www.w3.org/2000/svg" width="800" height="66" viewBox="0 0 800 66">
+<rect width="100%" height="100%" fill="#0d1117" rx="8"/>
+<rect x="20" y="16" width="760" height="30" rx="4" ry="4" fill="#161b22" stroke="#30363d" stroke-width="1"/><text x="400.0" y="35.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">UNIONF</text>
+</svg></div>
+
+      <div class="block block-teal" style="border-left: 4px solid #148f77;">
+        <div class="block-header" style="background: #1abc9c22;">
+          <span class="icon">≜</span><span class="name">Init</span><span class="badge"> ①</span>
+          <span class="kind-tag" style="background: #1abc9c;">operator_definition</span>
+        </div>
+        <div class="block-meta"><code>Init == ...</code><span class="container">in FeatureTour</span><span class="loc">L41</span></div>
+      </div>
+<div class="embedded-diagram" style="margin: 12px 0; padding: 12px; background: #21262d; border-radius: 8px;"><svg xmlns="http://www.w3.org/2000/svg" width="800" height="66" viewBox="0 0 800 66">
+<rect width="100%" height="100%" fill="#0d1117" rx="8"/>
+<rect x="20" y="16" width="760" height="30" rx="4" ry="4" fill="#161b22" stroke="#30363d" stroke-width="1"/><text x="400.0" y="35.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">x=0/\y=0/\vals=&lt;&lt;&gt;&gt;</text>
+</svg></div>
+
+      <div class="block block-teal" style="border-left: 4px solid #148f77;">
+        <div class="block-header" style="background: #1abc9c22;">
+          <span class="icon">≜</span><span class="name">AddVal</span><span class="badge"> ①</span>
+          <span class="kind-tag" style="background: #1abc9c;">operator_definition</span>
+        </div>
+        <div class="block-meta"><code>AddVal(v) == ...</code><span class="container">in FeatureTour</span><span class="loc">L43</span></div>
+      </div>
+<div class="embedded-diagram" style="margin: 12px 0; padding: 12px; background: #21262d; border-radius: 8px;"><svg xmlns="http://www.w3.org/2000/svg" width="800" height="66" viewBox="0 0 800 66">
+<rect width="100%" height="100%" fill="#0d1117" rx="8"/>
+<rect x="20" y="16" width="760" height="30" rx="4" ry="4" fill="#0d1f0d" stroke="#3fb950" stroke-width="1"/><text x="400.0" y="35.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">vals'=Append(vals,v)</text>
+</svg></div>
+
+      <div class="block block-teal" style="border-left: 4px solid #148f77;">
+        <div class="block-header" style="background: #1abc9c22;">
+          <span class="icon">≜</span><span class="name">GetRecord</span><span class="badge"> ①</span>
+          <span class="kind-tag" style="background: #1abc9c;">operator_definition</span>
+        </div>
+        <div class="block-meta"><code>GetRecord == ...</code><span class="container">in FeatureTour</span><span class="loc">L45</span></div>
+      </div>
+<div class="embedded-diagram" style="margin: 12px 0; padding: 12px; background: #21262d; border-radius: 8px;"><svg xmlns="http://www.w3.org/2000/svg" width="800" height="66" viewBox="0 0 800 66">
+<rect width="100%" height="100%" fill="#0d1117" rx="8"/>
+<rect x="20" y="16" width="760" height="30" rx="4" ry="4" fill="#161b22" stroke="#30363d" stroke-width="1"/><text x="400.0" y="35.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">[name|-&gt;&quot;test&quot;,value|-&gt;42,active|-&gt;TRUE]</text>
+</svg></div>
+
+      <div class="block block-teal" style="border-left: 4px solid #148f77;">
+        <div class="block-header" style="background: #1abc9c22;">
+          <span class="icon">≜</span><span class="name">NestedRecord</span><span class="badge"> ①</span>
+          <span class="kind-tag" style="background: #1abc9c;">operator_definition</span>
+        </div>
+        <div class="block-meta"><code>NestedRecord == ...</code><span class="container">in FeatureTour</span><span class="loc">L47</span></div>
+      </div>
+<div class="embedded-diagram" style="margin: 12px 0; padding: 12px; background: #21262d; border-radius: 8px;"><svg xmlns="http://www.w3.org/2000/svg" width="800" height="66" viewBox="0 0 800 66">
+<rect width="100%" height="100%" fill="#0d1117" rx="8"/>
+<rect x="20" y="16" width="760" height="30" rx="4" ry="4" fill="#161b22" stroke="#30363d" stroke-width="1"/><text x="400.0" y="35.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">[server|-&gt;[host|-&gt;&quot;localhost&quot;,port|-&gt;8080],status|-&gt;&quot;running&quot;]</text>
+</svg></div>
+
+      <div class="block block-teal" style="border-left: 4px solid #148f77;">
+        <div class="block-header" style="background: #1abc9c22;">
+          <span class="icon">≜</span><span class="name">ConstArray</span><span class="badge"> ①</span>
+          <span class="kind-tag" style="background: #1abc9c;">operator_definition</span>
+        </div>
+        <div class="block-meta"><code>ConstArray == ...</code><span class="container">in FeatureTour</span><span class="loc">L51</span></div>
+      </div>
+<div class="embedded-diagram" style="margin: 12px 0; padding: 12px; background: #21262d; border-radius: 8px;"><svg xmlns="http://www.w3.org/2000/svg" width="800" height="66" viewBox="0 0 800 66">
+<rect width="100%" height="100%" fill="#0d1117" rx="8"/>
+<rect x="20" y="16" width="760" height="30" rx="4" ry="4" fill="#161b22" stroke="#30363d" stroke-width="1"/><text x="400.0" y="35.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">[i\in1..10|-&gt;0]</text>
+</svg></div>
+
+      <div class="block block-teal" style="border-left: 4px solid #148f77;">
+        <div class="block-header" style="background: #1abc9c22;">
+          <span class="icon">≜</span><span class="name">IdentMatrix</span><span class="badge"> ①</span>
+          <span class="kind-tag" style="background: #1abc9c;">operator_definition</span>
+        </div>
+        <div class="block-meta"><code>IdentMatrix == ...</code><span class="container">in FeatureTour</span><span class="loc">L53</span></div>
+      </div>
+<div class="embedded-diagram" style="margin: 12px 0; padding: 12px; background: #21262d; border-radius: 8px;"><svg xmlns="http://www.w3.org/2000/svg" width="800" height="102" viewBox="0 0 800 102">
+<rect width="100%" height="100%" fill="#0d1117" rx="8"/>
+<polygon points="20,16 780,16 400.0,48" fill="#1a2233" stroke="#58a6ff" stroke-width="1.5"/><text x="400.0" y="30.4" text-anchor="middle" fill="#58a6ff" font-family="JetBrains Mono,Fira Code,monospace" font-size="11" font-weight="bold">r=c</text><text x="40" y="41.6" text-anchor="start" fill="#3fb950" font-family="JetBrains Mono,monospace" font-size="9" font-weight="bold">T</text><text x="760" y="41.6" text-anchor="end" fill="#f85149" font-family="JetBrains Mono,monospace" font-size="9" font-weight="bold">F</text>
+<rect x="400.0" y="52" width="380.0" height="34" fill="#f85149" fill-opacity="0.12" stroke="none"/>
+<rect x="20" y="52" width="380.0" height="30" rx="4" ry="4" fill="#161b22" stroke="#30363d" stroke-width="1"/><text x="210.0" y="71.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">1</text>
+<rect x="400.0" y="52" width="380.0" height="30" rx="4" ry="4" fill="#161b22" stroke="#30363d" stroke-width="1"/><text x="590.0" y="71.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">0</text>
+<line x1="400.0" y1="52" x2="400.0" y2="86" stroke="#58a6ff" stroke-width="1.5" opacity="0.6"/>
+</svg></div>
+
+      <div class="block block-teal" style="border-left: 4px solid #148f77;">
+        <div class="block-header" style="background: #1abc9c22;">
+          <span class="icon">≜</span><span class="name">AllPositive</span><span class="badge"> ①</span>
+          <span class="kind-tag" style="background: #1abc9c;">operator_definition</span>
+        </div>
+        <div class="block-meta"><code>AllPositive(S) == ...</code><span class="container">in FeatureTour</span><span class="loc">L55</span></div>
+      </div>
+<div class="embedded-diagram" style="margin: 12px 0; padding: 12px; background: #21262d; border-radius: 8px;"><svg xmlns="http://www.w3.org/2000/svg" width="800" height="66" viewBox="0 0 800 66">
+<rect width="100%" height="100%" fill="#0d1117" rx="8"/>
+<rect x="20" y="16" width="760" height="30" rx="4" ry="4" fill="#161b22" stroke="#30363d" stroke-width="1"/><text x="400.0" y="35.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">\An\inS:n&gt;0</text>
+</svg></div>
+
+      <div class="block block-teal" style="border-left: 4px solid #148f77;">
+        <div class="block-header" style="background: #1abc9c22;">
+          <span class="icon">≜</span><span class="name">ExistsZero</span><span class="badge"> ①</span>
+          <span class="kind-tag" style="background: #1abc9c;">operator_definition</span>
+        </div>
+        <div class="block-meta"><code>ExistsZero(S) == ...</code><span class="container">in FeatureTour</span><span class="loc">L57</span></div>
+      </div>
+<div class="embedded-diagram" style="margin: 12px 0; padding: 12px; background: #21262d; border-radius: 8px;"><svg xmlns="http://www.w3.org/2000/svg" width="800" height="66" viewBox="0 0 800 66">
+<rect width="100%" height="100%" fill="#0d1117" rx="8"/>
+<rect x="20" y="16" width="760" height="30" rx="4" ry="4" fill="#161b22" stroke="#30363d" stroke-width="1"/><text x="400.0" y="35.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">\En\inS:n=0</text>
+</svg></div>
+
+      <div class="block block-teal" style="border-left: 4px solid #148f77;">
+        <div class="block-header" style="background: #1abc9c22;">
+          <span class="icon">≜</span><span class="name">Safety</span><span class="badge"> ①</span>
+          <span class="kind-tag" style="background: #1abc9c;">operator_definition</span>
+        </div>
+        <div class="block-meta"><code>Safety == ...</code><span class="container">in FeatureTour</span><span class="loc">L59</span></div>
+      </div>
+<div class="embedded-diagram" style="margin: 12px 0; padding: 12px; background: #21262d; border-radius: 8px;"><svg xmlns="http://www.w3.org/2000/svg" width="800" height="66" viewBox="0 0 800 66">
+<rect width="100%" height="100%" fill="#0d1117" rx="8"/>
+<rect x="20" y="16" width="760" height="30" rx="4" ry="4" fill="#1f1a0d" stroke="#d29922" stroke-width="1"/><text x="400.0" y="35.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">[]TypeInv</text>
+</svg></div>
+
+      <div class="block block-teal" style="border-left: 4px solid #148f77;">
+        <div class="block-header" style="background: #1abc9c22;">
+          <span class="icon">≜</span><span class="name">Liveness</span><span class="badge"> ①</span>
+          <span class="kind-tag" style="background: #1abc9c;">operator_definition</span>
+        </div>
+        <div class="block-meta"><code>Liveness == ...</code><span class="container">in FeatureTour</span><span class="loc">L61</span></div>
+      </div>
+<div class="embedded-diagram" style="margin: 12px 0; padding: 12px; background: #21262d; border-radius: 8px;"><svg xmlns="http://www.w3.org/2000/svg" width="800" height="66" viewBox="0 0 800 66">
+<rect width="100%" height="100%" fill="#0d1117" rx="8"/>
+<rect x="20" y="16" width="760" height="30" rx="4" ry="4" fill="#1f1a0d" stroke="#d29922" stroke-width="1"/><text x="400.0" y="35.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">&lt;&gt;Done</text>
+</svg></div>
+
+      <div class="block block-teal" style="border-left: 4px solid #148f77;">
+        <div class="block-header" style="background: #1abc9c22;">
+          <span class="icon">≜</span><span class="name">Fairness</span><span class="badge"> ①</span>
+          <span class="kind-tag" style="background: #1abc9c;">operator_definition</span>
+        </div>
+        <div class="block-meta"><code>Fairness == ...</code><span class="container">in FeatureTour</span><span class="loc">L63</span></div>
+      </div>
+<div class="embedded-diagram" style="margin: 12px 0; padding: 12px; background: #21262d; border-radius: 8px;"><svg xmlns="http://www.w3.org/2000/svg" width="800" height="66" viewBox="0 0 800 66">
+<rect width="100%" height="100%" fill="#0d1117" rx="8"/>
+<rect x="20" y="16" width="760" height="30" rx="4" ry="4" fill="#161b22" stroke="#30363d" stroke-width="1"/><text x="400.0" y="35.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">WF_vars(Next)</text>
+</svg></div>
+
+      <div class="block block-teal" style="border-left: 4px solid #148f77;">
+        <div class="block-header" style="background: #1abc9c22;">
+          <span class="icon">≜</span><span class="name">StrongFair</span><span class="badge"> ①</span>
+          <span class="kind-tag" style="background: #1abc9c;">operator_definition</span>
+        </div>
+        <div class="block-meta"><code>StrongFair == ...</code><span class="container">in FeatureTour</span><span class="loc">L65</span></div>
+      </div>
+<div class="embedded-diagram" style="margin: 12px 0; padding: 12px; background: #21262d; border-radius: 8px;"><svg xmlns="http://www.w3.org/2000/svg" width="800" height="66" viewBox="0 0 800 66">
+<rect width="100%" height="100%" fill="#0d1117" rx="8"/>
+<rect x="20" y="16" width="760" height="30" rx="4" ry="4" fill="#161b22" stroke="#30363d" stroke-width="1"/><text x="400.0" y="35.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">SF_vars(Next)</text>
+</svg></div>
+
+      <div class="block block-teal" style="border-left: 4px solid #148f77;">
+        <div class="block-header" style="background: #1abc9c22;">
+          <span class="icon">≜</span><span class="name">LeadsTo</span><span class="badge"> ①</span>
+          <span class="kind-tag" style="background: #1abc9c;">operator_definition</span>
+        </div>
+        <div class="block-meta"><code>LeadsTo == ...</code><span class="container">in FeatureTour</span><span class="loc">L67</span></div>
+      </div>
+<div class="embedded-diagram" style="margin: 12px 0; padding: 12px; background: #21262d; border-radius: 8px;"><svg xmlns="http://www.w3.org/2000/svg" width="800" height="66" viewBox="0 0 800 66">
+<rect width="100%" height="100%" fill="#0d1117" rx="8"/>
+<rect x="20" y="16" width="760" height="30" rx="4" ry="4" fill="#161b22" stroke="#30363d" stroke-width="1"/><text x="400.0" y="35.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">Init~&gt;Done</text>
+</svg></div>
+
+      <div class="block block-teal" style="border-left: 4px solid #148f77;">
+        <div class="block-header" style="background: #1abc9c22;">
+          <span class="icon">≜</span><span class="name">AlwaysSafe</span><span class="badge"> ①</span>
+          <span class="kind-tag" style="background: #1abc9c;">operator_definition</span>
+        </div>
+        <div class="block-meta"><code>AlwaysSafe == ...</code><span class="container">in FeatureTour</span><span class="loc">L69</span></div>
+      </div>
+<div class="embedded-diagram" style="margin: 12px 0; padding: 12px; background: #21262d; border-radius: 8px;"><svg xmlns="http://www.w3.org/2000/svg" width="800" height="66" viewBox="0 0 800 66">
+<rect width="100%" height="100%" fill="#0d1117" rx="8"/>
+<rect x="20" y="16" width="760" height="30" rx="4" ry="4" fill="#1f1a0d" stroke="#d29922" stroke-width="1"/><text x="400.0" y="35.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">[]TypeInv</text>
+</svg></div>
+
+      <div class="block block-teal" style="border-left: 4px solid #148f77;">
+        <div class="block-header" style="background: #1abc9c22;">
+          <span class="icon">≜</span><span class="name">EventuallyDone</span><span class="badge"> ①</span>
+          <span class="kind-tag" style="background: #1abc9c;">operator_definition</span>
+        </div>
+        <div class="block-meta"><code>EventuallyDone == ...</code><span class="container">in FeatureTour</span><span class="loc">L71</span></div>
+      </div>
+<div class="embedded-diagram" style="margin: 12px 0; padding: 12px; background: #21262d; border-radius: 8px;"><svg xmlns="http://www.w3.org/2000/svg" width="800" height="66" viewBox="0 0 800 66">
+<rect width="100%" height="100%" fill="#0d1117" rx="8"/>
+<rect x="20" y="16" width="760" height="30" rx="4" ry="4" fill="#1f1a0d" stroke="#d29922" stroke-width="1"/><text x="400.0" y="35.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">&lt;&gt;Done</text>
+</svg></div>
+
+      <div class="block block-teal" style="border-left: 4px solid #148f77;">
+        <div class="block-header" style="background: #1abc9c22;">
+          <span class="icon">≜</span><span class="name">Step</span><span class="badge"> ①</span>
+          <span class="kind-tag" style="background: #1abc9c;">operator_definition</span>
+        </div>
+        <div class="block-meta"><code>Step == ...</code><span class="container">in FeatureTour</span><span class="loc">L73</span></div>
+      </div>
+<div class="embedded-diagram" style="margin: 12px 0; padding: 12px; background: #21262d; border-radius: 8px;"><svg xmlns="http://www.w3.org/2000/svg" width="800" height="66" viewBox="0 0 800 66">
+<rect width="100%" height="100%" fill="#0d1117" rx="8"/>
+<rect x="20" y="16" width="760" height="30" rx="4" ry="4" fill="#0d1f0d" stroke="#3fb950" stroke-width="1"/><text x="400.0" y="35.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">x'=x+1/\UNCHANGED&lt;&lt;y,vals&gt;&gt;</text>
+</svg></div>
+
+      <div class="block block-teal" style="border-left: 4px solid #148f77;">
+        <div class="block-header" style="background: #1abc9c22;">
+          <span class="icon">≜</span><span class="name">StutterStep</span><span class="badge"> ①</span>
+          <span class="kind-tag" style="background: #1abc9c;">operator_definition</span>
+        </div>
+        <div class="block-meta"><code>StutterStep == ...</code><span class="container">in FeatureTour</span><span class="loc">L75</span></div>
+      </div>
+<div class="embedded-diagram" style="margin: 12px 0; padding: 12px; background: #21262d; border-radius: 8px;"><svg xmlns="http://www.w3.org/2000/svg" width="800" height="66" viewBox="0 0 800 66">
+<rect width="100%" height="100%" fill="#0d1117" rx="8"/>
+<rect x="20" y="16" width="760" height="30" rx="4" ry="4" fill="#1f1a0d" stroke="#d29922" stroke-width="1"/><text x="400.0" y="35.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">[]Next</text>
+</svg></div>
+
+      <div class="block block-teal" style="border-left: 4px solid #148f77;">
+        <div class="block-header" style="background: #1abc9c22;">
+          <span class="icon">≜</span><span class="name">CanStep</span><span class="badge"> ①</span>
+          <span class="kind-tag" style="background: #1abc9c;">operator_definition</span>
+        </div>
+        <div class="block-meta"><code>CanStep == ...</code><span class="container">in FeatureTour</span><span class="loc">L77</span></div>
+      </div>
+<div class="embedded-diagram" style="margin: 12px 0; padding: 12px; background: #21262d; border-radius: 8px;"><svg xmlns="http://www.w3.org/2000/svg" width="800" height="66" viewBox="0 0 800 66">
+<rect width="100%" height="100%" fill="#0d1117" rx="8"/>
+<rect x="20" y="16" width="760" height="30" rx="4" ry="4" fill="#161b22" stroke="#30363d" stroke-width="1"/><text x="400.0" y="35.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">ENABLEDNext</text>
+</svg></div>
+
+      <div class="block block-teal" style="border-left: 4px solid #148f77;">
+        <div class="block-header" style="background: #1abc9c22;">
+          <span class="icon">≜</span><span class="name">TypeInv</span><span class="badge"> ①</span>
+          <span class="kind-tag" style="background: #1abc9c;">operator_definition</span>
+        </div>
+        <div class="block-meta"><code>TypeInv == ...</code><span class="container">in FeatureTour</span><span class="loc">L79</span></div>
+      </div>
+<div class="embedded-diagram" style="margin: 12px 0; padding: 12px; background: #21262d; border-radius: 8px;"><svg xmlns="http://www.w3.org/2000/svg" width="800" height="66" viewBox="0 0 800 66">
+<rect width="100%" height="100%" fill="#0d1117" rx="8"/>
+<rect x="20" y="16" width="760" height="30" rx="4" ry="4" fill="#161b22" stroke="#30363d" stroke-width="1"/><text x="400.0" y="35.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">x\inNat/\y\inNat/\vals\inSeq(Nat)</text>
+</svg></div>
+
+      <div class="block block-teal" style="border-left: 4px solid #148f77;">
+        <div class="block-header" style="background: #1abc9c22;">
+          <span class="icon">≜</span><span class="name">Next</span><span class="badge"> ①</span>
+          <span class="kind-tag" style="background: #1abc9c;">operator_definition</span>
+        </div>
+        <div class="block-meta"><code>Next == ...</code><span class="container">in FeatureTour</span><span class="loc">L83</span></div>
+      </div>
+<div class="embedded-diagram" style="margin: 12px 0; padding: 12px; background: #21262d; border-radius: 8px;"><svg xmlns="http://www.w3.org/2000/svg" width="800" height="66" viewBox="0 0 800 66">
+<rect width="100%" height="100%" fill="#0d1117" rx="8"/>
+<rect x="20" y="16" width="760" height="30" rx="4" ry="4" fill="#161b22" stroke="#30363d" stroke-width="1"/><text x="400.0" y="35.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">IncX\/IncY\/AddSomething/\x&lt;=MaxVal/\y&lt;=MaxVal</text>
+</svg></div>
+
+      <div class="block block-teal" style="border-left: 4px solid #148f77;">
+        <div class="block-header" style="background: #1abc9c22;">
+          <span class="icon">≜</span><span class="name">IncX</span><span class="badge"> ①</span>
+          <span class="kind-tag" style="background: #1abc9c;">operator_definition</span>
+        </div>
+        <div class="block-meta"><code>IncX == ...</code><span class="container">in FeatureTour</span><span class="loc">L90</span></div>
+      </div>
+<div class="embedded-diagram" style="margin: 12px 0; padding: 12px; background: #21262d; border-radius: 8px;"><svg xmlns="http://www.w3.org/2000/svg" width="800" height="66" viewBox="0 0 800 66">
+<rect width="100%" height="100%" fill="#0d1117" rx="8"/>
+<rect x="20" y="16" width="760" height="30" rx="4" ry="4" fill="#0d1f0d" stroke="#3fb950" stroke-width="1"/><text x="400.0" y="35.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">x'=x+1/\UNCHANGED&lt;&lt;y,vals&gt;&gt;</text>
+</svg></div>
+
+      <div class="block block-teal" style="border-left: 4px solid #148f77;">
+        <div class="block-header" style="background: #1abc9c22;">
+          <span class="icon">≜</span><span class="name">IncY</span><span class="badge"> ①</span>
+          <span class="kind-tag" style="background: #1abc9c;">operator_definition</span>
+        </div>
+        <div class="block-meta"><code>IncY == ...</code><span class="container">in FeatureTour</span><span class="loc">L92</span></div>
+      </div>
+<div class="embedded-diagram" style="margin: 12px 0; padding: 12px; background: #21262d; border-radius: 8px;"><svg xmlns="http://www.w3.org/2000/svg" width="800" height="66" viewBox="0 0 800 66">
+<rect width="100%" height="100%" fill="#0d1117" rx="8"/>
+<rect x="20" y="16" width="760" height="30" rx="4" ry="4" fill="#0d1f0d" stroke="#3fb950" stroke-width="1"/><text x="400.0" y="35.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">y'=y+1/\UNCHANGED&lt;&lt;x,vals&gt;&gt;</text>
+</svg></div>
+
+      <div class="block block-teal" style="border-left: 4px solid #148f77;">
+        <div class="block-header" style="background: #1abc9c22;">
+          <span class="icon">≜</span><span class="name">AddSomething</span><span class="badge"> ①</span>
+          <span class="kind-tag" style="background: #1abc9c;">operator_definition</span>
+        </div>
+        <div class="block-meta"><code>AddSomething == ...</code><span class="container">in FeatureTour</span><span class="loc">L94</span></div>
+      </div>
+<div class="embedded-diagram" style="margin: 12px 0; padding: 12px; background: #21262d; border-radius: 8px;"><svg xmlns="http://www.w3.org/2000/svg" width="800" height="66" viewBox="0 0 800 66">
+<rect width="100%" height="100%" fill="#0d1117" rx="8"/>
+<rect x="20" y="16" width="760" height="30" rx="4" ry="4" fill="#0d1f0d" stroke="#3fb950" stroke-width="1"/><text x="400.0" y="35.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">vals'=Append(vals,x+y)/\UNCHANGED&lt;&lt;x,y&gt;&gt;</text>
+</svg></div>
+
+      <div class="block block-amber" style="border-left: 4px solid #d68910;">
+        <div class="block-header" style="background: #f39c1222;">
+          <span class="icon">↺</span><span class="name">Fact</span><span class="badge"> ①</span>
+          <span class="kind-tag" style="background: #f39c12;">recursive</span>
+        </div>
+        <div class="block-meta"><code>RECURSIVE Fact</code><span class="container">in FeatureTour</span><span class="loc">L96</span></div>
+      </div>
+      <div class="block block-amber" style="border-left: 4px solid #d68910;">
+        <div class="block-header" style="background: #f39c1222;">
+          <span class="icon">↺</span><span class="name">Sum</span><span class="badge"> ①</span>
+          <span class="kind-tag" style="background: #f39c12;">recursive</span>
+        </div>
+        <div class="block-meta"><code>RECURSIVE Sum</code><span class="container">in FeatureTour</span><span class="loc">L96</span></div>
+      </div>
+      <div class="block block-teal" style="border-left: 4px solid #148f77;">
+        <div class="block-header" style="background: #1abc9c22;">
+          <span class="icon">≜</span><span class="name">Fact</span><span class="badge"> ①</span>
+          <span class="kind-tag" style="background: #1abc9c;">operator_definition</span>
+        </div>
+        <div class="block-meta"><code>Fact(n) == ...</code><span class="container">in FeatureTour</span><span class="loc">L98</span></div>
+      </div>
+<div class="embedded-diagram" style="margin: 12px 0; padding: 12px; background: #21262d; border-radius: 8px;"><svg xmlns="http://www.w3.org/2000/svg" width="800" height="102" viewBox="0 0 800 102">
+<rect width="100%" height="100%" fill="#0d1117" rx="8"/>
+<polygon points="20,16 780,16 400.0,48" fill="#1a2233" stroke="#58a6ff" stroke-width="1.5"/><text x="400.0" y="30.4" text-anchor="middle" fill="#58a6ff" font-family="JetBrains Mono,Fira Code,monospace" font-size="11" font-weight="bold">n=0</text><text x="40" y="41.6" text-anchor="start" fill="#3fb950" font-family="JetBrains Mono,monospace" font-size="9" font-weight="bold">T</text><text x="760" y="41.6" text-anchor="end" fill="#f85149" font-family="JetBrains Mono,monospace" font-size="9" font-weight="bold">F</text>
+<rect x="400.0" y="52" width="380.0" height="34" fill="#f85149" fill-opacity="0.12" stroke="none"/>
+<rect x="20" y="52" width="380.0" height="30" rx="4" ry="4" fill="#161b22" stroke="#30363d" stroke-width="1"/><text x="210.0" y="71.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">1</text>
+<rect x="400.0" y="52" width="380.0" height="30" rx="4" ry="4" fill="#161b22" stroke="#30363d" stroke-width="1"/><text x="590.0" y="71.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">n*Fact(n-1)</text>
+<line x1="400.0" y1="52" x2="400.0" y2="86" stroke="#58a6ff" stroke-width="1.5" opacity="0.6"/>
+</svg></div>
+
+      <div class="block block-teal" style="border-left: 4px solid #148f77;">
+        <div class="block-header" style="background: #1abc9c22;">
+          <span class="icon">≜</span><span class="name">Sum</span><span class="badge"> ①</span>
+          <span class="kind-tag" style="background: #1abc9c;">operator_definition</span>
+        </div>
+        <div class="block-meta"><code>Sum(n) == ...</code><span class="container">in FeatureTour</span><span class="loc">L100</span></div>
+      </div>
+<div class="embedded-diagram" style="margin: 12px 0; padding: 12px; background: #21262d; border-radius: 8px;"><svg xmlns="http://www.w3.org/2000/svg" width="800" height="102" viewBox="0 0 800 102">
+<rect width="100%" height="100%" fill="#0d1117" rx="8"/>
+<polygon points="20,16 780,16 400.0,48" fill="#1a2233" stroke="#58a6ff" stroke-width="1.5"/><text x="400.0" y="30.4" text-anchor="middle" fill="#58a6ff" font-family="JetBrains Mono,Fira Code,monospace" font-size="11" font-weight="bold">n=0</text><text x="40" y="41.6" text-anchor="start" fill="#3fb950" font-family="JetBrains Mono,monospace" font-size="9" font-weight="bold">T</text><text x="760" y="41.6" text-anchor="end" fill="#f85149" font-family="JetBrains Mono,monospace" font-size="9" font-weight="bold">F</text>
+<rect x="400.0" y="52" width="380.0" height="34" fill="#f85149" fill-opacity="0.12" stroke="none"/>
+<rect x="20" y="52" width="380.0" height="30" rx="4" ry="4" fill="#161b22" stroke="#30363d" stroke-width="1"/><text x="210.0" y="71.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">0</text>
+<rect x="400.0" y="52" width="380.0" height="30" rx="4" ry="4" fill="#161b22" stroke="#30363d" stroke-width="1"/><text x="590.0" y="71.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">n+Sum(n-1)</text>
+<line x1="400.0" y1="52" x2="400.0" y2="86" stroke="#58a6ff" stroke-width="1.5" opacity="0.6"/>
+</svg></div>
+
+      <div class="block block-red" style="border-left: 4px solid #c0392b;">
+        <div class="block-header" style="background: #e74c3c22;">
+          <span class="name">ASSUME</span><span class="badge"> ②</span>
+          <span class="kind-tag" style="background: #e74c3c;">assumption</span>
+        </div>
+        <div class="block-meta"><span class="container">in FeatureTour</span><span class="loc">L102</span></div>
+      </div>
+      <div class="block block-red" style="border-left: 4px solid #c0392b;">
+        <div class="block-header" style="background: #e74c3c22;">
+          <span class="name">NodeOK</span><span class="badge"> ②</span>
+          <span class="kind-tag" style="background: #e74c3c;">assumption</span>
+        </div>
+        <div class="block-meta"><span class="container">in FeatureTour</span><span class="loc">L104</span></div>
+      </div>
+      <div class="block block-red" style="border-left: 4px solid #c0392b;">
+        <div class="block-header" style="background: #e74c3c22;">
+          <span class="icon">📜</span><span class="name">ThmIncPositive</span><span class="badge"> ②</span>
+          <span class="kind-tag" style="background: #e74c3c;">theorem</span>
+        </div>
+        <div class="block-meta"><code>THEOREM ThmIncPositive</code><span class="container">in FeatureTour</span><span class="loc">L106</span></div>
+      </div>
+<div class="embedded-diagram" style="margin: 12px 0; padding: 12px; background: #21262d; border-radius: 8px;"><svg xmlns="http://www.w3.org/2000/svg" width="800" height="66" viewBox="0 0 800 66">
+<rect width="100%" height="100%" fill="#0d1117" rx="8"/>
+<rect x="20" y="16" width="760" height="30" rx="4" ry="4" fill="#161b22" stroke="#30363d" stroke-width="1"/><text x="400.0" y="35.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">\An\inNat:Inc(n)&gt;n</text>
+</svg></div>
+
+      <div class="block block-blue" style="border-left: 4px solid #2980b9;">
+        <div class="block-header" style="background: #3498db22;">
+          <span class="icon">📝</span><span class="name">PROOF</span><span class="badge"> ②</span>
+          <span class="kind-tag" style="background: #3498db;">proof</span>
+        </div>
+        <div class="block-meta"><span class="container">in FeatureTour</span><span class="loc">L108</span></div>
+      </div>
+<div class="embedded-diagram" style="margin: 12px 0; padding: 12px; background: #21262d; border-radius: 8px;"><svg xmlns="http://www.w3.org/2000/svg" width="800" height="168" viewBox="0 0 800 168">
+<rect width="100%" height="100%" fill="#0d1117" rx="8"/>
+<rect x="20" y="16" width="760" height="30" rx="4" ry="4" fill="#161b22" stroke="#30363d" stroke-width="1"/><text x="400.0" y="35.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">&lt;1&gt; TAKE TAKEn\inNat</text>
+<rect x="20" y="50" width="760" height="30" rx="4" ry="4" fill="#161b22" stroke="#30363d" stroke-width="1"/><text x="400.0" y="69.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">&lt;1&gt; HAVE Inc(n)=n+1</text>
+<rect x="20" y="84" width="760" height="30" rx="4" ry="4" fill="#161b22" stroke="#30363d" stroke-width="1"/><text x="400.0" y="103.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">&lt;1&gt; HAVE n+1&gt;n</text>
+<rect x="20" y="118" width="760" height="30" rx="4" ry="4" fill="#161b22" stroke="#30363d" stroke-width="1"/><text x="400.0" y="137.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">QED</text>
+</svg></div>
+
+      <div class="block block-blue" style="border-left: 4px solid #2980b9;">
+        <div class="block-header" style="background: #3498db22;">
+          <span class="icon">📝</span><span class="name">&lt;1&gt; TAKE</span><span class="badge"> ②</span>
+          <span class="kind-tag" style="background: #3498db;">proof</span>
+        </div>
+        <div class="block-meta"><code>&lt;1&gt; TAKEn\inNat</code><span class="container">in FeatureTour</span><span class="loc">L109</span></div>
+      </div>
+      <div class="block block-blue" style="border-left: 4px solid #2980b9;">
+        <div class="block-header" style="background: #3498db22;">
+          <span class="icon">📝</span><span class="name">&lt;1&gt; HAVE</span><span class="badge"> ②</span>
+          <span class="kind-tag" style="background: #3498db;">proof</span>
+        </div>
+        <div class="block-meta"><code>&lt;1&gt; HAVE Inc(n)=n+1</code><span class="container">in FeatureTour</span><span class="loc">L110</span></div>
+      </div>
+      <div class="block block-blue" style="border-left: 4px solid #2980b9;">
+        <div class="block-header" style="background: #3498db22;">
+          <span class="icon">📝</span><span class="name">&lt;1&gt; HAVE</span><span class="badge"> ②</span>
+          <span class="kind-tag" style="background: #3498db;">proof</span>
+        </div>
+        <div class="block-meta"><code>&lt;1&gt; HAVE n+1&gt;n</code><span class="container">in FeatureTour</span><span class="loc">L112</span></div>
+      </div>
+      <div class="block block-blue" style="border-left: 4px solid #2980b9;">
+        <div class="block-header" style="background: #3498db22;">
+          <span class="icon">📝</span><span class="name">&lt;1&gt; QED</span><span class="badge"> ②</span>
+          <span class="kind-tag" style="background: #3498db;">proof</span>
+        </div>
+        <div class="block-meta"><code>&lt;1&gt; QED</code><span class="container">in FeatureTour</span><span class="loc">L114</span></div>
+      </div>
+<div class="embedded-diagram" style="margin: 12px 0; padding: 12px; background: #21262d; border-radius: 8px;"><svg xmlns="http://www.w3.org/2000/svg" width="800" height="66" viewBox="0 0 800 66">
+<rect width="100%" height="100%" fill="#0d1117" rx="8"/>
+<rect x="20" y="16" width="760" height="30" rx="4" ry="4" fill="#161b22" stroke="#30363d" stroke-width="1"/><text x="400.0" y="35.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">&lt;1&gt; QED</text>
+</svg></div>
+
+      <div class="block block-blue" style="border-left: 4px solid #2980b9;">
+        <div class="block-header" style="background: #3498db22;">
+          <span class="icon">📝</span><span class="name">PROOF</span><span class="badge"> ②</span>
+          <span class="kind-tag" style="background: #3498db;">proof</span>
+        </div>
+        <div class="block-meta"><span class="container">in FeatureTour</span><span class="loc">L115</span></div>
+      </div>
+<div class="embedded-diagram" style="margin: 12px 0; padding: 12px; background: #21262d; border-radius: 8px;"><svg xmlns="http://www.w3.org/2000/svg" width="800" height="66" viewBox="0 0 800 66">
+<rect width="100%" height="100%" fill="#0d1117" rx="8"/>
+<rect x="20" y="16" width="760" height="30" rx="4" ry="4" fill="#161b22" stroke="#30363d" stroke-width="1"/><text x="400.0" y="35.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">OBVIOUS</text>
+</svg></div>
+
+      <div class="block block-red" style="border-left: 4px solid #c0392b;">
+        <div class="block-header" style="background: #e74c3c22;">
+          <span class="icon">📜</span><span class="name">ThmFactPositive</span><span class="badge"> ②</span>
+          <span class="kind-tag" style="background: #e74c3c;">theorem</span>
+        </div>
+        <div class="block-meta"><code>THEOREM ThmFactPositive</code><span class="container">in FeatureTour</span><span class="loc">L117</span></div>
+      </div>
+<div class="embedded-diagram" style="margin: 12px 0; padding: 12px; background: #21262d; border-radius: 8px;"><svg xmlns="http://www.w3.org/2000/svg" width="800" height="66" viewBox="0 0 800 66">
+<rect width="100%" height="100%" fill="#0d1117" rx="8"/>
+<rect x="20" y="16" width="760" height="30" rx="4" ry="4" fill="#161b22" stroke="#30363d" stroke-width="1"/><text x="400.0" y="35.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">\An\inNat:Fact(n)&gt;0</text>
+</svg></div>
+
+      <div class="block block-blue" style="border-left: 4px solid #2980b9;">
+        <div class="block-header" style="background: #3498db22;">
+          <span class="icon">📝</span><span class="name">PROOF</span><span class="badge"> ②</span>
+          <span class="kind-tag" style="background: #3498db;">proof</span>
+        </div>
+        <div class="block-meta"><span class="container">in FeatureTour</span><span class="loc">L119</span></div>
+      </div>
+<div class="embedded-diagram" style="margin: 12px 0; padding: 12px; background: #21262d; border-radius: 8px;"><svg xmlns="http://www.w3.org/2000/svg" width="800" height="134" viewBox="0 0 800 134">
+<rect width="100%" height="100%" fill="#0d1117" rx="8"/>
+<rect x="20" y="16" width="760" height="30" rx="4" ry="4" fill="#161b22" stroke="#30363d" stroke-width="1"/><text x="400.0" y="35.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">&lt;1&gt; TAKE TAKEn\inNat</text>
+<rect x="20" y="50" width="760" height="30" rx="4" ry="4" fill="#161b22" stroke="#30363d" stroke-width="1"/><text x="400.0" y="69.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">&lt;1&gt; HAVE Fact(n)&gt;0</text>
+<rect x="20" y="84" width="760" height="30" rx="4" ry="4" fill="#161b22" stroke="#30363d" stroke-width="1"/><text x="400.0" y="103.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">QED</text>
+</svg></div>
+
+      <div class="block block-blue" style="border-left: 4px solid #2980b9;">
+        <div class="block-header" style="background: #3498db22;">
+          <span class="icon">📝</span><span class="name">&lt;1&gt; TAKE</span><span class="badge"> ②</span>
+          <span class="kind-tag" style="background: #3498db;">proof</span>
+        </div>
+        <div class="block-meta"><code>&lt;1&gt; TAKEn\inNat</code><span class="container">in FeatureTour</span><span class="loc">L120</span></div>
+      </div>
+      <div class="block block-blue" style="border-left: 4px solid #2980b9;">
+        <div class="block-header" style="background: #3498db22;">
+          <span class="icon">📝</span><span class="name">&lt;1&gt; HAVE</span><span class="badge"> ②</span>
+          <span class="kind-tag" style="background: #3498db;">proof</span>
+        </div>
+        <div class="block-meta"><code>&lt;1&gt; HAVE Fact(n)&gt;0</code><span class="container">in FeatureTour</span><span class="loc">L121</span></div>
+      </div>
+      <div class="block block-blue" style="border-left: 4px solid #2980b9;">
+        <div class="block-header" style="background: #3498db22;">
+          <span class="icon">📝</span><span class="name">&lt;1&gt; QED</span><span class="badge"> ②</span>
+          <span class="kind-tag" style="background: #3498db;">proof</span>
+        </div>
+        <div class="block-meta"><code>&lt;1&gt; QED</code><span class="container">in FeatureTour</span><span class="loc">L123</span></div>
+      </div>
+<div class="embedded-diagram" style="margin: 12px 0; padding: 12px; background: #21262d; border-radius: 8px;"><svg xmlns="http://www.w3.org/2000/svg" width="800" height="66" viewBox="0 0 800 66">
+<rect width="100%" height="100%" fill="#0d1117" rx="8"/>
+<rect x="20" y="16" width="760" height="30" rx="4" ry="4" fill="#161b22" stroke="#30363d" stroke-width="1"/><text x="400.0" y="35.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">&lt;1&gt; QED</text>
+</svg></div>
+
+      <div class="block block-blue" style="border-left: 4px solid #2980b9;">
+        <div class="block-header" style="background: #3498db22;">
+          <span class="icon">📝</span><span class="name">PROOF</span><span class="badge"> ②</span>
+          <span class="kind-tag" style="background: #3498db;">proof</span>
+        </div>
+        <div class="block-meta"><span class="container">in FeatureTour</span><span class="loc">L124</span></div>
+      </div>
+<div class="embedded-diagram" style="margin: 12px 0; padding: 12px; background: #21262d; border-radius: 8px;"><svg xmlns="http://www.w3.org/2000/svg" width="800" height="66" viewBox="0 0 800 66">
+<rect width="100%" height="100%" fill="#0d1117" rx="8"/>
+<rect x="20" y="16" width="760" height="30" rx="4" ry="4" fill="#161b22" stroke="#30363d" stroke-width="1"/><text x="400.0" y="35.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">OBVIOUS</text>
+</svg></div>
+
+      <div class="block block-red" style="border-left: 4px solid #c0392b;">
+        <div class="block-header" style="background: #e74c3c22;">
+          <span class="icon">📜</span><span class="name">ThmDouble</span><span class="badge"> ②</span>
+          <span class="kind-tag" style="background: #e74c3c;">theorem</span>
+        </div>
+        <div class="block-meta"><code>THEOREM ThmDouble</code><span class="container">in FeatureTour</span><span class="loc">L126</span></div>
+      </div>
+<div class="embedded-diagram" style="margin: 12px 0; padding: 12px; background: #21262d; border-radius: 8px;"><svg xmlns="http://www.w3.org/2000/svg" width="800" height="66" viewBox="0 0 800 66">
+<rect width="100%" height="100%" fill="#0d1117" rx="8"/>
+<rect x="20" y="16" width="760" height="30" rx="4" ry="4" fill="#161b22" stroke="#30363d" stroke-width="1"/><text x="400.0" y="35.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">\An\inNat:Double(n)=2*n</text>
+</svg></div>
+
+      <div class="block block-blue" style="border-left: 4px solid #2980b9;">
+        <div class="block-header" style="background: #3498db22;">
+          <span class="icon">📝</span><span class="name">PROOF</span><span class="badge"> ②</span>
+          <span class="kind-tag" style="background: #3498db;">proof</span>
+        </div>
+        <div class="block-meta"><span class="container">in FeatureTour</span><span class="loc">L128</span></div>
+      </div>
+<div class="embedded-diagram" style="margin: 12px 0; padding: 12px; background: #21262d; border-radius: 8px;"><svg xmlns="http://www.w3.org/2000/svg" width="800" height="66" viewBox="0 0 800 66">
+<rect width="100%" height="100%" fill="#0d1117" rx="8"/>
+<rect x="20" y="16" width="760" height="30" rx="4" ry="4" fill="#161b22" stroke="#30363d" stroke-width="1"/><text x="400.0" y="35.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">OBVIOUS</text>
+</svg></div>
+
+      <div class="block block-red" style="border-left: 4px solid #c0392b;">
+        <div class="block-header" style="background: #e74c3c22;">
+          <span class="icon">📜</span><span class="name">ThmMaxCommutative</span><span class="badge"> ②</span>
+          <span class="kind-tag" style="background: #e74c3c;">theorem</span>
+        </div>
+        <div class="block-meta"><code>THEOREM ThmMaxCommutative</code><span class="container">in FeatureTour</span><span class="loc">L130</span></div>
+      </div>
+<div class="embedded-diagram" style="margin: 12px 0; padding: 12px; background: #21262d; border-radius: 8px;"><svg xmlns="http://www.w3.org/2000/svg" width="800" height="66" viewBox="0 0 800 66">
+<rect width="100%" height="100%" fill="#0d1117" rx="8"/>
+<rect x="20" y="16" width="760" height="30" rx="4" ry="4" fill="#161b22" stroke="#30363d" stroke-width="1"/><text x="400.0" y="35.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">\Aa,b\inNat:Max(a,b)=Max(b,a)</text>
+</svg></div>
+
+      <div class="block block-blue" style="border-left: 4px solid #2980b9;">
+        <div class="block-header" style="background: #3498db22;">
+          <span class="icon">📝</span><span class="name">PROOF</span><span class="badge"> ②</span>
+          <span class="kind-tag" style="background: #3498db;">proof</span>
+        </div>
+        <div class="block-meta"><span class="container">in FeatureTour</span><span class="loc">L132</span></div>
+      </div>
+<div class="embedded-diagram" style="margin: 12px 0; padding: 12px; background: #21262d; border-radius: 8px;"><svg xmlns="http://www.w3.org/2000/svg" width="800" height="100" viewBox="0 0 800 100">
+<rect width="100%" height="100%" fill="#0d1117" rx="8"/>
+<rect x="20" y="16" width="760" height="30" rx="4" ry="4" fill="#161b22" stroke="#30363d" stroke-width="1"/><text x="400.0" y="35.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">&lt;1&gt; HAVE Max(a,b)=Max(b,a)</text>
+<rect x="20" y="50" width="760" height="30" rx="4" ry="4" fill="#161b22" stroke="#30363d" stroke-width="1"/><text x="400.0" y="69.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">QED</text>
+</svg></div>
+
+      <div class="block block-blue" style="border-left: 4px solid #2980b9;">
+        <div class="block-header" style="background: #3498db22;">
+          <span class="icon">📝</span><span class="name">&lt;1&gt; HAVE</span><span class="badge"> ②</span>
+          <span class="kind-tag" style="background: #3498db;">proof</span>
+        </div>
+        <div class="block-meta"><code>&lt;1&gt; HAVE Max(a,b)=Max(b,a)</code><span class="container">in FeatureTour</span><span class="loc">L133</span></div>
+      </div>
+      <div class="block block-blue" style="border-left: 4px solid #2980b9;">
+        <div class="block-header" style="background: #3498db22;">
+          <span class="icon">📝</span><span class="name">&lt;1&gt; QED</span><span class="badge"> ②</span>
+          <span class="kind-tag" style="background: #3498db;">proof</span>
+        </div>
+        <div class="block-meta"><code>&lt;1&gt; QED</code><span class="container">in FeatureTour</span><span class="loc">L135</span></div>
+      </div>
+<div class="embedded-diagram" style="margin: 12px 0; padding: 12px; background: #21262d; border-radius: 8px;"><svg xmlns="http://www.w3.org/2000/svg" width="800" height="66" viewBox="0 0 800 66">
+<rect width="100%" height="100%" fill="#0d1117" rx="8"/>
+<rect x="20" y="16" width="760" height="30" rx="4" ry="4" fill="#161b22" stroke="#30363d" stroke-width="1"/><text x="400.0" y="35.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">&lt;1&gt; QED</text>
+</svg></div>
+
+      <div class="block block-blue" style="border-left: 4px solid #2980b9;">
+        <div class="block-header" style="background: #3498db22;">
+          <span class="icon">📝</span><span class="name">PROOF</span><span class="badge"> ②</span>
+          <span class="kind-tag" style="background: #3498db;">proof</span>
+        </div>
+        <div class="block-meta"><span class="container">in FeatureTour</span><span class="loc">L136</span></div>
+      </div>
+<div class="embedded-diagram" style="margin: 12px 0; padding: 12px; background: #21262d; border-radius: 8px;"><svg xmlns="http://www.w3.org/2000/svg" width="800" height="66" viewBox="0 0 800 66">
+<rect width="100%" height="100%" fill="#0d1117" rx="8"/>
+<rect x="20" y="16" width="760" height="30" rx="4" ry="4" fill="#161b22" stroke="#30363d" stroke-width="1"/><text x="400.0" y="35.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">OBVIOUS</text>
+</svg></div>
+
+      <div class="block block-red" style="border-left: 4px solid #c0392b;">
+        <div class="block-header" style="background: #e74c3c22;">
+          <span class="icon">📜</span><span class="name">LemmaSum</span><span class="badge"> ②</span>
+          <span class="kind-tag" style="background: #e74c3c;">theorem</span>
+        </div>
+        <div class="block-meta"><code>THEOREM LemmaSum</code><span class="container">in FeatureTour</span><span class="loc">L138</span></div>
+      </div>
+<div class="embedded-diagram" style="margin: 12px 0; padding: 12px; background: #21262d; border-radius: 8px;"><svg xmlns="http://www.w3.org/2000/svg" width="800" height="66" viewBox="0 0 800 66">
+<rect width="100%" height="100%" fill="#0d1117" rx="8"/>
+<rect x="20" y="16" width="760" height="30" rx="4" ry="4" fill="#161b22" stroke="#30363d" stroke-width="1"/><text x="400.0" y="35.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">Sum(3)=6</text>
+</svg></div>
+
+      <div class="block block-blue" style="border-left: 4px solid #2980b9;">
+        <div class="block-header" style="background: #3498db22;">
+          <span class="icon">📝</span><span class="name">PROOF</span><span class="badge"> ②</span>
+          <span class="kind-tag" style="background: #3498db;">proof</span>
+        </div>
+        <div class="block-meta"><span class="container">in FeatureTour</span><span class="loc">L139</span></div>
+      </div>
+<div class="embedded-diagram" style="margin: 12px 0; padding: 12px; background: #21262d; border-radius: 8px;"><svg xmlns="http://www.w3.org/2000/svg" width="800" height="66" viewBox="0 0 800 66">
+<rect width="100%" height="100%" fill="#0d1117" rx="8"/>
+<rect x="20" y="16" width="760" height="30" rx="4" ry="4" fill="#161b22" stroke="#30363d" stroke-width="1"/><text x="400.0" y="35.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">BY ...</text>
+</svg></div>
+
+      <div class="block block-amber" style="border-left: 4px solid #d68910;">
+        <div class="block-header" style="background: #f39c1222;">
+          <span class="icon">⇒</span><span class="name">Sequences</span><span class="badge"> ①</span>
+          <span class="kind-tag" style="background: #f39c12;">instance</span>
+        </div>
+        <div class="block-meta"><code>INSTANCE Sequences</code><span class="container">in FeatureTour</span><span class="loc">L141</span></div>
+      </div>
+      <div class="block block-teal" style="border-left: 4px solid #148f77;">
+        <div class="block-header" style="background: #1abc9c22;">
+          <span class="icon">≜</span><span class="name">Done</span><span class="badge"> ①</span>
+          <span class="kind-tag" style="background: #1abc9c;">operator_definition</span>
+        </div>
+        <div class="block-meta"><code>Done == ...</code><span class="container">in FeatureTour</span><span class="loc">L145</span></div>
+      </div>
+<div class="embedded-diagram" style="margin: 12px 0; padding: 12px; background: #21262d; border-radius: 8px;"><svg xmlns="http://www.w3.org/2000/svg" width="800" height="66" viewBox="0 0 800 66">
+<rect width="100%" height="100%" fill="#0d1117" rx="8"/>
+<rect x="20" y="16" width="760" height="30" rx="4" ry="4" fill="#161b22" stroke="#30363d" stroke-width="1"/><text x="400.0" y="35.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">x=MaxVal/\y=MaxVal/\Len(vals)=MaxVal</text>
+</svg></div>
+
+  </div>
+</body>
+</html>
