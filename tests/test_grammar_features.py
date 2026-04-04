@@ -18,6 +18,25 @@ from swifta.infrastructure.system import (
 
 _FIXTURES = Path(__file__).parent / "fixtures"
 
+_FIXTURE_SUBDIRS = {
+    "temporal.tla": "temporal",
+    "proof.tla": "proofs",
+    "lambda_choose.tla": "operators",
+    "use_hide.tla": "operators",
+    "allocator.tla": "operators",
+    "valid.tla": "operators",
+    "feature_tour.tla": "integration",
+}
+
+
+def _parse_fixture(service: ParsingJobService, name: str):
+    subdir = _FIXTURE_SUBDIRS.get(name)
+    if subdir:
+        path = _FIXTURES / subdir / name
+    else:
+        path = _FIXTURES / name
+    return service.parse_file(ParseFileCommand(path=str(path)))
+
 
 @pytest.fixture()
 def service() -> ParsingJobService:
@@ -28,10 +47,6 @@ def service() -> ParsingJobService:
         clock=SystemClock(),
         job_repository=InMemoryParsingJobRepository(),
     )
-
-
-def _parse_fixture(service: ParsingJobService, name: str):
-    return service.parse_file(ParseFileCommand(path=str(_FIXTURES / name)))
 
 
 def _make_result(label: str = "tree") -> ParseTreeResult:
