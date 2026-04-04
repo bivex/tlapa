@@ -65,6 +65,20 @@ The Nassi-Shneiderman diagrams include:
   * Fast path for simple operator definitions
   * Graceful handling of partially parsed constructs (diagnostics shown, parsing continues)
 
+## Screenshots
+
+**Structure view** — extracted elements with diagnostics:
+
+![FeatureTour structure](docs/screenshots/feature_tour.structure.png)
+
+![SimpleDistributed structure](docs/screenshots/simple_distributed.structure.png)
+
+**Nassi-Shneiderman diagrams** — operator and proof visualization:
+
+![FeatureTour NSD](docs/screenshots/feature_tour.nassi.png)
+
+![SimpleDistributed NSD](docs/screenshots/simple_distributed.nassi.png)
+
 ## Architecture
 
 The codebase is split into four explicit layers:
