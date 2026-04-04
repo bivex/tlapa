@@ -15,6 +15,16 @@ from swifta.infrastructure.system import (
 )
 
 _FIXTURES = Path(__file__).parent / "fixtures"
+_FIXTURE_SUBDIRS = {
+    "valid.tla": "operators",
+}
+
+
+def _fixture_path(name: str) -> Path:
+    subdir = _FIXTURE_SUBDIRS.get(name)
+    if subdir:
+        return _FIXTURES / subdir / name
+    return _FIXTURES / name
 
 
 @pytest.fixture()
@@ -29,7 +39,7 @@ def service() -> ParsingJobService:
 
 
 def test_parse_valid_tla_file(service: ParsingJobService) -> None:
-    report = service.parse_file(ParseFileCommand(path=str(_FIXTURES / "valid.tla")))
+    report = service.parse_file(ParseFileCommand(path=str(_fixture_path("valid.tla"))))
 
     assert report.summary.source_count == 1
     assert report.summary.technical_failure_count == 0
@@ -50,7 +60,7 @@ def test_parse_directory(service: ParsingJobService) -> None:
 
 
 def test_parse_extracts_module_name(service: ParsingJobService) -> None:
-    report = service.parse_file(ParseFileCommand(path=str(_FIXTURES / "valid.tla")))
+    report = service.parse_file(ParseFileCommand(path=str(_fixture_path("valid.tla"))))
     source = report.sources[0]
 
     module_elements = [e for e in source.structural_elements if e.kind == "module"]
@@ -59,7 +69,7 @@ def test_parse_extracts_module_name(service: ParsingJobService) -> None:
 
 
 def test_parse_extracts_variables(service: ParsingJobService) -> None:
-    report = service.parse_file(ParseFileCommand(path=str(_FIXTURES / "valid.tla")))
+    report = service.parse_file(ParseFileCommand(path=str(_fixture_path("valid.tla"))))
     source = report.sources[0]
 
     var_elements = [e for e in source.structural_elements if e.kind == "variable"]

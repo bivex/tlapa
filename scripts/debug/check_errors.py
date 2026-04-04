@@ -21,7 +21,7 @@ def parse_file(path):
 
 
 if __name__ == "__main__":
-    path = "example/distributed_log_full.tla"
+    path = "example/raft/distributed_log_full.tla"
     errs = parse_file(path)
     print(f"Syntax errors in {path}: {errs}")
     sys.exit(0 if errs == 0 else 1)

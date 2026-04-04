@@ -1,4 +1,4 @@
-with open("example/distributed_log_full.tla", "r") as f:
+with open("example/raft/distributed_log_full.tla", "r") as f:
     content = f.read()
 
 # Simple count

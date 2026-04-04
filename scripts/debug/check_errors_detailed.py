@@ -34,7 +34,7 @@ def parse_file(path):
 if __name__ == "__main__":
     import sys
 
-    path = sys.argv[1] if len(sys.argv) > 1 else "example/distributed_log_full.tla"
+    path = sys.argv[1] if len(sys.argv) > 1 else "example/raft/distributed_log_full.tla"
     errs, details = parse_file(path)
     print(f"Total syntax errors: {errs}")
     for line, col, msg in details:
