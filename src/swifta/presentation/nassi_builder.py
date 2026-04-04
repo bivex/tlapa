@@ -23,14 +23,41 @@ def _truncate(text: str, limit: int = _MAX_TEXT) -> str:
 
 
 class NassiBuilder:
-    """Converts TLA+ expression AST contexts into NSD block trees.
+    """Converts TLA+ expression AST contexts into NSD block trees."""
 
-    Strategy: recursively scan the ANTLR parse tree depth-first, looking
-    for "structural" constructs (IF, CASE, LET, conjunction, disjunction)
-    at any precedence level.  Pass-through layers are unwrapped transparently.
-    Binary expression nodes (comparisons, arithmetic) that don't carry NSD
-    semantics are treated as leaves.
-    """
+    # Mapping from pass-through context class names to the getter(s) that retrieve the inner child context.
+    # For contexts that have a single child, a single getter name is used.
+    # For ExpressionContext, multiple alternatives exist; we try them in order.
+    _UNWRAP_MAP: dict[str, list[str]] = {
+        "ExpressionContext": [
+            "quantifierExpr",
+            "lambdaExpression",
+            "ifThenElseExpression",
+            "caseExpression",
+            "letInExpression",
+            "equivExpr",
+        ],
+        "EquivPassThroughContext": ["impliesExpr"],
+        "ImpliesPassThroughContext": ["orExpr"],
+        "OrPassThroughContext": ["junctionExpr"],
+        "AndPassThroughContext": ["junctionExpr"],
+        "JunctionPassThroughContext": ["equalityExpr"],
+        "EqualityPassThroughContext": ["compareExpr"],
+        "ComparePassThroughContext": ["setRelExpr"],
+        "SetRelPassThroughContext": ["dotsExpr"],
+        "DotsPassThroughContext": ["addExpr"],
+        "AddPassThroughContext": ["multExpr"],
+        "MultPassThroughContext": ["prefixExpr"],
+        "PrefixPassThroughContext": ["postfixExpr"],
+        "PostfixPassThroughContext": ["applicationExpr"],
+        "ApplicationPassThroughContext": ["primaryExpression"],
+        # Quantifier pass-throughs
+        "QuantifierPassThroughContext": ["chooseExpr"],
+        "ChoosePassThroughContext": ["ifExpr"],
+        "IfPassThroughContext": ["caseExpr"],
+        "CasePassThroughContext": ["letExpr"],
+        "LetPassThroughContext": ["equivExpr"],
+    }
 
     def __init__(self) -> None:
         self._parser_cls: type | None = None
@@ -43,6 +70,19 @@ class NassiBuilder:
 
             self._parser_cls = TLAPLusParser
         return self._parser_cls
+
+    def _maybe_unwrap(self, ctx) -> object | None:
+        """Try to unwrap one pass-through layer using the getter map."""
+        tname = type(ctx).__name__
+        if tname in self._UNWRAP_MAP:
+            getters = self._UNWRAP_MAP[tname]
+            for getter_name in getters:
+                getter = getattr(ctx, getter_name, None)
+                if callable(getter):
+                    inner = getter()
+                    if inner is not None:
+                        return inner
+        return None
 
     # ------------------------------------------------------------------
     # Public API
@@ -104,39 +144,29 @@ class NassiBuilder:
     # ------------------------------------------------------------------
 
     def _build(self, ctx) -> Block:  # noqa: C901
-        P = self._P()
-
+        """Recursively build NSD block from ANTLR context."""
         if ctx is None:
             return EmptyBlock()
 
         tname = type(ctx).__name__
 
-        # ---- Structural constructs ----
-
+        # --- Direct structural constructs ---
         if tname == "IfThenElseExpressionContext":
             return self._build_if(ctx)
-
         if tname == "CaseExpressionContext":
             return self._build_case(ctx)
-
         if tname == "LetInExpressionContext":
             return self._build_let(ctx)
-
         if tname == "ConjunctionListContext":
             return self._build_conjunction_list(ctx)
-
         if tname == "DisjunctionListContext":
             return self._build_disjunction_list(ctx)
-
         if tname == "AndBinaryExprContext":
             return self._build_and_binary(ctx)
-
         if tname == "OrBinaryExprContext":
             return self._build_or_binary(ctx)
 
-        # Note: AddBinaryExprContext (arithmetic ops) is handled generically below.
-
-        # ---- Quantifier / CHOOSE → leaf ----
+        # --- Leaf quantifiers / CHOOSE ---
         if tname in (
             "QuantifierExpressionContext",
             "TemporalQuantifierExpressionContext",
@@ -144,22 +174,24 @@ class NassiBuilder:
         ):
             return ActionBlock(text=_truncate(ctx.getText()))
 
-        # ---- Binary expression nodes that may hide structural children ----
-        # If a binary context (comparison, equality, equiv, implies) contains
-        # an AddBinary with AND/LAND/OR/LOR deep inside, we must find it.
+        # --- Unwrap pass-through layers (ExpressionContext, EquivPassThrough, etc.) ---
+        inner = self._maybe_unwrap(ctx)
+        if inner is not None:
+            return self._build(inner)
+
+        # --- Binary expression nodes: scan for hidden structural children ---
         if "BinaryExprContext" in tname or "BinaryExpressionContext" in tname:
-            structural = self._find_structural_in_binary(ctx)
+            structural = self._scan_children(ctx)
             if structural is not None:
                 return structural
-            # No structural child → whole thing is a leaf
             return ActionBlock(text=_truncate(ctx.getText()))
 
-        # ---- Pass-through unwrapping ----
-        unwrapped = self._unwrap(ctx)
-        if unwrapped is not None:
-            return self._build(unwrapped)
+        # --- Generic child scan for any other wrapper ---
+        structural = self._scan_children(ctx)
+        if structural is not None:
+            return structural
 
-        # ---- Leaf ----
+        # --- Fallback leaf ---
         return ActionBlock(text=_truncate(ctx.getText()))
 
     # ------------------------------------------------------------------
@@ -216,44 +248,6 @@ class NassiBuilder:
             if result is not None:
                 return result
 
-        return None
-
-    # ------------------------------------------------------------------
-    # Pass-through unwrapping
-    # ------------------------------------------------------------------
-
-    # Chain: (context_class_suffix, method_to_call)
-    _UNWRAP_CHAIN: list[tuple[str, str]] = [
-        ("ExpressionContext", "quantifierExpr"),
-        ("QuantifierPassThroughContext", "chooseExpr"),
-        ("ChoosePassThroughContext", "ifExpr"),
-        ("IfPassThroughContext", "caseExpr"),
-        ("CasePassThroughContext", "letExpr"),
-        ("LetPassThroughContext", "equivExpr"),
-        ("EquivPassThroughContext", "impliesExpr"),
-        ("ImpliesPassThroughContext", "orExpr"),
-        ("OrPassThroughContext", "andExpr"),
-        ("AndPassThroughContext", "junctionExpr"),
-        ("JunctionPassThroughContext", "equalityExpr"),
-        ("EqualityPassThroughContext", "compareExpr"),
-        ("ComparePassThroughContext", "setRelExpr"),
-        ("SetRelPassThroughContext", "dotsExpr"),
-        ("DotsPassThroughContext", "addExpr"),
-        ("AddPassThroughContext", "multExpr"),
-        ("MultPassThroughContext", "prefixExpr"),
-        ("PrefixPassThroughContext", "postfixExpr"),
-        ("PostfixPassThroughContext", "applicationExpr"),
-        ("ApplicationPassThroughContext", "primaryExpression"),
-    ]
-
-    def _unwrap(self, ctx):
-        """Unwrap one pass-through layer.  Returns inner context or ``None``."""
-        tname = type(ctx).__name__
-        for suffix, method in self._UNWRAP_CHAIN:
-            if tname == suffix:
-                getter = getattr(ctx, method, None)
-                if callable(getter):
-                    return getter()
         return None
 
     # ------------------------------------------------------------------
@@ -322,6 +316,9 @@ class NassiBuilder:
             left = self._build(ctx.addExpr())
             right = self._build(ctx.multExpr())
             return SequenceBlock(children=[left, right])
+
+        # Not a logical operator → treat as leaf action
+        return ActionBlock(text=_truncate(ctx.getText()))
 
     # ------------------------------------------------------------------
     # Proof and theorem step builders
