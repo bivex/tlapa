@@ -16,7 +16,9 @@ _MAX_TEXT = 120
 
 
 def _truncate(text: str, limit: int = _MAX_TEXT) -> str:
-    text = text.strip()
+    # Replace multiple whitespaces/newlines with single space
+    import re
+    text = re.sub(r"\s+", " ", text).strip()
     if len(text) <= limit:
         return text
     return text[: limit - 3] + "..."
@@ -83,6 +85,19 @@ class NassiBuilder:
                     if inner is not None:
                         return inner
         return None
+
+    def _get_text(self, ctx) -> str:
+        if ctx is None:
+            return ""
+        # Try to get text with original whitespace if possible
+        try:
+            if hasattr(ctx, "start") and hasattr(ctx, "stop") and ctx.start and ctx.stop:
+                stream = ctx.start.getInputStream()
+                if stream:
+                    return stream.getText(ctx.start.start, ctx.stop.stop)
+        except Exception:
+            pass
+        return ctx.getText()
 
     # ------------------------------------------------------------------
     # Public API
@@ -172,7 +187,7 @@ class NassiBuilder:
             "TemporalQuantifierExpressionContext",
             "ChooseExpressionContext",
         ):
-            return ActionBlock(text=_truncate(ctx.getText()))
+            return ActionBlock(text=_truncate(self._get_text(ctx)))
 
         # --- Unwrap pass-through layers (ExpressionContext, EquivPassThrough, etc.) ---
         inner = self._maybe_unwrap(ctx)
@@ -184,7 +199,7 @@ class NassiBuilder:
             structural = self._scan_children(ctx)
             if structural is not None:
                 return structural
-            return ActionBlock(text=_truncate(ctx.getText()))
+            return ActionBlock(text=_truncate(self._get_text(ctx)))
 
         # --- Generic child scan for any other wrapper ---
         structural = self._scan_children(ctx)
@@ -192,7 +207,7 @@ class NassiBuilder:
             return structural
 
         # --- Fallback leaf ---
-        return ActionBlock(text=_truncate(ctx.getText()))
+        return ActionBlock(text=_truncate(self._get_text(ctx)))
 
     # ------------------------------------------------------------------
     # Structural construct builders
@@ -256,7 +271,7 @@ class NassiBuilder:
     # ------------------------------------------------------------------
 
     def _build_if(self, ctx) -> Block:
-        cond_text = _truncate(ctx.ifExpr(0).getText()) if ctx.ifExpr(0) else "?"
+        cond_text = _truncate(self._get_text(ctx.ifExpr(0))) if ctx.ifExpr(0) else "?"
         then_block = self._build(ctx.ifExpr(1)) if ctx.ifExpr(1) else EmptyBlock()
         else_block = self._build(ctx.ifExpr(2)) if ctx.ifExpr(2) else EmptyBlock()
         return SelectionBlock(condition=cond_text, then_branch=then_block, else_branch=else_block)
@@ -264,7 +279,7 @@ class NassiBuilder:
     def _build_case(self, ctx) -> Block:
         arms: list[tuple[str, Block]] = []
         for arm in ctx.caseArm():
-            guard = _truncate(arm.expression(0).getText()) if arm.expression(0) else "?"
+            guard = _truncate(self._get_text(arm.expression(0))) if arm.expression(0) else "?"
             body = self._build(arm.expression(1)) if arm.expression(1) else EmptyBlock()
             arms.append((guard, body))
         other = ctx.otherArm()
@@ -276,7 +291,7 @@ class NassiBuilder:
     def _build_let(self, ctx) -> Block:
         children: list[Block] = []
         for let_def in ctx.letDefinition():
-            text = _truncate(let_def.getText())
+            text = _truncate(self._get_text(let_def))
             children.append(ActionBlock(text=text))
         children.append(self._build(ctx.letExpr()))
         return ScopeBlock(label="LET...IN", children=children)
@@ -319,7 +334,7 @@ class NassiBuilder:
             return SequenceBlock(children=[left, right])
 
         # Not a logical operator → treat as leaf action
-        return ActionBlock(text=_truncate(ctx.getText()))
+        return ActionBlock(text=_truncate(self._get_text(ctx)))
 
     # ------------------------------------------------------------------
     # Proof and theorem step builders
@@ -405,45 +420,41 @@ class NassiBuilder:
         return block
 
     def _build_use_or_hide(self, ctx) -> Block:
-        text = _truncate(ctx.getText(), 60)
+        text = _truncate(self._get_text(ctx), 60)
         return ActionBlock(text=text)
 
     def _build_def_step(self, ctx) -> Block:
         parts = []
         for defn in ctx.operatorOrFunctionDefinition():
-            parts.append(_truncate(defn.getText(), 40))
+            parts.append(_truncate(self._get_text(defn), 40))
         text = "DEFINE " + ", ".join(parts) if parts else "DEFINE"
         return ActionBlock(text=text)
 
     def _build_have_step(self, ctx) -> Block:
-        expr = ctx.expression()
-        expr_text = _truncate(expr.getText(), 60) if expr else "HAVE"
-        return ActionBlock(text=f"HAVE {expr_text}")
+        text = _truncate(self._get_text(ctx), 60)
+        return ActionBlock(text=text)
 
     def _build_take_step(self, ctx) -> Block:
-        text = _truncate(ctx.getText(), 60) if ctx.getText() else "TAKE"
-        return ActionBlock(text=f"TAKE {text}")
+        text = _truncate(self._get_text(ctx), 60)
+        return ActionBlock(text=text)
 
     def _build_witness_step(self, ctx) -> Block:
-        exprs = ctx.expression()
-        parts = [e.getText() for e in exprs] if exprs else []
-        witness_text = ", ".join(parts)
-        return ActionBlock(text=f"WITNESS {witness_text}")
+        text = _truncate(self._get_text(ctx), 60)
+        return ActionBlock(text=text)
 
     def _build_pick_step(self, ctx) -> Block:
-        text = _truncate(ctx.getText(), 60) if ctx.getText() else "PICK"
-        return ActionBlock(text=f"PICK {text}")
+        text = _truncate(self._get_text(ctx), 60)
+        return ActionBlock(text=text)
 
     def _build_case_step(self, ctx) -> Block:
-        text = _truncate(ctx.getText(), 60) if ctx.getText() else "CASE"
-        return ActionBlock(text=f"CASE {text}")
+        text = _truncate(self._get_text(ctx), 60)
+        return ActionBlock(text=text)
 
     def _build_assert_step(self, ctx) -> Block:
-        if hasattr(ctx, "expression") and ctx.expression():
-            expr_text = _truncate(ctx.expression().getText(), 60)
-            text = f"ASSERT {expr_text}"
-        else:
-            text = "ASSERT"
+        text = _truncate(self._get_text(ctx), 60)
+        # Prepend ASSERT if the code doesn't have a specific keyword
+        if not text.startswith(("ASSERT", "SUFFICES", "THEOREM", "PROPOSITION", "LEMMA", "COROLLARY")):
+             text = f"ASSERT {text}"
         return ActionBlock(text=text)
 
     def _build_instantiation_step(self, ctx) -> Block:
