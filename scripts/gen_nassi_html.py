@@ -196,6 +196,8 @@ def render_html(
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>TLA+ Structure — {escape(module_name)}</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
   <style>
     :root {{
       --bg: #0d1117;
@@ -217,9 +219,12 @@ def render_html(
       background: var(--bg);
       color: var(--text);
       padding: 24px;
-      max-width: 960px;
+      max-width: 1000px;
       margin: 0 auto;
     }}
+    .tla-formula {{ font-family: var(--mono); }}
+    .katex {{ font-size: 1.05em !important; }}
+    
     .header {{
       margin-bottom: 24px;
       padding-bottom: 16px;
@@ -385,6 +390,40 @@ def render_html(
   <div class="structure">
 {body}
   </div>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function() {{
+      const TLA_MAP = [
+        [/\x5C\//g, "\\\\lor "], [/==/g, "\\\\triangleq "], [/\\|\\->/g, "\\\\mapsto "], [/<</g, "\\\\langle "], [/>>/g, "\\\\rangle "],
+        [/\\A/g, "\\\\forall "], [/\\E/g, "\\\\exists "], [/\\in/g, "\\\\in "], [/\\notin/g, "\\\\notin "],
+        [/~>/g, "\\\\leadsto "], [/=>/g, "\\\\implies "], [/<=>/g, "\\\\iff "], [/\\equiv/g, "\\\\equiv "],
+        [/\\cup/g, "\\\\cup "], [/\\cap/g, "\\\\cap "], [/\\subset/g, "\\\\subset "], [/\\subseteq/g, "\\\\subseteq "],
+        [/#/g, "\\\\neq "], [/\\neq/g, "\\\\neq "], [/¬/g, "\\\\neg "], [/\\lnot/g, "\\\\neg "],
+        [/'/g, "^\\\\prime"], [/\x5B\x5D/g, "\\\\square "], [/<>/g, "\\\\diamond "]
+      ];
+      TLA_MAP.push([new RegExp("/\\\\\\\\", "g"), "\\\\land "]);
+
+      function convertTla(text) {{
+        let res = text.trim();
+        TLA_MAP.forEach(([reg, sub]) => {{ res = res.replace(reg, sub); }});
+        return res;
+      }}
+
+      const formulas = document.querySelectorAll("code, .tla-formula, svg text");
+      formulas.forEach(el => {{
+        let raw = el.textContent;
+        if (raw.length > 1 && (raw.includes("\\\\") || raw.includes("/") || raw.includes("=") || raw.includes("<") || raw.includes(">"))) {{
+           const tex = convertTla(raw);
+           try {{
+             katex.render(tex, el, {{
+               throwOnError: false,
+               displayMode: false
+             }});
+           }} catch (e) {{ console.warn("KaTeX error:", e, tex); }}
+        }}
+      }});
+    }});
+  </script>
 </body>
 </html>"""
 
