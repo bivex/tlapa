@@ -190,7 +190,7 @@ def render_html(
 
     body = "\n".join(blocks_html)
 
-    return f"""<!DOCTYPE html>
+    return rf"""<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
@@ -394,14 +394,14 @@ def render_html(
   <script>
     document.addEventListener("DOMContentLoaded", function() {{
       const TLA_MAP = [
-        [/\x5C\//g, "\\\\lor "], [/==/g, "\\\\triangleq "], [/\\|\\->/g, "\\\\mapsto "], [/<</g, "\\\\langle "], [/>>/g, "\\\\rangle "],
-        [/\\A/g, "\\\\forall "], [/\\E/g, "\\\\exists "], [/\\in/g, "\\\\in "], [/\\notin/g, "\\\\notin "],
-        [/~>/g, "\\\\leadsto "], [/=>/g, "\\\\implies "], [/<=>/g, "\\\\iff "], [/\\equiv/g, "\\\\equiv "],
-        [/\\cup/g, "\\\\cup "], [/\\cap/g, "\\\\cap "], [/\\subset/g, "\\\\subset "], [/\\subseteq/g, "\\\\subseteq "],
-        [/#/g, "\\\\neq "], [/\\neq/g, "\\\\neq "], [/¬/g, "\\\\neg "], [/\\lnot/g, "\\\\neg "],
-        [/'/g, "^\\\\prime"], [/\x5B\x5D/g, "\\\\square "], [/<>/g, "\\\\diamond "]
+        [/\\x5C\//g, "\\lor "], [/==/g, "\\triangleq "], [/\\|\\->/g, "\\mapsto "], [/<</g, "\\langle "], [/>>/g, "\\rangle "],
+        [/\\A/g, "\\forall "], [/\\E/g, "\\exists "], [/\\in/g, "\\in "], [/\\notin/g, "\\notin "],
+        [/~>/g, "\\leadsto "], [/=>/g, "\\implies "], [/<=>/g, "\\iff "], [/\\equiv/g, "\\equiv "],
+        [/\\cup/g, "\\cup "], [/\\cap/g, "\\cap "], [/\\subset/g, "\\subset "], [/\\subseteq/g, "\\subseteq "],
+        [/#/g, "\\neq "], [/\\neq/g, "\\neq "], [/¬/g, "\\neg "], [/\\lnot/g, "\\neg "],
+        [/'/g, "^\\prime"], [/\\x5B\\x5D/g, "\\square "], [/<>/g, "\\diamond "]
       ];
-      TLA_MAP.push([new RegExp("/\\\\\\\\", "g"), "\\\\land "]);
+      TLA_MAP.push([new RegExp("/\\\\\\\\", "g"), "\\land "]);
 
       function convertTla(text) {{
         let res = text.trim();

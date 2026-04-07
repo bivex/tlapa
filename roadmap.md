@@ -39,6 +39,8 @@ This document outlines the completion tasks for the TLA+ parser implementation b
 - [x] Embedded Nassi diagrams in structural HTML (inline SVG after matching elements)
 - [x] THEOREM and PROOF diagram support in Nassi builder
 - [x] Proof step diagrams (HAVE, TAKE, WITNESS, PICK, CASE, ASSERT, QED, USE/HIDE, DEFINE)
+- [x] **Premium Aesthetics**: SVG gradients, glow filters, and Tokyo Night color palette
+- [x] **KaTeX Integration**: High-quality mathematical formula rendering for TLA+ symbols
 
 ### Grammar Completeness
 - [x] Add support for temporal operators (`[]`, `<>`, `WF_`, `SF_`)

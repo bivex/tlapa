@@ -188,7 +188,7 @@
 <body>
   <div class="header">
     <h1>FeatureTour</h1>
-    <div class="meta">/Volumes/External/Code/tlapa/example/tutorials/feature_tour.tla &middot; 733 tokens &middot; 191.9ms</div>
+    <div class="meta">/Volumes/External/Code/tlapa/example/tutorials/feature_tour.tla &middot; 733 tokens &middot; 168.9ms</div>
   </div>
 
   <div class="summary"><span class="summary-chip" style="background: #e74c3c33; border-color: #e74c3c;">2 assumption</span><span class="summary-chip" style="background: #9b59b633; border-color: #9b59b6;">2 constant</span><span class="summary-chip" style="background: #f39c1233; border-color: #f39c12;">1 instance</span><span class="summary-chip" style="background: #1676dc33; border-color: #1676dc;">1 module</span><span class="summary-chip" style="background: #1abc9c33; border-color: #1abc9c;">40 operator definition</span><span class="summary-chip" style="background: #3498db33; border-color: #3498db;">17 proof</span><span class="summary-chip" style="background: #f39c1233; border-color: #f39c12;">2 recursive</span><span class="summary-chip" style="background: #e74c3c33; border-color: #e74c3c;">5 theorem</span><span class="summary-chip" style="background: #9b59b633; border-color: #9b59b6;">3 variable</span></div>
@@ -1590,14 +1590,14 @@
   <script>
     document.addEventListener("DOMContentLoaded", function() {
       const TLA_MAP = [
-        [/\\//g, "\\lor "], [/==/g, "\\triangleq "], [/\|\->/g, "\\mapsto "], [/<</g, "\\langle "], [/>>/g, "\\rangle "],
-        [/\A/g, "\\forall "], [/\E/g, "\\exists "], [/\in/g, "\\in "], [/\notin/g, "\\notin "],
-        [/~>/g, "\\leadsto "], [/=>/g, "\\implies "], [/<=>/g, "\\iff "], [/\equiv/g, "\\equiv "],
-        [/\cup/g, "\\cup "], [/\cap/g, "\\cap "], [/\subset/g, "\\subset "], [/\subseteq/g, "\\subseteq "],
-        [/#/g, "\\neq "], [/\neq/g, "\\neq "], [/¬/g, "\\neg "], [/\lnot/g, "\\neg "],
-        [/'/g, "^\\prime"], [/[]/g, "\\square "], [/<>/g, "\\diamond "]
+        [/\\x5C\//g, "\\lor "], [/==/g, "\\triangleq "], [/\\|\\->/g, "\\mapsto "], [/<</g, "\\langle "], [/>>/g, "\\rangle "],
+        [/\\A/g, "\\forall "], [/\\E/g, "\\exists "], [/\\in/g, "\\in "], [/\\notin/g, "\\notin "],
+        [/~>/g, "\\leadsto "], [/=>/g, "\\implies "], [/<=>/g, "\\iff "], [/\\equiv/g, "\\equiv "],
+        [/\\cup/g, "\\cup "], [/\\cap/g, "\\cap "], [/\\subset/g, "\\subset "], [/\\subseteq/g, "\\subseteq "],
+        [/#/g, "\\neq "], [/\\neq/g, "\\neq "], [/¬/g, "\\neg "], [/\\lnot/g, "\\neg "],
+        [/'/g, "^\\prime"], [/\\x5B\\x5D/g, "\\square "], [/<>/g, "\\diamond "]
       ];
-      TLA_MAP.push([new RegExp("/\\\\", "g"), "\\land "]);
+      TLA_MAP.push([new RegExp("/\\\\\\\\", "g"), "\\land "]);
 
       function convertTla(text) {
         let res = text.trim();
@@ -1608,7 +1608,7 @@
       const formulas = document.querySelectorAll("code, .tla-formula, svg text");
       formulas.forEach(el => {
         let raw = el.textContent;
-        if (raw.length > 1 && (raw.includes("\\") || raw.includes("/") || raw.includes("=") || raw.includes("<") || raw.includes(">"))) {
+        if (raw.length > 1 && (raw.includes("\\\\") || raw.includes("/") || raw.includes("=") || raw.includes("<") || raw.includes(">"))) {
            const tex = convertTla(raw);
            try {
              katex.render(tex, el, {
