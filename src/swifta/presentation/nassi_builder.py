@@ -182,12 +182,18 @@ class NassiBuilder:
             return self._build_or_binary(ctx)
 
         # --- Leaf quantifiers / CHOOSE ---
-        if tname in (
-            "QuantifierExpressionContext",
-            "TemporalQuantifierExpressionContext",
-            "ChooseExpressionContext",
-        ):
-            return ActionBlock(text=_truncate(self._get_text(ctx)))
+        if tname == "QuantifierExpressionContext":
+            return self._build_quantifier(ctx)
+        if tname == "TemporalQuantifierExpressionContext":
+            return self._build_quantifier(ctx)
+        if tname == "ChooseExpressionContext":
+            return self._build_choose(ctx)
+        if tname == "SetConstructorContext":
+            return self._build_set_constructor(ctx)
+        if tname == "FunctionConstructorContext":
+            return self._build_function_constructor(ctx)
+        if tname == "LambdaExpressionContext":
+            return self._build_lambda(ctx)
 
         # --- Unwrap pass-through layers (ExpressionContext, EquivPassThrough, etc.) ---
         inner = self._maybe_unwrap(ctx)
@@ -295,6 +301,47 @@ class NassiBuilder:
             children.append(ActionBlock(text=text))
         children.append(self._build(ctx.letExpr()))
         return ScopeBlock(label="LET...IN", children=children)
+
+    def _build_quantifier(self, ctx) -> Block:
+        # Extract the quantifier part: \A x \in S :
+        full_text = self._get_text(ctx)
+        # Try to split at COLON to separate head and body
+        if ":" in full_text:
+            head, body_text = full_text.split(":", 1)
+            return ScopeBlock(label=f"{_truncate(head)} :", children=[self._build(ctx.quantifierExpr())])
+        return ActionBlock(text=_truncate(full_text))
+
+    def _build_choose(self, ctx) -> Block:
+        full_text = self._get_text(ctx)
+        if ":" in full_text:
+            head, body_text = full_text.split(":", 1)
+            return ScopeBlock(label=f"{_truncate(head)} :", children=[self._build(ctx.chooseExpr())])
+        return ActionBlock(text=_truncate(full_text))
+
+    def _build_set_constructor(self, ctx) -> Block:
+        # { x \in S : expression }
+        full_text = self._get_text(ctx)
+        if ":" in full_text:
+            head, body_text = full_text.split(":", 1)
+            # Remove closing RCURLY from body if it's there? No, the rule handles inner too.
+            return ScopeBlock(label=f"{_truncate(head)} :", children=[self._build(ctx.expression())])
+        return ActionBlock(text=_truncate(full_text))
+
+    def _build_function_constructor(self, ctx) -> Block:
+        # [ x \in S |-> expression ]
+        full_text = self._get_text(ctx)
+        # ARROW is |->
+        if "|->" in full_text:
+            head, body_text = full_text.split("|->", 1)
+            return ScopeBlock(label=f"{_truncate(head)} |->", children=[self._build(ctx.expression())])
+        return ActionBlock(text=_truncate(full_text))
+
+    def _build_lambda(self, ctx) -> Block:
+        full_text = self._get_text(ctx)
+        if ":" in full_text:
+            head, body_text = full_text.split(":", 1)
+            return ScopeBlock(label=f"{_truncate(head)} :", children=[self._build(ctx.expression())])
+        return ActionBlock(text=_truncate(full_text))
 
     def _build_conjunction_list(self, ctx) -> Block:
         # In the TLA+ grammar, ConjunctionListContext has multiple expression() children (ignoring AND tokens)
