@@ -32,7 +32,7 @@ INDENT = 16  # indent per nesting level
 COND_H = 32  # IF condition triangle height
 
 # ---------------------------------------------------------------------------
-# Colour palette (dark theme)
+# Colour palette (Premium Tokyo Night)
 # ---------------------------------------------------------------------------
 BG = "#0d1117"
 C_ACTION = "#161b22"
@@ -48,8 +48,30 @@ C_TEXT_DIM = "#8b949e"
 C_THEN = "#3fb950"
 C_ELSE = "#f85149"
 C_ARM = "#bc8cff"
-C_COND_TEXT = "#58a6ff"
+C_COND_TEXT = "#79c0ff"
 C_DIVIDER = "#30363d"
+
+# Kind specific colors
+C_STATE_BG = "#0d1f0d"
+C_STATE_ST = "#3fb950"
+C_TEMP_BG = "#1f1a0d"
+C_TEMP_ST = "#d29922"
+C_STRING_BG = "#1a1533"
+C_STRING_ST = "#bc8cff"
+C_NEG_BG = "#1f130d"
+C_NEG_ST = "#f0883e"
+
+# Icons
+I_OP = "≜ "
+I_FUNC = "↦ "
+I_PROOF = "📝 "
+I_LEMMA = "📜 "
+I_THEOREM = "📜 "
+I_LET = "⚙️ "
+I_IF = "🔀 "
+I_CASE = "📋 "
+I_STEP = "▸ "
+I_QED = "✅ "
 
 # ---------------------------------------------------------------------------
 # SVG helpers
@@ -84,13 +106,15 @@ def _svg_block(
     text_anchor: str = "middle",
     text_x: float | None = None,
     rx: int = 4,
+    show_id: str | None = None,
 ) -> str:
-    """Rounded rect with text."""
+    """Rounded rect with text and optional filter."""
     tx = text_x if text_x is not None else x + w / 2
     ty = y + h / 2 + font_size * 0.35
+    filter_attr = ' filter="url(#glow)"' if show_id else ""
     return (
         f'<rect x="{x}" y="{y}" width="{w}" height="{h}" rx="{rx}" ry="{rx}" '
-        f'fill="{fill}" stroke="{stroke}" stroke-width="1"/>'
+        f'fill="{fill}" stroke="{stroke}" stroke-width="1"{filter_attr}/>'
         f'<text x="{tx}" y="{ty}" text-anchor="{text_anchor}" fill="{text_color}" '
         f'font-family="JetBrains Mono,Fira Code,monospace" font-size="{font_size}" '
         f'font-weight="{font_weight}">{_esc(_fit_text(text))}</text>'
@@ -109,14 +133,14 @@ def _svg_triangle(
         # Condition text centered in upper portion of triangle
         f'<text x="{mid_x}" y="{y + h * 0.45}" text-anchor="middle" fill="{C_COND_TEXT}" '
         f'font-family="JetBrains Mono,Fira Code,monospace" font-size="11" '
-        f'font-weight="bold">{_esc(_fit_text(cond_text, 50))}</text>'
+        f'font-weight="bold">{I_IF}{_esc(_fit_text(cond_text, 50))}</text>'
         # THEN label (left)
         f'<text x="{x + 20}" y="{y + h * 0.8}" text-anchor="start" fill="{C_THEN}" '
-        f'font-family="JetBrains Mono,monospace" font-size="9" font-weight="bold">T</text>'
+        f'font-family="JetBrains Mono,monospace" font-size="9" font-weight="bold">TRUE</text>'
         # ELSE label (right)
         f'<text x="{x + w - 20}" y="{y + h * 0.8}" text-anchor="end" fill="{C_ELSE}" '
-        f'font-family="JetBrains Mono,monospace" font-size="9" font-weight="bold">F</text>'
-    )
+        f'font-family="JetBrains Mono,monospace" font-size="9" font-weight="bold">FALSE</text>'
+)
 
 
 def _svg_divider_v(x: float, y1: float, y2: float, color: str = C_COND_ST) -> str:
@@ -216,7 +240,16 @@ def render_nassi_diagram(root: Block, op_name: str, variant: str = "seq") -> str
         # --- Action (leaf) ---
         if isinstance(block, ActionBlock):
             text = block.text or block.label or "—"
+            # Add icon for proof steps
+            if text.startswith("<"):
+                text = f"{I_STEP}{text}"
+            elif "QED" in text:
+                text = f"{I_QED}{text}"
+
             fill, stroke = _action_colors(text)
+            # Use gradient for default action
+            if fill == C_ACTION:
+                fill = "url(#gradAction)"
             parts.append(_svg_block(x, y, w, BH, fill, stroke, text))
             return y + BH + BP
 
@@ -233,6 +266,16 @@ def render_nassi_diagram(root: Block, op_name: str, variant: str = "seq") -> str
         f'<svg xmlns="http://www.w3.org/2000/svg" '
         f'width="{DIAGRAM_W}" height="{total_h}" '
         f'viewBox="0 0 {DIAGRAM_W} {total_h}">\n'
+        f'<defs>\n'
+        f'  <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">\n'
+        f'    <feGaussianBlur stdDeviation="1.5" result="blur" />\n'
+        f'    <feComposite in="SourceGraphic" in2="blur" operator="over" />\n'
+        f'  </filter>\n'
+        f'  <linearGradient id="gradAction" x1="0%" y1="0%" x2="0%" y2="100%">\n'
+        f'    <stop offset="0%" style="stop-color:#21262d;stop-opacity:1" />\n'
+        f'    <stop offset="100%" style="stop-color:#161b22;stop-opacity:1" />\n'
+        f'  </linearGradient>\n'
+        f'</defs>\n'
         f'<rect width="100%" height="100%" fill="{BG}" rx="8"/>\n'
     )
     svg += "\n".join(parts)
@@ -309,7 +352,13 @@ def draw_block(block: Block, x: float, y: float, w: float, depth: int, parts: li
         return _draw_scope(block, x, y, w, depth, parts)
     if isinstance(block, ActionBlock):
         text = block.text or block.label or "—"
+        if text.startswith("<"):
+            text = f"{I_STEP}{text}"
+        elif "QED" in text:
+            text = f"{I_QED}{text}"
         fill, stroke = _action_colors(text)
+        if fill == C_ACTION:
+            fill = "url(#gradAction)"
         parts.append(_svg_block(x, y, w, BH, fill, stroke, text))
         return y + BH + BP
     # fallback
@@ -328,7 +377,7 @@ def _draw_case(
 ) -> float:
     # Header
     parts.append(
-        _svg_block(x, y, w, BH, C_CASE_BG, C_CASE_ST, "CASE", C_CASE_ST, font_weight="bold")
+        _svg_block(x, y, w, BH, C_CASE_BG, C_CASE_ST, f"{I_CASE} CASE", C_CASE_ST, font_weight="bold")
     )
     y += BH + BP
 
@@ -356,6 +405,8 @@ def _draw_scope(
     block: ScopeBlock, x: float, y: float, w: float, depth: int, parts: list[str]
 ) -> float:
     label = block.label or "SCOPE"
+    if "LET" in label:
+        label = f"{I_LET} {label}"
     parts.append(
         _svg_block(x, y, w, BH, C_SCOPE_BG, C_SCOPE_ST, label, C_SCOPE_ST, font_weight="bold", rx=6)
     )
@@ -383,8 +434,7 @@ def _action_colors(text: str) -> tuple[str, str]:
     # String literal
     if t.startswith('"'):
         return "#1a1533", "#bc8cff"  # purple tint
-    # Negation
-    if t.startswith("~") or t.startswith("\\") and "lnot" in t[:8]:
-        return "#1f130d", "#f0883e"  # orange tint
     # Default
+    if t.startswith(("~", "\\lnot", "¬")):
+        return C_NEG_BG, C_NEG_ST  # orange tint
     return C_ACTION, C_ACTION_ST
