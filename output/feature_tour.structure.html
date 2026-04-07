@@ -4,6 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>TLA+ Structure — FeatureTour</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
   <style>
     :root {
       --bg: #0d1117;
@@ -25,9 +27,12 @@
       background: var(--bg);
       color: var(--text);
       padding: 24px;
-      max-width: 960px;
+      max-width: 1000px;
       margin: 0 auto;
     }
+    .tla-formula { font-family: var(--mono); }
+    .katex { font-size: 1.05em !important; }
+    
     .header {
       margin-bottom: 24px;
       padding-bottom: 16px;
@@ -183,7 +188,7 @@
 <body>
   <div class="header">
     <h1>FeatureTour</h1>
-    <div class="meta">/Volumes/External/Code/tlapa/example/tutorials/feature_tour.tla &middot; 733 tokens &middot; 171.3ms</div>
+    <div class="meta">/Volumes/External/Code/tlapa/example/tutorials/feature_tour.tla &middot; 733 tokens &middot; 191.9ms</div>
   </div>
 
   <div class="summary"><span class="summary-chip" style="background: #e74c3c33; border-color: #e74c3c;">2 assumption</span><span class="summary-chip" style="background: #9b59b633; border-color: #9b59b6;">2 constant</span><span class="summary-chip" style="background: #f39c1233; border-color: #f39c12;">1 instance</span><span class="summary-chip" style="background: #1676dc33; border-color: #1676dc;">1 module</span><span class="summary-chip" style="background: #1abc9c33; border-color: #1abc9c;">40 operator definition</span><span class="summary-chip" style="background: #3498db33; border-color: #3498db;">17 proof</span><span class="summary-chip" style="background: #f39c1233; border-color: #f39c12;">2 recursive</span><span class="summary-chip" style="background: #e74c3c33; border-color: #e74c3c;">5 theorem</span><span class="summary-chip" style="background: #9b59b633; border-color: #9b59b6;">3 variable</span></div>
@@ -407,7 +412,7 @@
         </div>
         <div class="block-meta"><code>MinOf(S) == ...</code><span class="container">in FeatureTour</span><span class="loc">L27</span></div>
       </div>
-<div class="embedded-diagram" style="margin: 12px 0; padding: 12px; background: #21262d; border-radius: 8px;"><svg xmlns="http://www.w3.org/2000/svg" width="800" height="66" viewBox="0 0 800 66">
+<div class="embedded-diagram" style="margin: 12px 0; padding: 12px; background: #21262d; border-radius: 8px;"><svg xmlns="http://www.w3.org/2000/svg" width="800" height="100" viewBox="0 0 800 100">
 <defs>
   <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
     <feGaussianBlur stdDeviation="1.5" result="blur" />
@@ -419,7 +424,8 @@
   </linearGradient>
 </defs>
 <rect width="100%" height="100%" fill="#0d1117" rx="8"/>
-<rect x="20" y="16" width="760" height="30" rx="4" ry="4" fill="url(#gradAction)" stroke="#30363d" stroke-width="1"/><text x="400.0" y="35.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">CHOOSE m \in S : m &lt;= 3</text>
+<rect x="20" y="16" width="760" height="30" rx="6" ry="6" fill="#1a2744" stroke="#d2a8ff" stroke-width="1"/><text x="400.0" y="35.2" text-anchor="middle" fill="#d2a8ff" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="bold">CHOOSE m \in S :</text>
+<rect x="36" y="50" width="744" height="30" rx="4" ry="4" fill="url(#gradAction)" stroke="#30363d" stroke-width="1"/><text x="408.0" y="69.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">m &lt;= 3</text>
 </svg></div>
 
       <div class="block block-teal" style="border-left: 4px solid #148f77;">
@@ -697,7 +703,7 @@
         </div>
         <div class="block-meta"><code>AllPositive(S) == ...</code><span class="container">in FeatureTour</span><span class="loc">L55</span></div>
       </div>
-<div class="embedded-diagram" style="margin: 12px 0; padding: 12px; background: #21262d; border-radius: 8px;"><svg xmlns="http://www.w3.org/2000/svg" width="800" height="66" viewBox="0 0 800 66">
+<div class="embedded-diagram" style="margin: 12px 0; padding: 12px; background: #21262d; border-radius: 8px;"><svg xmlns="http://www.w3.org/2000/svg" width="800" height="100" viewBox="0 0 800 100">
 <defs>
   <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
     <feGaussianBlur stdDeviation="1.5" result="blur" />
@@ -709,7 +715,8 @@
   </linearGradient>
 </defs>
 <rect width="100%" height="100%" fill="#0d1117" rx="8"/>
-<rect x="20" y="16" width="760" height="30" rx="4" ry="4" fill="url(#gradAction)" stroke="#30363d" stroke-width="1"/><text x="400.0" y="35.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">\A n \in S : n &gt; 0</text>
+<rect x="20" y="16" width="760" height="30" rx="6" ry="6" fill="#1a2744" stroke="#d2a8ff" stroke-width="1"/><text x="400.0" y="35.2" text-anchor="middle" fill="#d2a8ff" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="bold">\A n \in S :</text>
+<rect x="36" y="50" width="744" height="30" rx="4" ry="4" fill="url(#gradAction)" stroke="#30363d" stroke-width="1"/><text x="408.0" y="69.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">n &gt; 0</text>
 </svg></div>
 
       <div class="block block-teal" style="border-left: 4px solid #148f77;">
@@ -719,7 +726,7 @@
         </div>
         <div class="block-meta"><code>ExistsZero(S) == ...</code><span class="container">in FeatureTour</span><span class="loc">L57</span></div>
       </div>
-<div class="embedded-diagram" style="margin: 12px 0; padding: 12px; background: #21262d; border-radius: 8px;"><svg xmlns="http://www.w3.org/2000/svg" width="800" height="66" viewBox="0 0 800 66">
+<div class="embedded-diagram" style="margin: 12px 0; padding: 12px; background: #21262d; border-radius: 8px;"><svg xmlns="http://www.w3.org/2000/svg" width="800" height="100" viewBox="0 0 800 100">
 <defs>
   <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
     <feGaussianBlur stdDeviation="1.5" result="blur" />
@@ -731,7 +738,8 @@
   </linearGradient>
 </defs>
 <rect width="100%" height="100%" fill="#0d1117" rx="8"/>
-<rect x="20" y="16" width="760" height="30" rx="4" ry="4" fill="url(#gradAction)" stroke="#30363d" stroke-width="1"/><text x="400.0" y="35.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">\E n \in S : n = 0</text>
+<rect x="20" y="16" width="760" height="30" rx="6" ry="6" fill="#1a2744" stroke="#d2a8ff" stroke-width="1"/><text x="400.0" y="35.2" text-anchor="middle" fill="#d2a8ff" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="bold">\E n \in S :</text>
+<rect x="36" y="50" width="744" height="30" rx="4" ry="4" fill="url(#gradAction)" stroke="#30363d" stroke-width="1"/><text x="408.0" y="69.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">n = 0</text>
 </svg></div>
 
       <div class="block block-teal" style="border-left: 4px solid #148f77;">
@@ -1151,7 +1159,7 @@
         </div>
         <div class="block-meta"><code>THEOREM ThmIncPositive</code><span class="container">in FeatureTour</span><span class="loc">L106</span></div>
       </div>
-<div class="embedded-diagram" style="margin: 12px 0; padding: 12px; background: #21262d; border-radius: 8px;"><svg xmlns="http://www.w3.org/2000/svg" width="800" height="66" viewBox="0 0 800 66">
+<div class="embedded-diagram" style="margin: 12px 0; padding: 12px; background: #21262d; border-radius: 8px;"><svg xmlns="http://www.w3.org/2000/svg" width="800" height="100" viewBox="0 0 800 100">
 <defs>
   <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
     <feGaussianBlur stdDeviation="1.5" result="blur" />
@@ -1163,7 +1171,8 @@
   </linearGradient>
 </defs>
 <rect width="100%" height="100%" fill="#0d1117" rx="8"/>
-<rect x="20" y="16" width="760" height="30" rx="4" ry="4" fill="url(#gradAction)" stroke="#30363d" stroke-width="1"/><text x="400.0" y="35.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">\A n \in Nat : Inc(n) &gt; n</text>
+<rect x="20" y="16" width="760" height="30" rx="6" ry="6" fill="#1a2744" stroke="#d2a8ff" stroke-width="1"/><text x="400.0" y="35.2" text-anchor="middle" fill="#d2a8ff" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="bold">\A n \in Nat :</text>
+<rect x="36" y="50" width="744" height="30" rx="4" ry="4" fill="url(#gradAction)" stroke="#30363d" stroke-width="1"/><text x="408.0" y="69.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">Inc(n) &gt; n</text>
 </svg></div>
 
       <div class="block block-blue" style="border-left: 4px solid #2980b9;">
@@ -1263,7 +1272,7 @@
         </div>
         <div class="block-meta"><code>THEOREM ThmFactPositive</code><span class="container">in FeatureTour</span><span class="loc">L117</span></div>
       </div>
-<div class="embedded-diagram" style="margin: 12px 0; padding: 12px; background: #21262d; border-radius: 8px;"><svg xmlns="http://www.w3.org/2000/svg" width="800" height="66" viewBox="0 0 800 66">
+<div class="embedded-diagram" style="margin: 12px 0; padding: 12px; background: #21262d; border-radius: 8px;"><svg xmlns="http://www.w3.org/2000/svg" width="800" height="100" viewBox="0 0 800 100">
 <defs>
   <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
     <feGaussianBlur stdDeviation="1.5" result="blur" />
@@ -1275,7 +1284,8 @@
   </linearGradient>
 </defs>
 <rect width="100%" height="100%" fill="#0d1117" rx="8"/>
-<rect x="20" y="16" width="760" height="30" rx="4" ry="4" fill="url(#gradAction)" stroke="#30363d" stroke-width="1"/><text x="400.0" y="35.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">\A n \in Nat : Fact(n) &gt; 0</text>
+<rect x="20" y="16" width="760" height="30" rx="6" ry="6" fill="#1a2744" stroke="#d2a8ff" stroke-width="1"/><text x="400.0" y="35.2" text-anchor="middle" fill="#d2a8ff" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="bold">\A n \in Nat :</text>
+<rect x="36" y="50" width="744" height="30" rx="4" ry="4" fill="url(#gradAction)" stroke="#30363d" stroke-width="1"/><text x="408.0" y="69.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">Fact(n) &gt; 0</text>
 </svg></div>
 
       <div class="block block-blue" style="border-left: 4px solid #2980b9;">
@@ -1367,7 +1377,7 @@
         </div>
         <div class="block-meta"><code>THEOREM ThmDouble</code><span class="container">in FeatureTour</span><span class="loc">L126</span></div>
       </div>
-<div class="embedded-diagram" style="margin: 12px 0; padding: 12px; background: #21262d; border-radius: 8px;"><svg xmlns="http://www.w3.org/2000/svg" width="800" height="66" viewBox="0 0 800 66">
+<div class="embedded-diagram" style="margin: 12px 0; padding: 12px; background: #21262d; border-radius: 8px;"><svg xmlns="http://www.w3.org/2000/svg" width="800" height="100" viewBox="0 0 800 100">
 <defs>
   <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
     <feGaussianBlur stdDeviation="1.5" result="blur" />
@@ -1379,7 +1389,8 @@
   </linearGradient>
 </defs>
 <rect width="100%" height="100%" fill="#0d1117" rx="8"/>
-<rect x="20" y="16" width="760" height="30" rx="4" ry="4" fill="url(#gradAction)" stroke="#30363d" stroke-width="1"/><text x="400.0" y="35.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">\A n \in Nat : Double(n) = 2 * n</text>
+<rect x="20" y="16" width="760" height="30" rx="6" ry="6" fill="#1a2744" stroke="#d2a8ff" stroke-width="1"/><text x="400.0" y="35.2" text-anchor="middle" fill="#d2a8ff" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="bold">\A n \in Nat :</text>
+<rect x="36" y="50" width="744" height="30" rx="4" ry="4" fill="url(#gradAction)" stroke="#30363d" stroke-width="1"/><text x="408.0" y="69.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">Double(n) = 2 * n</text>
 </svg></div>
 
       <div class="block block-blue" style="border-left: 4px solid #2980b9;">
@@ -1411,7 +1422,7 @@
         </div>
         <div class="block-meta"><code>THEOREM ThmMaxCommutative</code><span class="container">in FeatureTour</span><span class="loc">L130</span></div>
       </div>
-<div class="embedded-diagram" style="margin: 12px 0; padding: 12px; background: #21262d; border-radius: 8px;"><svg xmlns="http://www.w3.org/2000/svg" width="800" height="66" viewBox="0 0 800 66">
+<div class="embedded-diagram" style="margin: 12px 0; padding: 12px; background: #21262d; border-radius: 8px;"><svg xmlns="http://www.w3.org/2000/svg" width="800" height="100" viewBox="0 0 800 100">
 <defs>
   <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
     <feGaussianBlur stdDeviation="1.5" result="blur" />
@@ -1423,7 +1434,8 @@
   </linearGradient>
 </defs>
 <rect width="100%" height="100%" fill="#0d1117" rx="8"/>
-<rect x="20" y="16" width="760" height="30" rx="4" ry="4" fill="url(#gradAction)" stroke="#30363d" stroke-width="1"/><text x="400.0" y="35.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">\A a, b \in Nat : Max(a, b) = Max(b, a)</text>
+<rect x="20" y="16" width="760" height="30" rx="6" ry="6" fill="#1a2744" stroke="#d2a8ff" stroke-width="1"/><text x="400.0" y="35.2" text-anchor="middle" fill="#d2a8ff" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="bold">\A a, b \in Nat :</text>
+<rect x="36" y="50" width="744" height="30" rx="4" ry="4" fill="url(#gradAction)" stroke="#30363d" stroke-width="1"/><text x="408.0" y="69.2" text-anchor="middle" fill="#e6edf3" font-family="JetBrains Mono,Fira Code,monospace" font-size="12" font-weight="normal">Max(a, b) = Max(b, a)</text>
 </svg></div>
 
       <div class="block block-blue" style="border-left: 4px solid #2980b9;">
@@ -1574,5 +1586,39 @@
 </svg></div>
 
   </div>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function() {
+      const TLA_MAP = [
+        [/\\//g, "\\lor "], [/==/g, "\\triangleq "], [/\|\->/g, "\\mapsto "], [/<</g, "\\langle "], [/>>/g, "\\rangle "],
+        [/\A/g, "\\forall "], [/\E/g, "\\exists "], [/\in/g, "\\in "], [/\notin/g, "\\notin "],
+        [/~>/g, "\\leadsto "], [/=>/g, "\\implies "], [/<=>/g, "\\iff "], [/\equiv/g, "\\equiv "],
+        [/\cup/g, "\\cup "], [/\cap/g, "\\cap "], [/\subset/g, "\\subset "], [/\subseteq/g, "\\subseteq "],
+        [/#/g, "\\neq "], [/\neq/g, "\\neq "], [/¬/g, "\\neg "], [/\lnot/g, "\\neg "],
+        [/'/g, "^\\prime"], [/[]/g, "\\square "], [/<>/g, "\\diamond "]
+      ];
+      TLA_MAP.push([new RegExp("/\\\\", "g"), "\\land "]);
+
+      function convertTla(text) {
+        let res = text.trim();
+        TLA_MAP.forEach(([reg, sub]) => { res = res.replace(reg, sub); });
+        return res;
+      }
+
+      const formulas = document.querySelectorAll("code, .tla-formula, svg text");
+      formulas.forEach(el => {
+        let raw = el.textContent;
+        if (raw.length > 1 && (raw.includes("\\") || raw.includes("/") || raw.includes("=") || raw.includes("<") || raw.includes(">"))) {
+           const tex = convertTla(raw);
+           try {
+             katex.render(tex, el, {
+               throwOnError: false,
+               displayMode: false
+             });
+           } catch (e) { console.warn("KaTeX error:", e, tex); }
+        }
+      });
+    });
+  </script>
 </body>
 </html>
