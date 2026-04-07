@@ -61,8 +61,10 @@ class NassiBuilder:
         "LetPassThroughContext": ["equivExpr"],
     }
 
-    def __init__(self) -> None:
+    def __init__(self, variables: set[str] | None = None, constants: set[str] | None = None) -> None:
         self._parser_cls: type | None = None
+        self.variables = variables or set()
+        self.constants = constants or set()
 
     def _P(self) -> type:
         if self._parser_cls is None:
@@ -119,6 +121,10 @@ class NassiBuilder:
         visitor = visitor_cls()
         visitor.visit(result.tree)
 
+        # Pre-collect symbols for highlight classification
+        self.variables = {e.name for e in visitor.elements if e.kind == StructuralElementKind.VARIABLE}
+        self.constants = {e.name for e in visitor.elements if e.kind == StructuralElementKind.CONSTANT}
+
         diagrams: list[tuple[str, Block, int]] = []
         for elem in visitor.elements:
             ctx = visitor.get_context(elem)
@@ -172,6 +178,8 @@ class NassiBuilder:
             return self._build_case(ctx)
         if tname == "LetInExpressionContext":
             return self._build_let(ctx)
+        if tname == "ExceptExpressionContext":
+            return self._build_except(ctx)
         if tname == "ConjunctionListContext":
             return self._build_conjunction_list(ctx)
         if tname == "DisjunctionListContext":
@@ -205,7 +213,7 @@ class NassiBuilder:
             structural = self._scan_children(ctx)
             if structural is not None:
                 return structural
-            return ActionBlock(text=_truncate(self._get_text(ctx)))
+            return ActionBlock(text=self._highlight_identifiers(_truncate(self._get_text(ctx))))
 
         # --- Generic child scan for any other wrapper ---
         structural = self._scan_children(ctx)
@@ -213,7 +221,7 @@ class NassiBuilder:
             return structural
 
         # --- Fallback leaf ---
-        return ActionBlock(text=_truncate(self._get_text(ctx)))
+        return ActionBlock(text=self._highlight_identifiers(_truncate(self._get_text(ctx))))
 
     # ------------------------------------------------------------------
     # Structural construct builders
@@ -256,6 +264,8 @@ class NassiBuilder:
                 return self._build_case(child)
             if tname == "LetInExpressionContext":
                 return self._build_let(child)
+            if tname == "ExceptExpressionContext":
+                return self._build_except(child)
             if tname == "ConjunctionListContext":
                 return self._build_conjunction_list(child)
             if tname == "DisjunctionListContext":
@@ -507,3 +517,48 @@ class NassiBuilder:
     def _build_instantiation_step(self, ctx) -> Block:
         module_ref = ctx.IDENTIFIER().getText() if ctx.IDENTIFIER() else "?"
         return ActionBlock(text=f"INSTANCE {module_ref}")
+
+    def _build_except(self, ctx) -> Block:
+        # ctx is ExceptExpressionContext
+        # rule: expression EXCEPT_KW exceptSpec (COMMA exceptSpec)*
+        base_expr = ctx.expression()
+        base_text = self._highlight_identifiers(_truncate(self._get_text(base_expr))) if base_expr else "?"
+        
+        specs = ctx.exceptSpec()
+        update_blocks: list[Block] = []
+        for spec in specs:
+             # spec: BANG exceptComponent+ EQUALS expression
+             components = spec.exceptComponent()
+             comp_parts = []
+             for comp in components:
+                 comp_parts.append(self._get_text(comp))
+             
+             path = "".join(comp_parts)
+             val_expr = spec.expression()
+             val_text = self._highlight_identifiers(_truncate(self._get_text(val_expr))) if val_expr else "?"
+             
+             update_blocks.append(ActionBlock(text=f"!{path} = {val_text}"))
+        
+        content = SequenceBlock(children=update_blocks) if len(update_blocks) > 1 else update_blocks[0]
+        return ScopeBlock(label=f"Update {base_text}:", children=[content])
+
+    def _highlight_identifiers(self, text: str) -> str:
+        """Apply KaTeX color markers to known variables and constants."""
+        if not self.variables and not self.constants:
+            return text
+        
+        import re
+        # We only want to highlight standalone identifiers that aren't keywords
+        # TLA+ identifiers: [a-zA-Z_][a-zA-Z0-9_]*
+        def repl(match):
+            name = match.group(0)
+            if name in self.variables:
+                # Teal-ish color for variables
+                return f"\\color{{#1abc9c}}{{{name}}}"
+            if name in self.constants:
+                # Amber/Orange color for constants
+                return f"\\color{{#f39c12}}{{{name}}}"
+            return name
+
+        # Simple regex for identifiers
+        return re.sub(r"\b[a-zA-Z_][a-zA-Z0-9_]*\b", repl, text)

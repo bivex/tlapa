@@ -82,16 +82,15 @@ _KIND_ICONS = {
 }
 
 
-def _render_element_block(element, depth: int) -> str:
+def _render_element_block(element, depth: int, inner_html: str = "") -> str:
     kind = element.kind
     palette = _KIND_COLORS.get(kind, ("gray", "#7f8c8d", "#616a6b"))
     color_name, bg, border = palette
     # For proof steps, use name-based icon and color overrides if available
+    icon = _KIND_ICONS.get(kind, "•")
     if kind == "proof" and element.name in _KIND_ICONS:
         icon = _KIND_ICONS[element.name]
-    else:
-        icon = _KIND_ICONS.get(kind, "•")
-    # Optional: adjust color based on name? Could extend later.
+    
     badge = _depth_badge(depth)
     sig = escape(element.signature) if element.signature else ""
     name = escape(element.name)
@@ -111,12 +110,18 @@ def _render_element_block(element, depth: int) -> str:
         meta_parts.append(f'<span class="container">in {container}</span>')
     meta_parts.append(f'<span class="loc">L{element.line}</span>')
 
+    content_html = f'<div class="block-meta">{" ".join(meta_parts)}</div>'
+    if inner_html:
+        content_html += f'<div class="block-inner-content">{inner_html}</div>'
+
     return f"""      <div class="block block-{color_name}" style="border-left: 4px solid {border};">
         <div class="block-header" style="background: {bg}22;">
           {"".join(label_parts)}
           <span class="kind-tag" style="background: {bg};">{escape(kind)}</span>
         </div>
-        <div class="block-meta">{"".join(meta_parts)}</div>
+        <div class="block-content">
+          {content_html}
+        </div>
       </div>"""
 
 
@@ -172,16 +177,23 @@ def render_html(
             depth = 2
         else:
             depth = 1
-        block_html = _render_element_block(elem, depth)
+        
+        inner_html = ""
         # Embed Nassi diagram for operator/theorem/proof definitions
         if diagrams_by_line and elem.line in diagrams_by_line:
             block_tree, diag_name = diagrams_by_line[elem.line]
             try:
                 svg = render_nassi_diagram(block_tree, diag_name)
-                block_html += f'\n<div class="embedded-diagram" style="margin: 12px 0; padding: 12px; background: #21262d; border-radius: 8px;">{svg}</div>\n'
+                inner_html = f'<div class="embedded-diagram">{svg}</div>'
             except Exception:
                 pass
-        blocks_html.append(block_html)
+        
+        blocks_html.append(_render_element_block(elem, depth, inner_html))
+
+    if not blocks_html:
+        blocks_html.append(
+            '<div class="block block-gray"><div class="block-header">No structural elements found</div></div>'
+        )
 
     if not blocks_html:
         blocks_html.append(
@@ -196,236 +208,259 @@ def render_html(
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>TLA+ Structure — {escape(module_name)}</title>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
-  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
-  <style>
-    :root {{
-      --bg: #0d1117;
-      --surface: #161b22;
-      --surface-2: #21262d;
-      --border: #30363d;
-      --text: #e6edf3;
-      --text-muted: #8b949e;
-      --blue: #1676dc;
-      --green: #2d9d4a;
-      --purple: #9b59b6;
-      --teal: #1abc9c;
-      --amber: #f39c12;
-      --red: #e74c3c;
-    }}
-    * {{ box-sizing: border-box; margin: 0; padding: 0; }}
-    body {{
-      font-family: "IBM Plex Sans", -apple-system, sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      padding: 24px;
-      max-width: 1000px;
-      margin: 0 auto;
-    }}
-    .tla-formula {{ font-family: var(--mono); }}
-    .katex {{ font-size: 1.05em !important; }}
-    
-    .header {{
-      margin-bottom: 24px;
-      padding-bottom: 16px;
-      border-bottom: 1px solid var(--border);
-    }}
-    .header h1 {{
-      font-size: 22px;
-      font-weight: 600;
-      margin-bottom: 6px;
-    }}
-    .header .meta {{
-      font-size: 13px;
-      color: var(--text-muted);
-      font-family: "JetBrains Mono", monospace;
-    }}
-    .summary {{
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin-bottom: 20px;
-    }}
-    .summary-chip {{
-      padding: 4px 10px;
-      border-radius: 12px;
-      font-size: 12px;
-      font-weight: 500;
-      border: 1px solid;
-    }}
-    .diagnostics {{
-      margin-bottom: 20px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 12px;
-    }}
-    .diagnostics summary {{
-      cursor: pointer;
-      color: var(--red);
-      font-weight: 500;
-      margin-bottom: 8px;
-    }}
-    .diagnostics table {{
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 13px;
-    }}
-    .diagnostics th, .diagnostics td {{
-      text-align: left;
-      padding: 6px 10px;
-      border-bottom: 1px solid var(--border);
-    }}
-    .diag-sev {{
-      color: var(--red);
-      font-weight: 600;
-      font-size: 11px;
-      text-transform: uppercase;
-    }}
-    .structure {{
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }}
-    .block {{
-      background: var(--surface);
-      border-radius: 6px;
-      overflow: hidden;
-      transition: transform 0.1s;
-    }}
-    .block:hover {{
-      transform: translateX(2px);
-    }}
-    .block-header {{
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 10px 14px;
-      font-size: 14px;
-      font-weight: 500;
-    }}
-    .block-header .icon {{
-      font-size: 16px;
-      width: 22px;
-      text-align: center;
-    }}
-    .block-header .name {{
-      font-family: "JetBrains Mono", monospace;
-      font-weight: 600;
-      font-size: 14px;
-    }}
-    .block-header .badge {{
-      color: var(--text-muted);
-      font-size: 14px;
-    }}
-    .block-header .kind-tag {{
-      margin-left: auto;
-      padding: 2px 8px;
-      border-radius: 8px;
-      font-size: 10px;
-      font-weight: 600;
-      color: #fff;
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-    }}
-    .block-meta {{
-      padding: 4px 14px 8px 44px;
-      font-size: 12px;
-      color: var(--text-muted);
-      display: flex;
-      gap: 12px;
-      align-items: center;
-      flex-wrap: wrap;
-    }}
-    .block-meta code {{
-      font-family: "JetBrains Mono", monospace;
-      font-size: 12px;
-      color: var(--text);
-      background: var(--surface-2);
-      padding: 2px 6px;
-      border-radius: 4px;
-    }}
-    .block-meta .container {{
-      font-style: italic;
-    }}
-    .block-meta .loc {{
-      font-family: "JetBrains Mono", monospace;
-      font-size: 11px;
-    }}
-    .source-preview {{
-      margin-top: 24px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      overflow: hidden;
-    }}
-    .source-preview summary {{
-      padding: 10px 14px;
-      cursor: pointer;
-      font-weight: 500;
-      color: var(--text-muted);
-    }}
-    .source-preview pre {{
-      padding: 14px;
-      font-family: "JetBrains Mono", monospace;
-      font-size: 13px;
-      line-height: 1.5;
-      overflow-x: auto;
-      border-top: 1px solid var(--border);
-      max-height: 600px;
-      overflow-y: auto;
-    }}
-  </style>
-</head>
-<body>
-  <div class="header">
-    <h1>{escape(module_name)}</h1>
-    <div class="meta">{escape(source_path)} &middot; {token_count} tokens &middot; {elapsed_ms:.1f}ms</div>
-  </div>
-
-  <div class="summary">{summary_items}</div>
-
-  {diag_html}
-
-  <div class="structure">
-{body}
-  </div>
-
-  <script>
-    document.addEventListener("DOMContentLoaded", function() {{
-      const TLA_MAP = [
-        [/\\x5C\//g, "\\lor "], [/==/g, "\\triangleq "], [/\\|\\->/g, "\\mapsto "], [/<</g, "\\langle "], [/>>/g, "\\rangle "],
-        [/\\A/g, "\\forall "], [/\\E/g, "\\exists "], [/\\in/g, "\\in "], [/\\notin/g, "\\notin "],
-        [/~>/g, "\\leadsto "], [/=>/g, "\\implies "], [/<=>/g, "\\iff "], [/\\equiv/g, "\\equiv "],
-        [/\\cup/g, "\\cup "], [/\\cap/g, "\\cap "], [/\\subset/g, "\\subset "], [/\\subseteq/g, "\\subseteq "],
-        [/#/g, "\\neq "], [/\\neq/g, "\\neq "], [/¬/g, "\\neg "], [/\\lnot/g, "\\neg "],
-        [/'/g, "^\\prime"], [/\\x5B\\x5D/g, "\\square "], [/<>/g, "\\diamond "]
-      ];
-      TLA_MAP.push([new RegExp("/\\\\\\\\", "g"), "\\land "]);
-
-      function convertTla(text) {{
-        let res = text.trim();
-        TLA_MAP.forEach(([reg, sub]) => {{ res = res.replace(reg, sub); }});
-        return res;
+    <style>
+      :root {{
+        --bg: #0d1117;
+        --surface: #161b22;
+        --surface-2: #21262d;
+        --border: #30363d;
+        --text: #e6edf3;
+        --text-muted: #8b949e;
+        --blue: #1676dc;
+        --green: #2d9d4a;
+        --purple: #9b59b6;
+        --teal: #1abc9c;
+        --amber: #f39c12;
+        --red: #e74c3c;
       }}
+      * {{ box-sizing: border-box; margin: 0; padding: 0; }}
+      body {{
+        font-family: "IBM Plex Sans", -apple-system, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        padding: 24px;
+        max-width: 1000px;
+        margin: 0 auto;
+      }}
+      .tla-formula {{ font-family: var(--mono); }}
+      .katex {{ font-size: 1.05em !important; }}
+      
+      .header {{
+        margin-bottom: 24px;
+        padding-bottom: 16px;
+        border-bottom: 1px solid var(--border);
+      }}
+      .header h1 {{
+        font-size: 22px;
+        font-weight: 600;
+        margin-bottom: 6px;
+      }}
+      .header .meta {{
+        font-size: 13px;
+        color: var(--text-muted);
+        font-family: "JetBrains Mono", monospace;
+      }}
+      .summary {{
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 20px;
+      }}
+      .summary-chip {{
+        padding: 4px 10px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 500;
+        border: 1px solid;
+      }}
+      .diagnostics {{
+        margin-bottom: 20px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 12px;
+      }}
+      .diagnostics summary {{
+        cursor: pointer;
+        color: var(--red);
+        font-weight: 500;
+        margin-bottom: 8px;
+      }}
+      .diagnostics table {{
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+      }}
+      .diagnostics th, .diagnostics td {{
+        text-align: left;
+        padding: 6px 10px;
+        border-bottom: 1px solid var(--border);
+      }}
+      .diag-sev {{
+        color: var(--red);
+        font-weight: 600;
+        font-size: 11px;
+        text-transform: uppercase;
+      }}
+      .structure {{
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }}
+      .block {{
+        background: var(--surface);
+        border-radius: 6px;
+        overflow: hidden;
+        transition: transform 0.1s;
+      }}
+      .block:hover {{
+        transform: translateX(2px);
+      }}
+      .block-header {{
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 14px;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        user-select: none;
+      }}
+      .block-header::before {{
+        content: "▾";
+        display: inline-block;
+        width: 12px;
+        transition: transform 0.2s;
+        color: var(--text-muted);
+      }}
+      .block.collapsed .block-header::before {{
+        transform: rotate(-90deg);
+      }}
+      .block-header .icon {{
+        font-size: 16px;
+        width: 22px;
+        text-align: center;
+      }}
+      .block-header .name {{
+        font-family: "JetBrains Mono", monospace;
+        font-weight: 600;
+        font-size: 14px;
+      }}
+      .block-header .badge {{
+        color: var(--text-muted);
+        font-size: 14px;
+      }}
+      .block-header .kind-tag {{
+        margin-left: auto;
+        padding: 2px 8px;
+        border-radius: 8px;
+        font-size: 10px;
+        font-weight: 600;
+        color: #fff;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+      }}
+      .block-meta {{
+        padding: 4px 14px 8px 44px;
+        font-size: 12px;
+        color: var(--text-muted);
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        flex-wrap: wrap;
+      }}
+      .block-content {{
+        display: block;
+      }}
+      .block.collapsed .block-content {{
+        display: none;
+      }}
+      .embedded-diagram {{
+        margin: 12px 14px 12px 44px;
+        padding: 12px;
+        background: #21262d;
+        border-radius: 8px;
+        overflow-x: auto;
+      }}
+      .block-meta code {{
+        font-family: "JetBrains Mono", monospace;
+        font-size: 12px;
+        color: var(--text);
+        background: var(--surface-2);
+        padding: 2px 6px;
+        border-radius: 4px;
+      }}
+      .source-preview {{
+        margin-top: 24px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        overflow: hidden;
+      }}
+      .source-preview summary {{
+        padding: 10px 14px;
+        cursor: pointer;
+        font-weight: 500;
+        color: var(--text-muted);
+      }}
+      .source-preview pre {{
+        padding: 14px;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 13px;
+        line-height: 1.5;
+        overflow-x: auto;
+        border-top: 1px solid var(--border);
+        max-height: 600px;
+        overflow-y: auto;
+      }}
+    </style>
+  </head>
+  <body>
+    <div class="header">
+      <h1>{escape(module_name)}</h1>
+      <div class="meta">{escape(source_path)} &middot; {token_count} tokens &middot; {elapsed_ms:.1f}ms</div>
+    </div>
 
-      const formulas = document.querySelectorAll("code, .tla-formula, svg text");
-      formulas.forEach(el => {{
-        let raw = el.textContent;
-        if (raw.length > 1 && (raw.includes("\\\\") || raw.includes("/") || raw.includes("=") || raw.includes("<") || raw.includes(">"))) {{
-           const tex = convertTla(raw);
-           try {{
-             katex.render(tex, el, {{
-               throwOnError: false,
-               displayMode: false
-             }});
-           }} catch (e) {{ console.warn("KaTeX error:", e, tex); }}
+    <div class="summary">{summary_items}</div>
+
+    {diag_html}
+
+    <div class="structure">
+  {body}
+    </div>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", function() {{
+        const TLA_MAP = [
+          [/\\x5C\//g, "\\lor "], [/==/g, "\\triangleq "], [/\\|\\->/g, "\\mapsto "], [/<</g, "\\langle "], [/>>/g, "\\rangle "],
+          [/\\A/g, "\\forall "], [/\\E/g, "\\exists "], [/\\in/g, "\\in "], [/\\notin/g, "\\notin "],
+          [/~>/g, "\\leadsto "], [/=>/g, "\\implies "], [/<=>/g, "\\iff "], [/\\equiv/g, "\\equiv "],
+          [/\\cup/g, "\\cup "], [/\\cap/g, "\\cap "], [/\\subset/g, "\\subset "], [/\\subseteq/g, "\\subseteq "],
+          [/#/g, "\\neq "], [/\\neq/g, "\\neq "], [/¬/g, "\\neg "], [/\\lnot/g, "\\neg "],
+          [/'/g, "^\\prime"], [/\\x5B\\x5D/g, "\\square "], [/<>/g, "\\diamond "]
+        ];
+        TLA_MAP.push([new RegExp("/\\\\\\\\", "g"), "\\land "]);
+
+        function convertTla(text) {{
+          let res = text.trim();
+          TLA_MAP.forEach(([reg, sub]) => {{ res = res.replace(reg, sub); }});
+          return res;
         }}
+
+        // Process collapse/expand functionality
+        document.querySelectorAll(".block-header").forEach(header => {{
+          header.addEventListener("click", () => {{
+            header.parentElement.classList.toggle("collapsed");
+          }});
+        }});
+
+        const formulas = document.querySelectorAll("code, .tla-formula, svg text");
+        formulas.forEach(el => {{
+          let raw = el.textContent;
+          if (raw.length > 1 && (raw.includes("\\\\") || raw.includes("/") || raw.includes("=") || raw.includes("<") || raw.includes(">"))) {{
+             const tex = convertTla(raw);
+             try {{
+               katex.render(tex, el, {{
+                 throwOnError: false,
+                 displayMode: false
+               }});
+             }} catch (e) {{ console.warn("KaTeX error:", e, tex); }}
+          }}
+        }});
       }});
-    }});
-  </script>
-</body>
-</html>"""
+    </script>
+  </body>
+  </html>"""
 
 
 def main() -> int:

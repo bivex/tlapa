@@ -69,9 +69,16 @@ I_LEMMA = "📜 "
 I_THEOREM = "📜 "
 I_LET = "⚙️ "
 I_IF = "🔀 "
-I_CASE = "📋 "
-I_STEP = "▸ "
-I_QED = "✅ "
+I_CASE = "🔀"
+I_STEP = "📍"
+I_QED = "🏁"
+I_ALWAYS = "🔒"
+I_EVENTUALLY = "⏳"
+I_LEADS_TO = "⚡"
+I_ENABLED = "🔘"
+I_UNCHANGED = "⏸️"
+I_VAR = "💎"
+I_CONST = "🔧"
 
 # ---------------------------------------------------------------------------
 # SVG helpers
@@ -352,10 +359,25 @@ def draw_block(block: Block, x: float, y: float, w: float, depth: int, parts: li
         return _draw_scope(block, x, y, w, depth, parts)
     if isinstance(block, ActionBlock):
         text = block.text or block.label or "—"
-        if text.startswith("<"):
-            text = f"{I_STEP}{text}"
+        # print(f"DEBUG ICON INPUT: {text}")
+        
+        # 1. Temporal Logic Icons (highest priority)
+        if "[]" in text or "\\square" in text:
+            text = f"{I_ALWAYS} {text}"
+        elif "<>" in text or "\\diamond" in text:
+            text = f"{I_EVENTUALLY} {text}"
+        elif "~>" in text:
+            text = f"{I_LEADS_TO} {text}"
+        elif "ENABLED" in text:
+            text = f"{I_ENABLED} {text}"
+        elif "UNCHANGED" in text:
+            text = f"{I_UNCHANGED} {text}"
         elif "QED" in text:
-            text = f"{I_QED}{text}"
+            text = f"{I_QED} {text}"
+        # 2. Step symbols (only if not a temporal operator)
+        elif text.strip().startswith("<") and not text.strip().startswith("<>"):
+            text = f"{I_STEP} {text}"
+        
         fill, stroke = _action_colors(text)
         if fill == C_ACTION:
             fill = "url(#gradAction)"
@@ -428,13 +450,14 @@ def _action_colors(text: str) -> tuple[str, str]:
     # Primed variable (state transition)
     if "'" in t:
         return "#0d1f0d", "#3fb950"  # green tint
-    # Temporal ([] <>, ~>)
-    if t.startswith("[]") or t.startswith("<>") or t.startswith("~[]"):
+    # Temporal ([] <>, ~>, ENABLED, UNCHANGED)
+    if any(m in t for m in ("[]", "<>", "~>", "ENABLED", "UNCHANGED", "\\square", "\\diamond")):
         return "#1f1a0d", "#d29922"  # amber tint
     # String literal
-    if t.startswith('"'):
+    if '"' in t:
         return "#1a1533", "#bc8cff"  # purple tint
+    # Negation
+    if any(m in t for m in ("~", "\\lnot", "¬", "\\neg")):
+        return "#2d161b", "#f85149"  # red tint
     # Default
-    if t.startswith(("~", "\\lnot", "¬")):
-        return C_NEG_BG, C_NEG_ST  # orange tint
     return C_ACTION, C_ACTION_ST
