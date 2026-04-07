@@ -219,53 +219,7 @@ def render_nassi_diagram(root: Block, op_name: str, variant: str = "seq") -> str
     parts: list[str] = []
     y = MY
 
-    def draw(block: Block, x: float, y: float, w: float, depth: int = 0) -> float:
-        """Draw a block. Returns new y position."""
-
-        if isinstance(block, EmptyBlock):
-            return y
-
-        # --- Sequence ---
-        if isinstance(block, SequenceBlock):
-            cy = y
-            for child in block.children:
-                cy = draw(child, x, cy, w, depth)
-            return cy
-
-        # --- IF / Selection ---
-        if isinstance(block, SelectionBlock):
-            return _draw_selection(block, x, y, w, depth, parts)
-
-        # --- CASE ---
-        if isinstance(block, CaseBlock):
-            return _draw_case(block, x, y, w, depth, parts)
-
-        # --- Scope (LET...IN) ---
-        if isinstance(block, ScopeBlock):
-            return _draw_scope(block, x, y, w, depth, parts)
-
-        # --- Action (leaf) ---
-        if isinstance(block, ActionBlock):
-            text = block.text or block.label or "—"
-            # Add icon for proof steps
-            if text.startswith("<"):
-                text = f"{I_STEP}{text}"
-            elif "QED" in text:
-                text = f"{I_QED}{text}"
-
-            fill, stroke = _action_colors(text)
-            # Use gradient for default action
-            if fill == C_ACTION:
-                fill = "url(#gradAction)"
-            parts.append(_svg_block(x, y, w, BH, fill, stroke, text))
-            return y + BH + BP
-
-        # --- Fallback ---
-        text = getattr(block, "text", None) or block.label or block.kind
-        parts.append(_svg_block(x, y, w, BH, C_ACTION, C_ACTION_ST, text))
-        return y + BH + BP
-
-    total_y = draw(root, MX, y, DIAGRAM_W - 2 * MX)
+    total_y = draw_block(root, MX, y, DIAGRAM_W - 2 * MX, 0, parts)
     total_h = total_y + MY
 
     # Assemble SVG
@@ -359,7 +313,6 @@ def draw_block(block: Block, x: float, y: float, w: float, depth: int, parts: li
         return _draw_scope(block, x, y, w, depth, parts)
     if isinstance(block, ActionBlock):
         text = block.text or block.label or "—"
-        # print(f"DEBUG ICON INPUT: {text}")
         
         # 1. Temporal Logic Icons (highest priority)
         if "[]" in text or "\\square" in text:
