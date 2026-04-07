@@ -361,14 +361,15 @@ class NassiBuilder:
             token = ctx.stepStartToken()
             if token:
                 return token.getText()
-        # Walk up parents to find a StepContext with stepStartToken
-        parent = getattr(ctx, "parent", None)
+        # Walk up parents to find a StepContext (or QedStepContext) with stepStartToken
+        # ANTLR4 Python uses parentCtx
+        parent = getattr(ctx, "parentCtx", getattr(ctx, "parent", None))
         while parent:
             if hasattr(parent, "stepStartToken"):
                 token = parent.stepStartToken()
                 if token:
                     return token.getText()
-            parent = getattr(parent, "parent", None)
+            parent = getattr(parent, "parentCtx", getattr(parent, "parent", None))
         return None
 
     def _build_step(self, ctx) -> Block | None:
@@ -380,6 +381,8 @@ class NassiBuilder:
             block = ActionBlock(text="QED")
         elif hasattr(ctx, "useOrHide") and ctx.useOrHide():
             block = self._build_use_or_hide(ctx.useOrHide())
+        elif hasattr(ctx, "instantiation") and ctx.instantiation():
+            block = self._build_instantiation_step(ctx.instantiation())
         elif hasattr(ctx, "defStep") and ctx.defStep():
             block = self._build_def_step(ctx.defStep())
         elif hasattr(ctx, "haveStep") and ctx.haveStep():
@@ -442,3 +445,7 @@ class NassiBuilder:
         else:
             text = "ASSERT"
         return ActionBlock(text=text)
+
+    def _build_instantiation_step(self, ctx) -> Block:
+        module_ref = ctx.IDENTIFIER().getText() if ctx.IDENTIFIER() else "?"
+        return ActionBlock(text=f"INSTANCE {module_ref}")

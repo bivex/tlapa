@@ -505,6 +505,8 @@ def _build_structure_visitor(visitor_base: type) -> type:
                     self._visit_assert_step(child, step_num)
                 elif child_name == "TerminalProofContext":
                     self._visit_terminal_proof_step(child, step_num)
+                elif child_name == "InstantiationContext":
+                    self._visit_instantiation_step(child, step_num)
                 elif child_name == "TerminalNodeImpl":
                     token_text = child.getText() if hasattr(child, "getText") else ""
                     if token_text in ("OBVIOUS", "OMITTED"):
@@ -545,6 +547,16 @@ def _build_structure_visitor(visitor_base: type) -> type:
                 f"{prefix}{keyword}",
                 ctx,
                 signature=f"{prefix}{keyword}",
+            )
+
+        def _visit_instantiation_step(self, ctx, step_num: str | None = None) -> None:
+            module_ref = ctx.IDENTIFIER().getText() if ctx.IDENTIFIER() else "?"
+            prefix = self._step_prefix(step_num)
+            self._append(
+                StructuralElementKind.INSTANCE,
+                f"{prefix}INSTANCE",
+                ctx,
+                signature=f"{prefix}INSTANCE {module_ref}",
             )
 
         def visitQedStep(self, ctx):

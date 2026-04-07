@@ -96,9 +96,8 @@ This document outlines the completion tasks for the TLA+ parser implementation b
 
 ## 🐛 Known Issues
 
-- **Step numbers on proof step diagrams**: `_get_step_number()` works for `QedStepContext` but not for `StepContext` children (e.g., `AssertStepContext`) because the visitor's context map stores inner step contexts without parent pointers.
-- **BY clause with multiple references**: `BY <1>, <2>` doesn't parse; only single references like `BY <1>` work.
-- **Instantiation steps in proofs**: `instantiation` rule exists in grammar but NassiBuilder doesn't handle it.
+- [x] **BY clause with multiple references**: `BY <1>, <2>` works correctly including bare levels
+- [x] **Instantiation steps in proofs**: `instantiation` rule handled by NassiBuilder and structural visitor
 
 ---
 

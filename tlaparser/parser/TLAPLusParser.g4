@@ -653,6 +653,9 @@ primaryExpression
 proofStepRef
     : ProofStepLexeme
     | ProofImplicitStepLexeme
+    | ProofStepDotLexeme
+    | BareLevelLexeme
+    | UnnumberedStepLexeme
     ;
 
 reducedExpression
